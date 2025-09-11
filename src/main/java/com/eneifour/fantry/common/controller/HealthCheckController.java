@@ -11,7 +11,7 @@ import java.util.Map;
 @RequestMapping("/api")
 public class HealthCheckController {
 
-    // 테스트용 주석
+    // 테스트용 주석입니다
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> healthCheck() {
         // 간단한 상태 메시지와 현재 시간을 담은 Map 객체를 생성합니다.
