@@ -4,6 +4,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -35,5 +39,21 @@ public class SecurityConfig {
                 .formLogin(withDefaults());
 
         return http.build();
+    }
+
+    /***
+     * 배포 테스용 임시 user
+     * @author 재환
+     */
+    @Bean
+    public UserDetailsService userDetailsService() {
+        // 'user'라는 아이디와 'password'라는 비밀번호를 가진 테스트용 계정을 생성합니다.
+        // {noop}은 비밀번호를 암호화하지 않고 평문으로 사용하겠다는 의미입니다. (개발용)
+        UserDetails user = User.withUsername("user")
+                .password("{noop}password")
+                .roles("USER")
+                .build();
+
+        return new InMemoryUserDetailsManager(user);
     }
 }
