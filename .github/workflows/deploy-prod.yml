@@ -11,7 +11,7 @@ on:
 jobs:
   deploy:
     # 이 작업을 어떤 러너에서 실행할지 지정
-    runs-on: [self-hosted, group:Default] # GitHub 제공 서버가 아닌, 우리 '셀프 호스팅 러너'에서 실행
+    runs-on: self-hosted # GitHub 제공 서버가 아닌, 우리 '셀프 호스팅 러너'에서 실행
 
     # 실제 수행할 단계(들)
     steps:
