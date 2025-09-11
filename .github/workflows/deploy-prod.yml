@@ -1,0 +1,19 @@
+# 워크플로우의 이름
+name: Deploy to PROD Server
+
+# 어떤 조건에서 이 워크플로우를 실행할지 정의
+on:
+  push:
+    branches:
+      - main  # 'main' 브랜치에 push가 발생했을 때만 실행
+
+# 수행할 작업(들)을 정의
+jobs:
+  deploy:
+    # 이 작업을 어떤 러너에서 실행할지 지정
+    runs-on: self-hosted # GitHub 제공 서버가 아닌, 우리 '셀프 호스팅 러너'에서 실행
+
+    # 실제 수행할 단계(들)
+    steps:
+      - name: Execute deployment script # 단계의 이름
+        run: ~/scripts/deploy-prod.sh # 우리 서버에 만들어둔 배포 스크립트를 실행
