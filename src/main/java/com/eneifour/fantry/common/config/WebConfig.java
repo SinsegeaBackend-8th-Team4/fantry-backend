@@ -17,6 +17,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     /**
      * CORS 설정
+     * 추후 수정 필요
      * @Author: 재환
      */
     @Override
