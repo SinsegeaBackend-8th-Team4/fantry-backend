@@ -8,6 +8,8 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted # 우리 서버의 Runner에서 실행
+
+    # 실제 수행할 단계(들)
     steps:
       - name: Execute backend deployment script
         run: ~/scripts/deploy-backend-dev.sh
