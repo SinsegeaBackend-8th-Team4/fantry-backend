@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 public class Album {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long albumId;
+    private Integer albumId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "artist_id", nullable = false)
