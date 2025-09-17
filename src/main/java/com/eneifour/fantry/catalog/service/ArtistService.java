@@ -2,7 +2,6 @@ package com.eneifour.fantry.catalog.service;
 
 import com.eneifour.fantry.catalog.dto.ArtistDto;
 import com.eneifour.fantry.catalog.repository.ArtistRepository;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +12,9 @@ import java.util.List;
 public class ArtistService {
     private final ArtistRepository artistRepository;
 
-    @Transactional()
+    // 아티스트 전체 조회 (한글명 오름차순)
     public List<ArtistDto> getAllArtists() {
-        return artistRepository.findAllByOrderByNameKoAsc()
+        return artistRepository.findArtistsByOrderByNameKoAsc()
                 .stream()
                 .map(ArtistDto::from)
                 .toList();

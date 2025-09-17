@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ArtistRepository extends JpaRepository<Artist, Long> {
-    List<Artist> findAllByOrderByNameKoAsc();
+public interface ArtistRepository extends JpaRepository<Artist, Integer> {
+    // 아티스트 전체 조회 (한글 이름 오름차순: ㄱ~ㅎ)
+    List<Artist> findArtistsByOrderByNameKoAsc();
 }

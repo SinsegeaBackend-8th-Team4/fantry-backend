@@ -7,12 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface AlbumRepository extends JpaRepository<Album, Long> {
-    // 특정 아티스트의 앨범
-    List<Album> findByArtistArtistId(Long ArtistId);
-    // SELECT * FROM album WHERE artist_id = ?;
-
-    // 특정 아티스트 앨범을 발매일 역순 정렬
-    List<Album> findByArtistArtistIdOrderByReleaseDateDesc(Long ArtistId);
-    // SELECT * FROM album WHERE artist_id = ? ORDER BY release_date DESC;
+public interface AlbumRepository extends JpaRepository<Album, Integer> {
+    // 특정 아티스의 앨범 전제 조회 (발매일 내림차순)
+    List<Album> findAlbumsByArtistArtistIdOrderByReleaseDateDesc(Integer artistId);
 }

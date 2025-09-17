@@ -14,8 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class Album {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer albumId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -28,5 +27,6 @@ public class Album {
 
     @Column(insertable = false, updatable = false)
     private LocalDateTime createdAt;
-
+    @Column(insertable = false, updatable = false)
+    private LocalDateTime updatedAt;
 }

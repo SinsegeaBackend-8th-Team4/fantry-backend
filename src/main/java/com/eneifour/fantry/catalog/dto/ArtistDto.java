@@ -4,6 +4,10 @@ import com.eneifour.fantry.catalog.domain.Artist;
 
 public record ArtistDto(Integer artistId, String nameKo, String nameEn) {
     public static ArtistDto from(Artist a) {
-        return new ArtistDto(a.getArtistId(), a.getNameKo(), a.getNameEn());
+        return new ArtistDto(
+                a.getArtistId(),
+                a.getNameKo(),
+                a.getNameEn()
+        );
     }
 }
