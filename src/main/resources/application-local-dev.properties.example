@@ -2,8 +2,9 @@
 # 로컬-데브 (서버 DB접속)용 프로퍼티스
 # ============================
 
-# Dev(Test) DB
-spring.datasource.url=jdbc:mysql://fantry-dev.duckdns.org:4406/fantry_db_dev?serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=utf8
+# Dev(Test) DB (SSH 터널 사용)
+# SSH 터널의 로컬 끝 지점(내 PC의 3307 포트)을 바라보도록 수정
+spring.datasource.url=jdbc:mysql://127.0.0.1:3307/fantry_dev?serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=utf8
 spring.datasource.username=inc_dev
 spring.datasource.password= # 여기에 테스트 db 비밀번호 입력
 
