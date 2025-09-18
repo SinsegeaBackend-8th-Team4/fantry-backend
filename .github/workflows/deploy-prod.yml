@@ -8,6 +8,14 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted # 우리 서버의 Runner에서 실행
+
+    # API KEY 정의
+    env:
+      SECRET_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+      SECRET_REDIS_PASSWORD: ${{ secrets.PROD_REDIS_PASSWORD }}
+      # 새로운 이메일 키 추가 시 GitHub Secret에 등록 후 아래 한 줄만 추가하면 됨
+      # SECRET_EMAIL_API_KEY: ${{ secrets.PROD_EMAIL_API_KEY }}
+      
     steps:
       - name: Execute backend deployment script
         run: ~/scripts/deploy-backend-prod.sh
