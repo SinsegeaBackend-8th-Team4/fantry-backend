@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 public class Album {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer albumId;
+    private int albumId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "artist_id", nullable = false)

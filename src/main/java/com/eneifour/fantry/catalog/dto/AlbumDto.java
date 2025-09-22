@@ -4,7 +4,7 @@ import com.eneifour.fantry.catalog.domain.Album;
 
 import java.time.LocalDate;
 
-public record AlbumDto(Integer albumId, ArtistDto artist, String title, LocalDate releaseDate, String version) {
+public record AlbumDto(int albumId, ArtistDto artist, String title, LocalDate releaseDate, String version) {
     public static AlbumDto from(Album a) {
         return new AlbumDto(
                 a.getAlbumId(),

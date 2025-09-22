@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class Artist {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer artistId;
+    private int artistId;
 
     private String nameKo;
     private String nameEn;

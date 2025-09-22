@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class GoodsCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer goodsCategoryId;
+    private int goodsCategoryId;
 
     private String code;
     private String name;
