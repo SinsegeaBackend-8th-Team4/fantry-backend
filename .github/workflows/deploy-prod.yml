@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted # 우리 서버의 Runner에서 실행
-    
+
     # API KEY 정의
     env:
       SECRET_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
@@ -19,4 +19,3 @@ jobs:
     steps:
       - name: Execute backend deployment script
         run: ~/scripts/deploy-backend-prod.sh
-
