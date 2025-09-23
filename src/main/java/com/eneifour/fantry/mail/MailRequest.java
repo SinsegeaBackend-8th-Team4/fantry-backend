@@ -1,8 +1,10 @@
 package com.eneifour.fantry.mail;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class MailRequest {
     private String to;
     private String subject;

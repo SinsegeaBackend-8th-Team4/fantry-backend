@@ -3,9 +3,11 @@ package com.eneifour.fantry.member.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class MemberDTO {
     @NotBlank(message = "아이디는 필수 항목입니다.")
     @Pattern(regexp = "^[a-zA-Z0-9]{6,20}$", message = "아이디는 6~20자의 영문, 숫자만 가능합니다.")
