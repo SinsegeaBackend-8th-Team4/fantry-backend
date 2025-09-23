@@ -18,15 +18,19 @@ public class ChecklistTemplate {
 
     private String code;
     private String title;
+    private int version;
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
     @Enumerated(EnumType.STRING)
     private Status status;
 
     private LocalDateTime published_at;
+
     @Column(insertable = false, updatable = false)
     private LocalDateTime created_at;
+
     @Column(insertable = false, updatable = false)
     private LocalDateTime updated_at;
 
