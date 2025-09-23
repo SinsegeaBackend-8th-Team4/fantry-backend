@@ -9,6 +9,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -22,14 +27,29 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity // 스프링 시큐리티의 웹 보안 설정을 활성화합니다.
 public class SecurityConfig {
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173")); // 허용할 origin
+        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config); // 모든 경로에 적용
+        return source;
+    }
+
     @Bean // 이 메서드가 반환하는 객체를 스프링의 Bean으로 등록합니다.
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
                         // 🔽 여기에 로그인 없이 접근을 허용할 URL 경로 목록을 작성합니다.
                         .requestMatchers(
                                 "/actuator/**",
-                                "/api/**"
+                                "/api/**",
+                                "/ws-auction/**"
                         ).permitAll() // 위에 명시된 경로들은 모두 허용
 
                         // 🔽 위에서 허용한 경로 외의 나머지 모든 요청은 반드시 인증(로그인)을 거쳐야 합니다.
