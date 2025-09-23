@@ -1,8 +1,9 @@
 package com.eneifour.fantry.saleItem.service;
 
+import com.eneifour.fantry.member.domain.Member;
+import com.eneifour.fantry.member.model.JpaMemberRepository;
 import com.eneifour.fantry.saleItem.domain.Auction;
 import com.eneifour.fantry.saleItem.domain.Bid;
-import com.eneifour.fantry.saleItem.domain.Member;
 import com.eneifour.fantry.saleItem.domain.SaleStatus;
 import com.eneifour.fantry.saleItem.dto.BidDTO;
 import com.eneifour.fantry.saleItem.exception.AuctionException;
@@ -10,7 +11,7 @@ import com.eneifour.fantry.saleItem.exception.BidException;
 import com.eneifour.fantry.saleItem.exception.MemberException;
 import com.eneifour.fantry.saleItem.repository.AuctionRepository;
 import com.eneifour.fantry.saleItem.repository.BidRepository;
-import com.eneifour.fantry.saleItem.repository.MemberRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -31,7 +32,7 @@ public class BidService {
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
     private final RedisTemplate redisTemplate;
-    private final MemberRepository memberRepository;
+    private final JpaMemberRepository memberRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
 
     /*---------------------------------------------------------------------------------------*/

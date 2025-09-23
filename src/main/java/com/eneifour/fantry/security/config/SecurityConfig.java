@@ -49,7 +49,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/actuator/**",
                                 "/api/user/**",
-                                "/api/send/**"
+                                "/api/send/**",
+                                    "/app/**",
+                                "/ws-auction/**"
                         ).permitAll() // 위에 명시된 경로들은 모두 허용
 
                         // 여기에 관리자만 접근을 허용할 URL 경로 목록 작성

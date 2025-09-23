@@ -1,6 +1,7 @@
 package com.eneifour.fantry.saleItem.domain;
 
 
+import com.eneifour.fantry.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
