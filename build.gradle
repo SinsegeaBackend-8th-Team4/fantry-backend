@@ -35,6 +35,9 @@ dependencies {
 
     /* Bootpay */
     implementation 'io.github.bootpay:backend:3.0.2'
+    /* Jackson JSR310 for LocalDateTime support */
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.mysql:mysql-connector-j'
     compileOnly 'org.projectlombok:lombok'
