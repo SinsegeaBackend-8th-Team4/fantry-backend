@@ -5,6 +5,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 class FantryApplicationTests {
+    @MockBean
+    private JavaMailSender javaMailSender;
 
     @Test
     void contextLoads() {
