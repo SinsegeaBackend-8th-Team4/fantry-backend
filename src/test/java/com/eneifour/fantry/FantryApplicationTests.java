@@ -10,9 +10,6 @@ class FantryApplicationTests {
     @MockBean
     private JavaMailSender javaMailSender;
 
-    @MockBean
-    private JavaMailSender javaMailSender;
-
     @Test
     void contextLoads() {
     }
