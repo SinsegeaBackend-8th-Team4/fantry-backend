@@ -32,3 +32,7 @@ cors.allowed-origins=http://localhost:3000,http://localhost:5173
 # 이메일 전송 (자신의 계정으로 테스트하기)
 #spring.mail.username= 자신의 구글 이메일
 #spring.mail.password= 구글 앱 비밀번호
+
+# File Upload (파일이 저장될 디렉토리 경로와, url 접근 주소)
+file.upload-dir=C:/fantry_uploads
+file.base-url=http://localhost:8080/static/
