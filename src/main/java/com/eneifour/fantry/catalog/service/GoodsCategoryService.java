@@ -4,11 +4,13 @@ import com.eneifour.fantry.catalog.dto.GoodsCategoryDto;
 import com.eneifour.fantry.catalog.repository.GoodsCategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class GoodsCategoryService {
     private final GoodsCategoryRepository goodsCategoryRepository;
 

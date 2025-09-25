@@ -10,11 +10,11 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AlbumService {
     private final AlbumRepository albumRepository;
 
     // 특정 아티스트의 앨범 전제 조회 (발매일 내림차순)
-    @Transactional(readOnly = true)
     public List<AlbumDto> getAllAlbumByArtis(Integer artistId){
         return albumRepository.findAlbumsByArtistArtistIdOrderByReleaseDateDesc(artistId)
                 .stream()
