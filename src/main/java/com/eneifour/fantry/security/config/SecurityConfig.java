@@ -49,7 +49,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/actuator/**",
                                 "/api/user/**",
-                                "/api/send/**"
+                                "/api/send/**",
+                                "/api/file/**"
                         ).permitAll() // 위에 명시된 경로들은 모두 허용
 
                         // 여기에 관리자만 접근을 허용할 URL 경로 목록 작성
@@ -61,7 +62,6 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 // 🔽 기본 설정으로 폼 로그인 방식을 사용합니다. (로그인 페이지 자동 생성)
-                .formLogin(withDefaults())
                 .httpBasic(auth -> auth.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
