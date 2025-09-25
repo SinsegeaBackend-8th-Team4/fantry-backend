@@ -14,13 +14,14 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 /***
  * 파일 업로드, 삭제, 조회 서비스
- * 조회(url 반환) : public String getFileAccessUrl(int fileMetaId)
+ * 조회(url 반환) : public String getFileAccessUrl(int fileMetaId) or getFileAccessUrls(List<integer> fileMetaId)
  * 업로드 : List<FileMeta> uploadFiles(List<MultipartFile> files, String subDirectory, Member member)
  * - subDirectory는 저장될 세부 경로입니다. 매개변수는 아래 양식에 맞추어 도메인별 서비스 혹은 컨트롤러에서 호출합니다.
  *   subDirectory = "member/profile", "cs/inquiry"
@@ -109,11 +110,27 @@ public class FileService {
         return fileMetaRepository.findById(fileMetaId);
     }
 
+    /***
+     * 파일 한건 주소 요청
+     */
     @Transactional(readOnly = true)
     public String getFileAccessUrl(int fileMetaId){
         FileMeta fileMeta = fileMetaRepository.findById(fileMetaId)
                 .orElseThrow(() -> new FileException(FileErrorCode.FILE_NOT_FOUND));
         return fileManager.getFileUrl(fileMeta.getStoredFilePath());
+    }
+
+    /***
+     * 다중 파일 주소 요청
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, String> getFileAccessUrls(List<Integer> fileMetaIds) {
+        List<FileMeta> fileMetas = fileMetaRepository.findAllById(fileMetaIds);
+        return fileMetas.stream()
+                .collect(Collectors.toMap(
+                        FileMeta::getFilemetaId,
+                        fileMeta -> fileManager.getFileUrl(fileMeta.getStoredFilePath())
+                ));
     }
 
     @Transactional

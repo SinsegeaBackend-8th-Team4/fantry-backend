@@ -48,9 +48,4 @@ public class FileMeta {
     private LocalDateTime deletedAt; // 삭제된 날짜
     private Integer width; // (이미지일 경우) 사진 너비, 이미지가 아닌 경우 null
     private Integer height; // (이미지일 경우) 사진 높이, 이미지가 아닌 경우 null
-
-    @PrePersist
-    protected void onCreate() {
-        this.uploadedAt = LocalDateTime.now();
-    }
 }

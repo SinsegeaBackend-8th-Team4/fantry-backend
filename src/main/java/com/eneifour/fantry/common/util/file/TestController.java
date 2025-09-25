@@ -18,7 +18,7 @@ import java.util.List;
 public class TestController {
     private final FileService fileService;
 
-    public String subDirectory = "cs/inquiry";
+    private final String subDirectory = "cs/inquiry";
 
     @PostMapping("/upload")
     public ResponseEntity<List<FileMeta>> uploadFiles(@RequestPart List<MultipartFile> files) {
