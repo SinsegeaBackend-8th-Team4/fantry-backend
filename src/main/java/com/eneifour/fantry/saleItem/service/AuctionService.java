@@ -3,6 +3,7 @@ package com.eneifour.fantry.saleItem.service;
 import com.eneifour.fantry.saleItem.domain.Auction;
 import com.eneifour.fantry.saleItem.domain.SaleStatus;
 import com.eneifour.fantry.saleItem.domain.SaleType;
+import com.eneifour.fantry.saleItem.exception.AuctionException;
 import com.eneifour.fantry.saleItem.repository.AuctionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,10 @@ public class AuctionService {
 
     //Auction_id 를 이용한 1건 조회
     public Auction findOne(int auctionId){
-        return auctionRepository.findById(auctionId).get();
+        Auction auction = auctionRepository.findById(auctionId).orElseThrow(()->
+            new AuctionException("존재하지 않는 상품입니다")
+        );
+        return auction;
     }
 
     // 판매 상품 중 , member_id 를 기준으로 sale_status가 특정한 것 조회
