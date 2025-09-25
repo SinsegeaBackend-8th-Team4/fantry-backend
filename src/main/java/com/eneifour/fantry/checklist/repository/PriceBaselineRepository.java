@@ -10,11 +10,12 @@ import java.util.List;
 
 @Repository
 public interface PriceBaselineRepository extends JpaRepository<PriceBaseline, Integer> {
-    // 카테고리(fetch join)별 기준가 조회
+    // 카테고리(fetch join)별 최신 기준가 조회
     @Query("""
         SELECT pb FROM PriceBaseline pb
         JOIN FETCH pb.goodsCategory gc
-        WHERE gc.goodsCategoryId = :categoryId
+        WHERE gc.goodsCategoryId = :goodsCategoryId
+        ORDER BY pb.effectiveAt DESC
     """)
-    List<PriceBaseline> findWithCategoryByCategoryId(@Param("categoryId") int categoryId);
+    List<PriceBaseline> findLatestBaselineByCategoryId(@Param("goodsCategoryId") int goodsCategoryId);
 }
