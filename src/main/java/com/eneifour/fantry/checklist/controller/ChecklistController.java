@@ -19,7 +19,7 @@ public class ChecklistController {
     private final ChecklistService checklistService;
 
     @GetMapping
-    public List<ChecklistItemDto> getChecklistByCategory(@RequestParam int goodsCategoryId) {
+    public List<ChecklistItemDto> getChecklistsByCategory(@RequestParam int goodsCategoryId) {
         return checklistService.getItemsByCategory(goodsCategoryId);
     }
 }
