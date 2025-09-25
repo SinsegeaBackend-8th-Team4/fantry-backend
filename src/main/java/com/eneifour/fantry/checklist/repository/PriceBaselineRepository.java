@@ -6,16 +6,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Repository
 public interface PriceBaselineRepository extends JpaRepository<PriceBaseline, Integer> {
-    // 카테고리(fetch join)별 최신 기준가 조회
+    // 카테고리별 최신 기준가 조회
     @Query("""
-        SELECT pb FROM PriceBaseline pb
-        JOIN FETCH pb.goodsCategory gc
-        WHERE gc.goodsCategoryId = :goodsCategoryId
-        ORDER BY pb.effectiveAt DESC
+        SELECT pb.amount FROM PriceBaseline pb
+        WHERE pb.goodsCategory.goodsCategoryId = :goodsCategoryId
+        AND pb.effectiveAt <= :now
+        ORDER BY pb.effectiveAt DESC, pb.priceBaselineId DESC
     """)
-    List<PriceBaseline> findLatestBaselineByCategoryId(@Param("goodsCategoryId") int goodsCategoryId);
+    Optional<Double> findTopAmount(@Param("goodsCategoryId") int goodsCategoryId, @Param("now") LocalDateTime now);
 }
