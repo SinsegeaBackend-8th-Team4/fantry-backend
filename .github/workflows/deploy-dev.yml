@@ -13,6 +13,7 @@ jobs:
     env:
       SECRET_DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
       SECRET_REDIS_PASSWORD: ${{ secrets.DEV_REDIS_PASSWORD }}
+      SECRET_MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
       # 새로운 이메일 키 추가 시 GitHub Secret에 등록 후 아래 처럼 추가하면 됨
       # 아래의 {{ }} 안에서 'secrets.'을 제외한 이름과 깃허브에 등록한 이름과 같아야함.
       # SECRET_EMAIL_API_KEY: ${{ secrets.DEV_EMAIL_API_KEY }}
