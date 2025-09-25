@@ -9,5 +9,4 @@ import java.util.Optional;
 @Repository
 public interface FileMetaRepository extends JpaRepository<FileMeta, Integer> {
     Optional<FileMeta> findByStoredFilePath(String storedFilePath);
-    List<FileMeta> findAllByIdIn0(Integer memberId);
 }
