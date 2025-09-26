@@ -76,6 +76,7 @@ public class SecurityConfig {
                                 "/api/send/**",     //메일 관련
                                 "/api/login", "/api/reissue",    //로그인 관련
                                 "/api/file/**",
+                                "/api/payment/**",
                                 "/webhook/**"
                         ).permitAll() // 위에 명시된 경로들은 모두 허용
 
