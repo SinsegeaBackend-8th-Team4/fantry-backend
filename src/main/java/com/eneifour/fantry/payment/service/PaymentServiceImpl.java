@@ -122,6 +122,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             Payment paidPayment = PaymentMapper.dtoToEntity(confirmReceiptResult);
             paidPayment.setPaymentId(payment.getPaymentId());
+            paidPayment.setVersion(payment.getVersion());
             log.info("receiptPayment : {}", paidPayment);
             paymentRepository.save(paidPayment);
         } catch (ObjectOptimisticLockingFailureException e) {
