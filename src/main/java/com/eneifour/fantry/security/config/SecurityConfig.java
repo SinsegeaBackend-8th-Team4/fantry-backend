@@ -74,7 +74,9 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/api/user/**",     //회원가입 관련
                                 "/api/send/**",     //메일 관련
-                                "/api/login", "/api/reissue"    //로그인 관련
+                                "/api/login", "/api/reissue",    //로그인 관련
+                                "/api/file/**",
+                                "/webhook/**"
                         ).permitAll() // 위에 명시된 경로들은 모두 허용
 
                         // 여기에 관리자만 접근을 허용할 URL 경로 목록 작성
