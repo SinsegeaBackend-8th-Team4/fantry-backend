@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -116,5 +117,26 @@ public class JwtUtil {
     public String getCategory(Claims claims) {
         Object category = claims.get("category");
         return (category == null) ? null : category.toString();
+    }
+
+    //accessToken 헤더에서 가져오기
+    public String extractAccessToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if(authHeader != null || authHeader.startsWith("Bearer ")){
+            return authHeader.substring(7);
+        }
+        return null;
+    }
+
+    //accessToken 만료시간까지 남은 시간
+    public long getRemainTime(Claims claims) {
+        Date exp = claims.getExpiration();
+        if(exp == null) return 0L;
+
+        long expireTime = exp.toInstant().getEpochSecond();
+        long currentTime = Instant.now().getEpochSecond();
+        long remainTime = expireTime - currentTime;
+
+        return Math.max(0L, remainTime);
     }
 }

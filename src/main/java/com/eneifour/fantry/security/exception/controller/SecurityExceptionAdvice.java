@@ -1,10 +1,7 @@
 package com.eneifour.fantry.security.exception.controller;
 
 import com.eneifour.fantry.security.exception.dto.ErrorResponse;
-import com.eneifour.fantry.security.exception.exception.InvalidTokenTypeException;
-import com.eneifour.fantry.security.exception.exception.TimeoutAccessTokenException;
-import com.eneifour.fantry.security.exception.exception.TokenHeaderVerificationException;
-import com.eneifour.fantry.security.exception.exception.UnauthorizedException;
+import com.eneifour.fantry.security.exception.exception.*;
 import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,6 +55,16 @@ public class SecurityExceptionAdvice {
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
+    //로그아웃 예외
+    @ExceptionHandler(LogoutException.class)
+    public ResponseEntity<ErrorResponse> handleLogoutException(LogoutException e){
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                e.getMessage()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
 
     //그 밖에 모든 예외 처리 핸들러
     @ExceptionHandler(Exception.class)

@@ -1,6 +1,5 @@
 package com.eneifour.fantry.security.filter;
 
-import com.eneifour.fantry.member.domain.RoleType;
 import com.eneifour.fantry.security.exception.exception.InvalidTokenTypeException;
 import com.eneifour.fantry.security.exception.exception.TimeoutAccessTokenException;
 import com.eneifour.fantry.security.exception.exception.TokenHeaderVerificationException;
@@ -41,6 +40,8 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
             throws IOException, ServletException, TimeoutAccessTokenException, InvalidTokenTypeException, UnauthorizedException {
         //로그인이 필요없은 요청은 이 필터를 건너뛰기
         List<String> passFilterUrls = Arrays.asList("/api/login", "/api/reissue", "/api/user");
+        String requestURI = request.getRequestURI();
+
         if(passFilterUrls.contains(request.getRequestURI())) {
             filterChain.doFilter(request, response);
             return;
@@ -64,9 +65,11 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
                 }
 
                 //토큰 만료 여부 확인
-                Date expiration = claims.getExpiration();
-                if(expiration == null || expiration.before(new Date())) {
-                    throw new TimeoutAccessTokenException("토큰 시간이 만료됨");
+                if(!"/api/logout".equals(requestURI)) {
+                    Date expiration = claims.getExpiration();
+                    if(expiration == null || expiration.before(new Date())) {
+                        throw new TimeoutAccessTokenException("토큰 시간이 만료됨");
+                    }
                 }
 
                 //Claimes 값 추출, 블랙리스트 여부 판단
@@ -100,7 +103,31 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         }catch (ExpiredJwtException e){
-            throw new TimeoutAccessTokenException("AccessToken이 만료되었습니다.");
+            if(requestURI.contains("/logout")) {
+                Claims expiredClaims = e.getClaims();
+                // 만료된 토큰이지만 기본 검증은 수행
+                String category = expiredClaims.get("category", String.class);
+                if (!"access".equals(category)) {
+                    throw new InvalidTokenTypeException("Access Token이 아닙니다.");
+                }
+
+                String tokenId = jwtUtil.getJwtId(expiredClaims);
+                String username = jwtUtil.getUsername(expiredClaims);
+
+                if(username == null || tokenId == null){
+                    throw new InvalidTokenTypeException("토큰 정보가 누락되었습니다.");
+                }
+
+                // 인증 객체 생성 (만료되었지만 로그아웃 처리를 위해)
+                String role = expiredClaims.get("role", String.class);
+                GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_"+role);
+                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username,null, List.of(authority));
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+                filterChain.doFilter(request, response);
+            }else{
+                throw new TimeoutAccessTokenException("AccessToken이 만료되었습니다.");
+            }
         }catch (UnsupportedJwtException e) {
             throw new InvalidTokenTypeException("지원하지 않는 JWT 형식입니다.");
         }catch (MalformedJwtException e) {

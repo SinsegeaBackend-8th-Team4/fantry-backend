@@ -21,9 +21,9 @@ public class RedisTokenService {
     }
 
     //AccssToken 블랙리스트 등록
-    public void registBlackList(String tokenId, long ttlSeconds){
+    public void saveBlackList(String tokenId, String token, long ttlSeconds){
         if(ttlSeconds<=0) return;
-        redis.opsForValue().set("bl:access:"+tokenId, "ttl", Duration.ofSeconds(ttlSeconds));
+        redis.opsForValue().set("bl:access:"+tokenId, token, Duration.ofSeconds(ttlSeconds));
     }
 
     //AccessToken 블랙리스트 조회
@@ -36,7 +36,12 @@ public class RedisTokenService {
         redis.opsForValue().set("rt:" + userId, refreshToken, Duration.ofSeconds(ttlSeconds));
     }
 
-    //RefreshToken 일치 여부 확인
+    //refreshToken 존재 여부 확인
+    public boolean isExistRefreshToken(String userId){
+        return redis.hasKey("rt:" + userId);
+    }
+
+    //refreshToken 일치 여부 확인
     public boolean matchesRefreshToken(String userId, String refreshToken){
         String userValue = redis.opsForValue().get("rt:" + userId);
         return userValue != null && refreshToken.equals(userValue);

@@ -2,9 +2,11 @@ package com.eneifour.fantry.security.controller;
 
 import com.eneifour.fantry.member.dto.MemberDTO;
 import com.eneifour.fantry.security.exception.exception.JwtRefreshTokenException;
+import com.eneifour.fantry.security.exception.exception.LogoutException;
 import com.eneifour.fantry.security.model.LoginService;
 import com.eneifour.fantry.security.dto.AccessTokenResponse;
 import com.eneifour.fantry.security.dto.TokenResponse;
+import com.eneifour.fantry.security.model.LogoutService;
 import com.eneifour.fantry.security.model.ReissueService;
 import com.eneifour.fantry.security.util.CookieUtil;
 import com.eneifour.fantry.security.util.JwtUtil;
@@ -32,12 +34,11 @@ public class LoginController {
     private final JwtUtil jwtUtil;
     private final ReissueService reissueService;
     @Value("${spring.jwt.refresh-days}") long refreshTtl;
+    private final LogoutService logoutService;
 
     //로그인 요청 처리
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody MemberDTO memberDTO, HttpServletResponse response) {
-        log.debug("개발자 정의 컨트롤러 로그인 요청 받음");
-
         // 서비스 메서드 호출
         AccessTokenResponse accessToken = loginService.login(memberDTO.getUsername(), memberDTO.getPassword(), response);
         return ResponseEntity.ok(accessToken);
@@ -59,6 +60,16 @@ public class LoginController {
 
         }catch (JwtRefreshTokenException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            logoutService.logout(request, response);
+            return ResponseEntity.ok(Map.of("result", "로그아웃 성공"));
+        } catch (LogoutException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
 }

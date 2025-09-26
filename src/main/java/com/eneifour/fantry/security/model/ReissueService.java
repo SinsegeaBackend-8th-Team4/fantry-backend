@@ -55,18 +55,27 @@ public class ReissueService {
         }
 
         //category 확인(발급 시 페이로드에 명시)
-        if(!"refresh".equals(jwtUtil.getCategory(claims))){    //카테고리 얻어오는 함수 정의해야 함
+        if(!"refresh".equals(jwtUtil.getCategory(claims))){
             throw new JwtRefreshTokenException("invalid refresh token: 저장된 토큰이 없습니다.");
         }
 
-        //Redis에 저장되어 있는지 확인(블랙리스트)
+        //Redis에 저장되어 있는지 확인
         String username = jwtUtil.getUsername(claims);
-        String userId = jwtUtil.getUsername(claims);
-        String tokenId = jwtUtil.getJwtId(claims);
 
-        if(!redisTokenService.matchesRefreshToken(userId, refresh)){
+        if(!redisTokenService.matchesRefreshToken(username, refresh)){
             throw new JwtRefreshTokenException("invalid refresh token: 저장된 토큰과 일치하지 않습니다.");
         }
+
+        //accessToken이 블랙리스트에 저장되어 있는지 확인
+        String accessToken = jwtUtil.extractAccessToken(request);
+        Claims accessClaims = null;
+        try {
+            Jws<Claims> accessJws = jwtUtil.parseToken(accessToken);
+            accessClaims = accessJws.getBody();
+        } catch (ExpiredJwtException e) {
+            accessClaims = e.getClaims();
+        }
+        String tokenId = jwtUtil.getJwtId(accessClaims);
 
         if(redisTokenService.isBlackList(tokenId)){
             throw new JwtRefreshTokenException("해당 토큰은 사용이 금지되어 있습니다.");
@@ -79,8 +88,8 @@ public class ReissueService {
         String newAccessToken = jwtUtil.createAccessToken(username, currentVer, "access", roleType);
         String newRefreshToken = jwtUtil.createRefreshToken(username, "refresh", roleType);
 
-        //Refresh Token 저장, 기존의 Refresh 토큰 삭제 후 새 토큰 저장 -> 수정 필요!!!
-        redisTokenService.deleteRefreshToken(userId);
+        //Refresh Token 저장, 기존의 Refresh 토큰 삭제 후 새 토큰 저장
+        redisTokenService.deleteRefreshToken(username);
 //        String newTokenId = jwtUtil.getJwtId(jwtUtil.parseToken(newRefreshToken).getBody());
         long tokenTtl = refreshDays * 24 * 60 * 60;
         redisTokenService.saveRefreshToken(username, newRefreshToken, tokenTtl);
