@@ -1,4 +1,4 @@
-package com.eneifour.fantry.cs.controller.cs.domain;
+package com.eneifour.fantry.cs.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
