@@ -18,6 +18,7 @@ public class ChecklistController {
     private final ChecklistService checklistService;
     private final PricingService pricingService;
 
+    // 카테고리별 체크리스트 목록 조회
     @GetMapping
     public List<ChecklistItemDto> getChecklistsByCategory(@RequestParam int goodsCategoryId) {
         return checklistService.getItemsByCategory(goodsCategoryId);
