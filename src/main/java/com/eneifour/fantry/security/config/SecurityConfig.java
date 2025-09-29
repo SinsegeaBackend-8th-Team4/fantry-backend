@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 "/api/user/**",
                                 "/api/send/**",
                                 "/api/file/**",
+                                "/api/payment/**",
                                 "/webhook/**"
                         ).permitAll() // 위에 명시된 경로들은 모두 허용
 
