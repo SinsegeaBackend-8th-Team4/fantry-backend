@@ -1,18 +1,11 @@
 package com.eneifour.fantry.payment.exception;
 
-public class NotFoundReceiptException extends RuntimeException {
-    public NotFoundReceiptException(Throwable cause) {
-        super(cause);
-    }
-
-    public NotFoundReceiptException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public NotFoundReceiptException(String message) {
-        super(message);
-    }
-
+public class NotFoundReceiptException extends BootpayException {
     public NotFoundReceiptException() {
+        super(PaymentErrorCode.RC_NOT_FOUND);
+    }
+
+    public NotFoundReceiptException(Throwable cause) {
+        super(PaymentErrorCode.RC_NOT_FOUND, cause);
     }
 }

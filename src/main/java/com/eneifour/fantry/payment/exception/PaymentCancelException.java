@@ -1,18 +1,18 @@
 package com.eneifour.fantry.payment.exception;
 
+import lombok.Getter;
+
+@Getter
 public class PaymentCancelException extends RuntimeException {
-    public PaymentCancelException(Throwable cause) {
-        super(cause);
-    }
-
-    public PaymentCancelException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public PaymentCancelException(String message) {
-        super(message);
-    }
+    private final PaymentErrorCode errorCode;
 
     public PaymentCancelException() {
+        super(PaymentErrorCode.PAYMENT_CANCEL_FAILED.getMessage());
+        this.errorCode = PaymentErrorCode.PAYMENT_CANCEL_FAILED;
+    }
+
+    public PaymentCancelException(Throwable cause) {
+        super(PaymentErrorCode.PAYMENT_CANCEL_FAILED.getMessage(), cause);
+        this.errorCode = PaymentErrorCode.PAYMENT_CANCEL_FAILED;
     }
 }

@@ -1,19 +1,18 @@
 package com.eneifour.fantry.payment.exception;
 
-public class TokenIssuedFailException extends RuntimeException {
-    public TokenIssuedFailException(String message) {
-        super(message);
-    }
+import lombok.Getter;
 
-    public TokenIssuedFailException(String message, Throwable cause) {
-        super(message, cause);
+@Getter
+public class TokenIssuedFailException extends RuntimeException {
+    private final PaymentErrorCode errorCode;
+
+    public TokenIssuedFailException() {
+        super(PaymentErrorCode.TOKEN_ISSUED_FAILED.getMessage());
+        this.errorCode = PaymentErrorCode.TOKEN_ISSUED_FAILED;
     }
 
     public TokenIssuedFailException(Throwable cause) {
-        super(cause);
-    }
-
-    public TokenIssuedFailException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
+        super(PaymentErrorCode.TOKEN_ISSUED_FAILED.getMessage(), cause);
+        this.errorCode = PaymentErrorCode.TOKEN_ISSUED_FAILED;
     }
 }

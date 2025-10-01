@@ -9,6 +9,7 @@ import com.eneifour.fantry.member.exception.MemberException;
 import com.eneifour.fantry.report.exception.ReportException;
 import com.eneifour.fantry.security.exception.AuthException;
 import com.eneifour.fantry.cs.exception.CsException;
+import com.eneifour.fantry.payment.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -104,5 +105,67 @@ public class GlobalExceptionHandler {
                 ex.getErrorCode().getMessage()
         );
         return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
+    }
+
+    @ExceptionHandler(BootpayException.class)
+    public ResponseEntity<ErrorResponse> handleBootpayException(BootpayException ex) {
+        log.error("BootpayException 발생: {}", ex.getErrorCode().getMessage(), ex);
+        ErrorResponse response = ErrorResponse.of(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getCode(),
+                ex.getErrorCode().getMessage()
+        );
+        return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
+    }
+
+    @ExceptionHandler({
+            ConcurrentPaymentException.class,
+            NotFoundPaymentException.class,
+            PaymentAmountMismatchException.class,
+            PaymentCancelException.class,
+            PaymentConfirmException.class,
+            ProductNotAvailableForSaleException.class,
+            TokenIssuedFailException.class,
+            CancellableAmountExceededException.class,
+            CreatePaymentFailedException.class,
+            GhostPaymentCleanupFailedException.class
+    })
+    public ResponseEntity<ErrorResponse> handlePaymentException(RuntimeException ex) {
+        PaymentErrorCode errorCode = null;
+
+        if (ex instanceof ConcurrentPaymentException) {
+            errorCode = ((ConcurrentPaymentException) ex).getErrorCode();
+        } else if (ex instanceof NotFoundPaymentException) {
+            errorCode = ((NotFoundPaymentException) ex).getErrorCode();
+        } else if (ex instanceof PaymentAmountMismatchException) {
+            errorCode = ((PaymentAmountMismatchException) ex).getErrorCode();
+        } else if (ex instanceof PaymentCancelException) {
+            errorCode = ((PaymentCancelException) ex).getErrorCode();
+        } else if (ex instanceof PaymentConfirmException) {
+            errorCode = ((PaymentConfirmException) ex).getErrorCode();
+        } else if (ex instanceof ProductNotAvailableForSaleException) {
+            errorCode = ((ProductNotAvailableForSaleException) ex).getErrorCode();
+        } else if (ex instanceof TokenIssuedFailException) {
+            errorCode = ((TokenIssuedFailException) ex).getErrorCode();
+        } else if (ex instanceof CancellableAmountExceededException) {
+            errorCode = ((CancellableAmountExceededException) ex).getErrorCode();
+        } else if (ex instanceof CreatePaymentFailedException) {
+            errorCode = ((CreatePaymentFailedException) ex).getErrorCode();
+        } else if (ex instanceof GhostPaymentCleanupFailedException) {
+            errorCode = ((GhostPaymentCleanupFailedException) ex).getErrorCode();
+        }
+
+        log.error("PaymentException 발생: {}", errorCode != null ? errorCode.getMessage() : ex.getMessage(), ex);
+
+        if (errorCode != null) {
+            ErrorResponse response = ErrorResponse.of(
+                    errorCode.getStatus(),
+                    errorCode.getCode(),
+                    errorCode.getMessage()
+            );
+            return new ResponseEntity<>(response, errorCode.getStatus());
+        }
+
+        throw ex;
     }
 }

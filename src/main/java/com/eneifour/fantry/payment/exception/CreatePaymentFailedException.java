@@ -1,18 +1,18 @@
 package com.eneifour.fantry.payment.exception;
 
+import lombok.Getter;
+
+@Getter
 public class CreatePaymentFailedException extends RuntimeException {
-    public CreatePaymentFailedException(Throwable cause) {
-        super(cause);
-    }
-
-    public CreatePaymentFailedException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public CreatePaymentFailedException(String message) {
-        super(message);
-    }
+    private final PaymentErrorCode errorCode;
 
     public CreatePaymentFailedException() {
+        super(PaymentErrorCode.CREATE_PAYMENT_FAILED.getMessage());
+        this.errorCode = PaymentErrorCode.CREATE_PAYMENT_FAILED;
+    }
+
+    public CreatePaymentFailedException(Throwable cause) {
+        super(PaymentErrorCode.CREATE_PAYMENT_FAILED.getMessage(), cause);
+        this.errorCode = PaymentErrorCode.CREATE_PAYMENT_FAILED;
     }
 }
