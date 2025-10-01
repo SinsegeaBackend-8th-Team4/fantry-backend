@@ -105,13 +105,16 @@ public class PaymentController {
     ) throws Exception {
         log.info("RequestPaymentApprove : {}", requestPaymentApprove);
         paymentService.purchaseItem(requestPaymentApprove);
-        return ResponseEntity.ok(new ApiResponse<>(true, "결제가 완료되었습니다."));
+        return ResponseEntity.ok(new ApiResponse<>(true, "결제가 완료되었습니다.", null));
     }
 
     @PostMapping("/api/payment/cancel")
     public ResponseEntity<Void> requestPaymentCancel(
-            @Valid RequestPaymentCancel requestPaymentCancel
-    ) {
+            @Valid
+            @RequestBody
+            RequestPaymentCancel requestPaymentCancel
+    ) throws Exception {
+        paymentService.cancelPayment(requestPaymentCancel);
         return null;
     }
 

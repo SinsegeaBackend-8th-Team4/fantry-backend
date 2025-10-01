@@ -2,14 +2,19 @@ package com.eneifour.fantry.payment.service;
 
 import com.eneifour.fantry.payment.domain.GhostPayment;
 import com.eneifour.fantry.payment.domain.GhostPaymentStatus;
+import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
+import com.eneifour.fantry.payment.exception.NotFoundPaymentException;
+import com.eneifour.fantry.payment.mapper.PaymentMapper;
 import com.eneifour.fantry.payment.repository.GhostPaymentRepository;
+import com.eneifour.fantry.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -17,7 +22,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class GhostPaymentCleanupService {
+public class GhostPaymentService {
     private final GhostPaymentRepository ghostPaymentRepository;
     private final CleanupExecutor cleanupExecutor;
 
@@ -36,16 +41,27 @@ public class GhostPaymentCleanupService {
         log.info("End GhostPayment Cleanup");
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createGhostPayment(String receiptId) {
+        GhostPayment ghostPayment = new GhostPayment();
+        ghostPayment.setReceiptId(receiptId);
+        ghostPayment.setStatus(GhostPaymentStatus.CANCEL_RESERVATION);
+        ghostPaymentRepository.save(ghostPayment);
+    }
+
     @Component
     static class CleanupExecutor {
         private final GhostPaymentRepository ghostPaymentRepository;
+        private final PaymentRepository paymentRepository;
         private final BootpayService bootpayService;
 
         public CleanupExecutor(
                 GhostPaymentRepository ghostPaymentRepository,
+                PaymentRepository paymentRepository,
                 BootpayService bootpayService
         ) {
             this.ghostPaymentRepository = ghostPaymentRepository;
+            this.paymentRepository = paymentRepository;
             this.bootpayService = bootpayService;
         }
 
@@ -59,10 +75,14 @@ public class GhostPaymentCleanupService {
         public void execute(GhostPayment ghostPayment) {
             try {
                 log.info("유령 결제 취소 시도. Receipt ID: {}", ghostPayment.getReceiptId());
-                BootpayReceiptDto bootpayReceiptDto = bootpayService.getReceipt(ghostPayment.getReceiptId());
+                BootpayReceiptDto bootpayReceiptDto = bootpayService.getReceiptViaWebClient(ghostPayment.getReceiptId());
                 String PREFIX = "ghost_";
-                bootpayService.cancellation(bootpayReceiptDto.getReceiptId(), "유령결제", "CleanupFromServer", PREFIX + bootpayReceiptDto.getOrderId(), String.valueOf(bootpayReceiptDto.getPrice()), null);
+                BootpayReceiptDto resultReceiptDto = bootpayService.cancellationViaWebClient(bootpayReceiptDto.getReceiptId(), "유령결제", "CleanupFromServer", PREFIX + bootpayReceiptDto.getOrderId(), String.valueOf(bootpayReceiptDto.getPrice()), null);
                 ghostPayment.setStatus(GhostPaymentStatus.CANCEL_SUCCESS);
+                Payment payment = paymentRepository.findPaymentByOrderId(resultReceiptDto.getOrderId())
+                        .orElseThrow(NotFoundPaymentException::new);
+                PaymentMapper.updateFromDto(payment, resultReceiptDto);
+                paymentRepository.save(payment);
                 log.info("유령 결제 취소 성공. Receipt ID: {}", ghostPayment.getReceiptId());
             } catch (Exception e) {
                 log.error("유령 결제 취소 중 오류 발생. Receipt ID: {}, Error: {}", ghostPayment.getReceiptId(), e.getMessage());

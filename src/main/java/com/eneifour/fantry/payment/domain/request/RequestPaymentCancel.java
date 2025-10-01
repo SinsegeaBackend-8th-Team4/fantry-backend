@@ -21,7 +21,7 @@ public class RequestPaymentCancel {
     private String cancelPrice;
     @JsonAlias({"memberId", "member_id"})
     @NotBlank(message = "멤버 아이디가 누락되었습니다.")
-    private String adminId;
+    private String memberId;
     @JsonAlias({"cancel_reason", "cancelReason"})
     private String cancelReason;
     @JsonAlias({"bank_data","bankData"})
