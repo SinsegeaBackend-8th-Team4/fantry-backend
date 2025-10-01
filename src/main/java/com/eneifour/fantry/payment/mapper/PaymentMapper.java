@@ -2,6 +2,7 @@ package com.eneifour.fantry.payment.mapper;
 
 import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
+import com.eneifour.fantry.payment.domain.PaymentStatus;
 import com.eneifour.fantry.payment.domain.request.RequestPaymentCreate;
 import com.eneifour.fantry.payment.domain.response.ResponseCreatedPayment;
 import com.eneifour.fantry.payment.domain.response.ResponsePaymentReceipt;
@@ -19,7 +20,6 @@ public class PaymentMapper {
         Payment payment = new Payment();
         payment.setOrderId(orderId);
         payment.setPrice(price);
-        payment.setStatus(100);
         return payment;
     }
 
@@ -38,7 +38,7 @@ public class PaymentMapper {
         payment.setPurchasedAt(bootpayReceiptDto.getPurchasedAt());
         payment.setCancelledAt(bootpayReceiptDto.getCancelledAt());
         payment.setReceiptUrl(bootpayReceiptDto.getReceiptUrl());
-        payment.setStatus(bootpayReceiptDto.getStatus());
+        payment.setStatus(PaymentStatus.fromCode(bootpayReceiptDto.getStatus()));
         ObjectMapper objectMapper = new ObjectMapper();
         Object paymentData = null;
         if (bootpayReceiptDto.getCardDataDto() != null) {
@@ -65,6 +65,40 @@ public class PaymentMapper {
             return clazz.cast(responseCreatedPayment);
         } else {
             throw new ClassNotFoundException();
+        }
+    }
+
+    public static void updateFromDto(Payment payment, BootpayReceiptDto dto) {
+        payment.setReceiptId(dto.getReceiptId());
+        payment.setCancelledPrice(dto.getCancelledPrice());
+        payment.setOrderName(dto.getOrderName());
+        payment.setPg(dto.getPg());
+        payment.setMethod(dto.getMethod());
+        payment.setCurrency(dto.getCurrency());
+        payment.setRequestedAt(dto.getRequestedAt());
+        payment.setPurchasedAt(dto.getPurchasedAt());
+        payment.setCancelledAt(dto.getCancelledAt());
+        payment.setReceiptUrl(dto.getReceiptUrl());
+        payment.setStatus(PaymentStatus.fromCode(dto.getStatus()));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            payment.setMetadata(objectMapper.writeValueAsString(dto.getMetadata()));
+        } catch (Exception e) {
+            payment.setMetadata(null);
+        }
+
+        Object paymentData = null;
+        if (dto.getCardDataDto() != null) {
+            paymentData = dto.getCardDataDto();
+        } else if (dto.getBankDataDto() != null) {
+            paymentData = dto.getBankDataDto();
+        } else if (dto.getVirtualBankDataDto() != null) {
+            paymentData = dto.getVirtualBankDataDto();
+        }
+
+        if (paymentData != null) {
+            payment.setPaymentInfo(objectMapper.convertValue(paymentData, new TypeReference<>() {}));
         }
     }
 }

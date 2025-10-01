@@ -1,5 +1,6 @@
 package com.eneifour.fantry.payment.domain;
 
+import com.eneifour.fantry.payment.exception.PaymentAmountMismatchException;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -55,11 +56,26 @@ public class Payment {
     @Column(name = "receipt_url")
     private String receiptUrl;
     @Column(name = "status")
-    private Integer status = 100;
+    @Enumerated(value = EnumType.STRING)
+    private PaymentStatus status = PaymentStatus.PAYMENT_WAITING;
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payment_info", columnDefinition = "json")
     private Map<String, Object> paymentInfo;
     @Version
     @Column(name = "version")
     Long version = 0L;
+
+    public void validateAmount(Integer price) {
+        if (this.price - (int) price != 0) {
+            throw new PaymentAmountMismatchException();
+        }
+    }
+
+    public boolean isPaymentWaiting() {
+        return this.status == PaymentStatus.PAYMENT_WAITING;
+    }
+
+    public boolean isPaymentApproving() {
+        return this.status == PaymentStatus.PAYMENT_APPROVING;
+    }
 }

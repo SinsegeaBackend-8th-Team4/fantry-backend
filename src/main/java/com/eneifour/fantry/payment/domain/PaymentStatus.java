@@ -1,9 +1,9 @@
-package com.eneifour.fantry.payment.domain.bootpay;
+package com.eneifour.fantry.payment.domain;
 
 import lombok.Getter;
 
 @Getter
-public enum BootpayStatus {
+public enum PaymentStatus {
     // 실패 상태
     CASH_RECEIPT_CANCEL_FAILED(-61, "현금영수증 발행취소 실패"),
     CASH_RECEIPT_ISSUE_FAILED(-60, "현금영수증 발행 실패"),
@@ -39,13 +39,13 @@ public enum BootpayStatus {
     private final int code;
     private final String description;
 
-    BootpayStatus(int code, String description) {
+    PaymentStatus(int code, String description) {
         this.code = code;
         this.description = description;
     }
 
-    public static BootpayStatus fromCode(int code) {
-        for (BootpayStatus status : values()) {
+    public static PaymentStatus fromCode(int code) {
+        for (PaymentStatus status : values()) {
             if (status.code == code) {
                 return status;
             }
