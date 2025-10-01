@@ -27,9 +27,9 @@ public class PricingRule {
     @Enumerated(EnumType.STRING)
     private EffectiveType effectiveType;
 
-    private double pctValue;
-    private double absValue;
-    private double capMinMultiplier;
+    private Double pctValue;
+    private Double absValue;
+    private Double capMinMultiplier;
     private Boolean active;
 
     @Column(insertable = false, updatable = false)
