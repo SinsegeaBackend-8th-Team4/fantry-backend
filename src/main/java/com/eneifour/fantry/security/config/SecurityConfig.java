@@ -19,8 +19,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
 /***
  * 기본적인 접근 권한 설정.
  * 로그인 개발전까진 /api 경로로 로그인 없이 테스트 가능
@@ -52,7 +50,8 @@ public class SecurityConfig {
                                 "/api/send/**",
                                 "/api/file/**",
                                 "/api/payment/**",
-                                "/webhook/**"
+                                "/webhook/**",
+                                "/static/**"
                         ).permitAll() // 위에 명시된 경로들은 모두 허용
 
                         // 여기에 관리자만 접근을 허용할 URL 경로 목록 작성
