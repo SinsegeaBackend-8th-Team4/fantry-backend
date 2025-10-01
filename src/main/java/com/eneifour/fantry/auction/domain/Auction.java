@@ -1,5 +1,6 @@
 package com.eneifour.fantry.auction.domain;
 
+import com.eneifour.fantry.inspection.domain.ProductInspection;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -8,7 +9,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Getter
-@Setter
 @Table(name = "auction")
 @Entity
 @NoArgsConstructor
@@ -50,7 +50,31 @@ public class Auction {
     private LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "inventory_item_id")
-    private InventoryItem inventoryItem;
+    @JoinColumn(name = "product_inspection_id")
+    private ProductInspection productInspection;
+
+    /**
+     * 경매를 '낙찰 완료' 상태로 변경합니다.
+     * 이 메서드는 객체 스스로 상태 변경의 유효성을 검사.
+     * //@param finalPrice 최종 낙찰가
+     */
+    public void closeAsSold(int finalPrice) {
+        if (this.saleStatus != SaleStatus.ACTIVE) {
+            throw new IllegalStateException("이미 마감 처리된 경매입니다. 현재 상태: " + this.saleStatus);
+        }
+        this.saleStatus = SaleStatus.SOLD;
+        this.finalPrice = finalPrice;
+    }
+
+    /**
+     * 경매를 '유찰' 상태로 변경.
+     */
+    public void closeAsNotSold() {
+        if (this.saleStatus != SaleStatus.ACTIVE) {
+            throw new IllegalStateException("이미 마감 처리된 경매입니다. 현재 상태: " + this.saleStatus);
+        }
+        this.saleStatus = SaleStatus.NOT_SOLD;
+    }
+
 
 }

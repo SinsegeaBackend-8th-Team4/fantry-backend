@@ -3,8 +3,7 @@ package com.eneifour.fantry.auction.domain;
 
 import com.eneifour.fantry.member.domain.Member;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,7 +12,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "orders")
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Orders {
 
     @Id

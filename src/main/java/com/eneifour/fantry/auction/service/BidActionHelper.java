@@ -23,8 +23,7 @@ public class BidActionHelper {
     public void broadcastNewBid(int auctionId, Member bidder, int newPrice) {
         simpMessagingTemplate.convertAndSend("/topic/auctions/" + auctionId, Map.of(
                 "newPrice", newPrice,
-                "memberId", bidder.getId(),
-                "bidderName", bidder.getName()
+                "memberId", bidder.getId()
         ));
     }
 
@@ -32,12 +31,12 @@ public class BidActionHelper {
      * DB에 저장할 Bid 엔티티를 생성.
      */
     public Bid createBidLog(Auction auction, Member bidder, int bidAmount) {
-        Bid bidLog = new Bid();
-        bidLog.setBidAmount(bidAmount);
-        bidLog.setItemId(auction.getAuctionId());
-        bidLog.setBidderId(bidder.getMemberId());
-        bidLog.setBidderName(bidder.getName());
-        bidLog.setItemName(auction.getInventoryItem().getItemName());
-        return bidLog;
+        return Bid.builder()
+                .bidAmount(bidAmount)
+                .bidderId(bidder.getMemberId())
+                .bidderName(bidder.getName())
+                .itemId(auction.getAuctionId())
+                .itemName(auction.getProductInspection().getItemName())
+                .build();
     }
 }

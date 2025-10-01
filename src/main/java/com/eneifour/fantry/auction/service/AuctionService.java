@@ -3,11 +3,13 @@ package com.eneifour.fantry.auction.service;
 import com.eneifour.fantry.auction.domain.Auction;
 import com.eneifour.fantry.auction.domain.SaleStatus;
 import com.eneifour.fantry.auction.domain.SaleType;
+import com.eneifour.fantry.auction.dto.AuctionDetailDTO;
 import com.eneifour.fantry.auction.exception.AuctionException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -38,20 +40,22 @@ public class AuctionService {
     }
 
     //Auction_id 를 이용한 1건 조회
-    public Auction findOne(int auctionId){
-        Auction auction = auctionRepository.findById(auctionId).orElseThrow(()->
-            new AuctionException(ErrorCode.AUCTION_NOT_FOUND));
-        return auction;
+    @Transactional
+    public AuctionDetailDTO  findOne(int auctionId){
+        AuctionDetailDTO auctionDetail = auctionRepository.findAuctionDetailById(auctionId)
+                .orElseThrow(() -> new AuctionException(ErrorCode.AUCTION_NOT_FOUND));
+
+        return auctionDetail;
     }
 
     // 판매 상품 중 , member_id 를 기준으로 sale_status가 특정한 것 조회
     public List<Auction> findBymemberIdAndSaleStatus(int memberId, SaleStatus saleStatus){
-        return auctionRepository.findByInventoryItem_Member_MemberIdAndSaleStatus(memberId, saleStatus);
+        return auctionRepository.findByProductInspection_MemberIdAndSaleStatus(memberId, saleStatus);
     }
 
     // 판매 상품 중 , member_id 를 기준으로 모든 상품 조회
     public List<Auction> findBymemberId(int memberId){
-        return auctionRepository.findByInventoryItem_Member_MemberId(memberId);
+        return auctionRepository.findByProductInspection_MemberId(memberId);
     }
 
     //판매 상품 1건 등록 

@@ -1,5 +1,6 @@
 package com.eneifour.fantry.auction.controller;
 
+import com.eneifour.fantry.auction.dto.AuctionDetailDTO;
 import com.eneifour.fantry.auction.service.AuctionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +18,8 @@ public class AuctionController {
 
     @GetMapping("/auctions/{auctionId}")
     public ResponseEntity<?> getAuctionById(@PathVariable("auctionId") int auctionId){
-        auctionService.findOne(auctionId);
+        AuctionDetailDTO auctionDetail = auctionService.findOne(auctionId);
 
-        return ResponseEntity.ok(Map.of("result","조회 성공"));
+        return ResponseEntity.ok(auctionDetail);
     }
 }

@@ -2,8 +2,7 @@ package com.eneifour.fantry.auction.domain;
 
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -11,7 +10,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "bid")
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Bid {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
