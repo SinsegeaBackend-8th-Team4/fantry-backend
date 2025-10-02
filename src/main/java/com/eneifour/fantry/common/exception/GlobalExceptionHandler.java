@@ -1,5 +1,7 @@
 package com.eneifour.fantry.common.exception;
 
+import com.eneifour.fantry.auction.exception.BusinessException;
+import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.common.util.file.FileException;
 import com.eneifour.fantry.member.exception.MemberException;
 import com.eneifour.fantry.security.exception.AuthException;
@@ -47,5 +49,12 @@ public class GlobalExceptionHandler {
                 e.getAuthErrorCode().getMessage()
         );
         return new ResponseEntity<>(response, e.getAuthErrorCode().getStatus());
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorCode> handleAuctionException(BusinessException ex) {
+        ErrorCode errorCode = ex.getErrorCode();
+        log.error("Auction exception occurred [ Message: {}]",  errorCode.getMessage());
+        return new ResponseEntity<>(errorCode, ex.getErrorCode().getStatus());
     }
 }

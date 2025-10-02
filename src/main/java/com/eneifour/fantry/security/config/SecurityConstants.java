@@ -4,10 +4,13 @@ package com.eneifour.fantry.security.config;
 public class SecurityConstants {
 
     public static final String[] PUBLIC_URIS = {
+            "/actuator/**",
             "/api/login",
             "/api/reissue",
             "/api/user/**",
             "/api/send/**",
+            "/app/**",
+            "/ws-auction/**",
             "/api/file/**",
             "/api/payment/**",
             "/webhook/**",
