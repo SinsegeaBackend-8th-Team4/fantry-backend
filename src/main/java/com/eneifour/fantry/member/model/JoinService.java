@@ -4,8 +4,8 @@ import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.domain.Role;
 import com.eneifour.fantry.member.domain.RoleType;
 import com.eneifour.fantry.member.dto.MemberDTO;
-import com.eneifour.fantry.member.exception.EmailAlreadyExistsException;
-import com.eneifour.fantry.member.exception.MemberNotFoundException;
+import com.eneifour.fantry.member.exception.MemberErrorCode;
+import com.eneifour.fantry.member.exception.MemberException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,7 +30,7 @@ public class JoinService {
 
     //회원가입
     @Transactional
-    public void join(MemberDTO memberDTO, RoleType default_role) throws EmailAlreadyExistsException {
+    public void join(MemberDTO memberDTO, RoleType default_role) throws MemberException {
         String username = memberDTO.getUsername();
         String password = memberDTO.getPassword();
 
@@ -40,7 +40,7 @@ public class JoinService {
         }
 
         if (isEmailDuplicated(memberDTO.getEmail()) != null){
-            throw new EmailAlreadyExistsException("이미 사용 중인 이메일입니다.");
+            throw new MemberException(MemberErrorCode.MEMBER_EMAIL_DUPLICATED);
         }
 
         //Member 모델에 할당
@@ -51,8 +51,10 @@ public class JoinService {
         member.setEmail(memberDTO.getEmail());
         member.setTel(memberDTO.getPhone());
 
-        Role role = jpaRoleRepository.findByRoleType(default_role)
-                        .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 역할입니다."));
+        Role role = jpaRoleRepository.findByRoleType(default_role);
+        if(role == null){
+            throw new MemberException(MemberErrorCode.MEMBER_ROLE_NOT_FOUND);
+        }
         member.setRole(role);
 
         //저장
@@ -63,7 +65,7 @@ public class JoinService {
     public MemberDTO findMemberByEmail(String email) {
         Member member = jpaMemberRepository.findByEmail(email);
         if (member == null) {
-            throw new MemberNotFoundException("해당 이메일로 등록된 회원이 없습니다.");
+            throw new MemberException(MemberErrorCode.MEMBER_NOT_FOUND);
         }
 
         MemberDTO memberDTO = new MemberDTO();

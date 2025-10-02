@@ -10,4 +10,7 @@ public interface JpaMemberRepository extends JpaRepository<Member, Integer> {
     //이메일로 아이디 찾기
     public Member findByEmail(String email);
 
+    //아이디로 유저 한명 가져오기
+    public Member findById(String id);
+
 }
