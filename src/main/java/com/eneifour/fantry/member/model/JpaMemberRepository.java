@@ -13,4 +13,7 @@ public interface JpaMemberRepository extends JpaRepository<Member, Integer> {
     //아이디로 유저 한명 가져오기
     public Member findById(String id);
 
+    //아이디로 유저 한명 삭제하기
+    public void deleteById(String id);
+
 }

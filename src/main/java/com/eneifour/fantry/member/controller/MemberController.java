@@ -1,5 +1,7 @@
 package com.eneifour.fantry.member.controller;
 
+import com.eneifour.fantry.member.domain.Member;
+import com.eneifour.fantry.member.domain.Role;
 import com.eneifour.fantry.member.domain.RoleType;
 import com.eneifour.fantry.member.dto.AuthCodeDTO;
 import com.eneifour.fantry.member.dto.MemberDTO;
@@ -16,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -38,7 +41,7 @@ public class MemberController {
     @PostMapping("/user/verifyCode")
     public ResponseEntity<?> verifyCode(@RequestBody AuthCodeDTO authCodeDTO){
         redisCodeService.verifyCode6(authCodeDTO);
-        return ResponseEntity.ok(Map.of("result", "인증 성공"));
+        return ResponseEntity.ok().body(Map.of("result", "인증 성공"));
     }
 
     //회원가입
@@ -61,7 +64,7 @@ public class MemberController {
             return ResponseEntity.badRequest().body(errorMessage);
         }
         joinService.join(memberDTO, roleType);
-        return ResponseEntity.ok(Map.of("result","가입 완료"));
+        return ResponseEntity.ok().body(Map.of("result","가입 완료"));
 
     }
 
@@ -69,7 +72,7 @@ public class MemberController {
     @GetMapping("/user/findId")
     public ResponseEntity<?> findId(@RequestParam String email){
         MemberDTO memberDTO = joinService.findMemberByEmail(email);
-        return ResponseEntity.ok(Map.of("result", "회원 찾기 완료", "member", memberDTO));
+        return ResponseEntity.ok().body(Map.of("result", "회원 찾기 완료", "member", memberDTO));
     }
 
     //access 토큰으로 멤버 정보 가져오기
@@ -77,6 +80,48 @@ public class MemberController {
     public ResponseEntity<?> getMember(){
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         MemberResponse response = memberService.findMemberResponseBy(username);
-        return ResponseEntity.ok(Map.of("result", "회원 찾기 완료", "member", response));
+        return ResponseEntity.ok().body(Map.of("result", "회원 찾기 완료", "member", response));
+    }
+
+    //모든 회원 가져오기
+    @GetMapping("/member")
+    public ResponseEntity<?> getMembers(){
+        List<Member> memberList = memberService.getMembers();
+        return ResponseEntity.ok().body(Map.of("memberList", memberList));
+    }
+
+    //한명의 회원 가져오기
+    @GetMapping("/member/{id}")
+    public ResponseEntity<?> getMemberById(@PathVariable String id){
+        Member member = memberService.getMemberById(id);
+        return ResponseEntity.ok().body(Map.of("member", member));
+    }
+
+    //신규 회원 추가하기
+    @PostMapping("/member")
+    public ResponseEntity<?> addMember(@RequestBody Member member){
+        memberService.saveMember(member);
+        return ResponseEntity.ok().body(Map.of("result", "회원이 성공적으로 등록됨"));
+    }
+
+    //회원 수정하기
+    @PutMapping("/member/{id}")
+    public ResponseEntity<?> updateMember(@PathVariable String id, @RequestBody Member member){
+        memberService.updateMember(member);
+        return ResponseEntity.ok().body(Map.of("result", "회원이 성공적으로 수정됨"));
+    }
+
+    //회원 삭제하기
+    @DeleteMapping("/member/{id}")
+    public ResponseEntity<?> deleteMember(@PathVariable String id){
+        memberService.deleteMemberById(id);
+        return ResponseEntity.ok().body(Map.of("result", "회원이 성공적으로 삭제됨"));
+    }
+
+    //회원의 권한을 수정
+    @PutMapping("/member/{id}/role")
+    public ResponseEntity<?> updateMemberRole(@PathVariable String id, @RequestBody Role role){
+        memberService.updateMemberRole(id, role);
+        return ResponseEntity.ok().body(Map.of("result", "회원의 권한이 성공적으로 수정되었습니다."));
     }
 }
