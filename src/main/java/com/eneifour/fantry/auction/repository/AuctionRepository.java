@@ -3,7 +3,7 @@ package com.eneifour.fantry.auction.repository;
 import com.eneifour.fantry.auction.domain.Auction;
 import com.eneifour.fantry.auction.domain.SaleStatus;
 import com.eneifour.fantry.auction.domain.SaleType;
-import com.eneifour.fantry.auction.dto.AuctionDetailDTO;
+import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,17 +26,20 @@ public interface AuctionRepository extends JpaRepository<Auction,Integer> {
      * @param auctionId 조회할 경매의 ID
      * @return 경매 상세 정보가 담긴 AuctionDetailDTO
      */
-    @Query("SELECT NEW com.eneifour.fantry.auction.dto.AuctionDetailDTO(" +
-            "    a.auctionId, pi.memberId, a.startPrice, CAST(a.saleStatus AS string), CAST(a.saleType AS string), " +
-            "    pi.itemName, pi.itemDescription, gc.name, ar.nameKo, al.title, a.startTime, a.endTime" +
-            ") " +
-            "FROM Auction a " +
-            "JOIN a.productInspection pi " +
-            "LEFT JOIN GoodsCategory gc ON pi.goodsCategoryId = gc.goodsCategoryId " +
-            "LEFT JOIN Artist ar ON pi.artistId = ar.artistId " +
-            "LEFT JOIN Album al ON pi.albumId = al.albumId " +
-            "WHERE a.auctionId = :auctionId")
-    Optional<AuctionDetailDTO> findAuctionDetailById(@Param("auctionId") int auctionId);
+    @Query("""
+        SELECT NEW com.eneifour.fantry.auction.dto.AuctionDetailResponse(
+            a.auctionId, pi.memberId, a.startPrice, CAST(a.saleStatus AS string), CAST(a.saleType AS string),
+            a.startTime, a.endTime, pi.itemName, pi.itemDescription, gc.name, ar.nameKo, al.title
+        )
+        FROM Auction a
+        JOIN a.productInspection pi
+        LEFT JOIN GoodsCategory gc ON pi.goodsCategoryId = gc.goodsCategoryId
+        LEFT JOIN Artist ar ON pi.artistId = ar.artistId
+        LEFT JOIN Album al ON pi.albumId = al.albumId
+        WHERE a.auctionId = :auctionId
+    """)
+    Optional<AuctionDetailResponse> findAuctionDetailById(@Param("auctionId") int auctionId);
+
 
     //판매 상품 중 , 특정 sale_type 으로 전체 조회
     List<Auction> findBySaleType(SaleType saleType);

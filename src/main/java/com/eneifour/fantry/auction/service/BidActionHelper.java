@@ -23,7 +23,7 @@ public class BidActionHelper {
     public void broadcastNewBid(int auctionId, Member bidder, int newPrice) {
         simpMessagingTemplate.convertAndSend("/topic/auctions/" + auctionId, Map.of(
                 "newPrice", newPrice,
-                "memberId", bidder.getId()
+                "memberId", bidder.getMemberId()
         ));
     }
 

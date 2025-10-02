@@ -3,7 +3,7 @@ package com.eneifour.fantry.auction.service;
 import com.eneifour.fantry.auction.domain.Auction;
 import com.eneifour.fantry.auction.domain.SaleStatus;
 import com.eneifour.fantry.auction.domain.SaleType;
-import com.eneifour.fantry.auction.dto.AuctionDetailDTO;
+import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
 import com.eneifour.fantry.auction.exception.AuctionException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
@@ -41,8 +41,8 @@ public class AuctionService {
 
     //Auction_id 를 이용한 1건 조회
     @Transactional
-    public AuctionDetailDTO  findOne(int auctionId){
-        AuctionDetailDTO auctionDetail = auctionRepository.findAuctionDetailById(auctionId)
+    public AuctionDetailResponse findOne(int auctionId){
+        AuctionDetailResponse auctionDetail = auctionRepository.findAuctionDetailById(auctionId)
                 .orElseThrow(() -> new AuctionException(ErrorCode.AUCTION_NOT_FOUND));
 
         return auctionDetail;

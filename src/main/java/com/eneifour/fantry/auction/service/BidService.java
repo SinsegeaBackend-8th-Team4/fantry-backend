@@ -32,7 +32,7 @@ public class BidService {
     //의존성 주입
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
-    private final RedisTemplate redisTemplate;
+    private final RedisTemplate<String,String> redisTemplate;
     private final JpaMemberRepository memberRepository;
     private final RedisScript<String> placeBidScript;
     private final BlockingQueue<Bid> bidLogQueue;

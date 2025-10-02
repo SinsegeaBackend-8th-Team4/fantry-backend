@@ -23,8 +23,8 @@ public class Auction {
     @Column(name = "auction_id")
     private int auctionId;
 
-    @Enumerated(EnumType.ORDINAL) // 0, 1 값으로 저장하기 위해 ORDINAL 사용
-    @Column(nullable = false, columnDefinition = "TINYINT")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private SaleType saleType;
 
     @Enumerated(EnumType.STRING)
