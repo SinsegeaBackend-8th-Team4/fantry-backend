@@ -7,6 +7,7 @@ import com.eneifour.fantry.member.model.JoinService;
 import com.eneifour.fantry.member.model.MemberService;
 import com.eneifour.fantry.member.model.RedisCodeService;
 import com.eneifour.fantry.security.dto.MemberResponse;
+import com.eneifour.fantry.security.util.SecurityUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,7 +76,7 @@ public class MemberController {
     //access 토큰으로 멤버 정보 가져오기
     @GetMapping("/member/me")
     public ResponseEntity<?> getMember(){
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        String username = SecurityUtil.getUserName();
         MemberResponse response = memberService.findMemberResponseBy(username);
         return ResponseEntity.ok(Map.of("result", "회원 찾기 완료", "member", response));
     }
