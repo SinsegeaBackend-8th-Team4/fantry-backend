@@ -1,6 +1,9 @@
 package com.eneifour.fantry.member.model;
 
+import com.eneifour.fantry.member.dto.AuthCodeDTO;
 import com.eneifour.fantry.member.dto.MemberDTO;
+import com.eneifour.fantry.security.exception.AuthErrorCode;
+import com.eneifour.fantry.security.exception.AuthException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -67,16 +70,16 @@ public class RedisCodeService {
     }
 
     //인증 코드 검증
-    public boolean verifyCode6(String email, String code){
-        String storedEmail = redis.opsForValue().get(codeKey(code));
-        //인증 성공 시
-        if(storedEmail.equals(email)){
-            //Redis에서 인증 정보 삭제
-            redis.delete(pendingKey(email));
-            redis.delete(codeKey(code));
-            return true;
+    public void verifyCode6(AuthCodeDTO authCodeDTO) throws AuthException{
+        String storedEmail = redis.opsForValue().get(codeKey(authCodeDTO.getCode()));
+        if(storedEmail == null){
+            throw new AuthException(AuthErrorCode.AUTH_CODE_NOT_FOUND);
         }
-        return false;
+        if(!storedEmail.equals(authCodeDTO.getEmail())){
+            throw new AuthException(AuthErrorCode.AUTH_EMAIL_MISMATCH);
+        }
+        redis.delete(pendingKey(authCodeDTO.getEmail()));
+        redis.delete(codeKey(authCodeDTO.getCode()));
     }
 
     //TTL 전달
