@@ -10,6 +10,7 @@ public class SecurityConstants {
             "/api/send/**",
             "/api/file/**",
             "/api/payment/**",
-            "/webhook/**"
+            "/webhook/**",
+            "/static/**"
     };
 }

@@ -1,19 +1,21 @@
 package com.eneifour.fantry.common.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 
 @Configuration 
 public class WebConfig implements WebMvcConfigurer {
-
-
     private final CorsProperties corsProperties;
 
     public WebConfig(CorsProperties corsProperties) {
         this.corsProperties = corsProperties;
     }
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     /**
      * CORS 설정
@@ -36,5 +38,15 @@ public class WebConfig implements WebMvcConfigurer {
 
                 // 브라우저에서 preflight 요청 결과를 캐시할 시간을 초 단위로 지정합니다.
                 .maxAge(3600);
+    }
+
+    /**
+     * 파일 업로드 경로 → /static/** URL 로 접근 가능하도록 매핑
+     * @Author: 혜원
+     */
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/static/**")
+                .addResourceLocations("file:" + uploadDir + "/");
     }
 }
