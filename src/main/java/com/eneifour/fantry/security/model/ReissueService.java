@@ -2,6 +2,8 @@ package com.eneifour.fantry.security.model;
 
 import com.eneifour.fantry.member.domain.RoleType;
 import com.eneifour.fantry.security.dto.TokenResponse;
+import com.eneifour.fantry.security.exception.AuthErrorCode;
+import com.eneifour.fantry.security.exception.AuthException;
 import com.eneifour.fantry.security.exception.exception.JwtRefreshTokenException;
 import com.eneifour.fantry.security.util.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -25,7 +27,7 @@ public class ReissueService {
     private final RedisTokenService redisTokenService;
     @Value("${spring.jwt.refresh-days}") long refreshDays;
 
-    public TokenResponse reissueAccessToken(HttpServletRequest request){
+    public TokenResponse reissueAccessToken(HttpServletRequest request) throws AuthException {
         //Refresh Token 꺼내기
         String refresh = null;
         Cookie[] cookies = request.getCookies();
@@ -40,7 +42,7 @@ public class ReissueService {
 
         //Refresh Token 존재 확인
         if(refresh == null){
-         throw new JwtRefreshTokenException("refresh token is null: 토큰이 존재하지 않습니다.");
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_MISSING);
         }
 
         //Refresh Token 만료 여부 체크
@@ -49,21 +51,21 @@ public class ReissueService {
             Jws<Claims> jws = jwtUtil.parseToken(refresh);
             claims = jws.getBody();
         }catch(ExpiredJwtException e){
-            throw new JwtRefreshTokenException("invalid refresh token: 리프레시 토큰이 만료되었습니다.");
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_EXPIRED);
         }catch(JwtException e){
-            throw new JwtRefreshTokenException("유효하지 않은 리프레시 토큰입니다.");
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_INVALID);
         }
 
         //category 확인(발급 시 페이로드에 명시)
         if(!"refresh".equals(jwtUtil.getCategory(claims))){
-            throw new JwtRefreshTokenException("invalid refresh token: 저장된 토큰이 없습니다.");
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_NOT_SAVE);
         }
 
         //Redis에 저장되어 있는지 확인
         String username = jwtUtil.getUsername(claims);
 
         if(!redisTokenService.matchesRefreshToken(username, refresh)){
-            throw new JwtRefreshTokenException("invalid refresh token: 저장된 토큰과 일치하지 않습니다.");
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_MISMATCH);
         }
 
         //accessToken이 블랙리스트에 저장되어 있는지 확인
@@ -78,7 +80,7 @@ public class ReissueService {
         String tokenId = jwtUtil.getJwtId(accessClaims);
 
         if(redisTokenService.isBlackList(tokenId)){
-            throw new JwtRefreshTokenException("해당 토큰은 사용이 금지되어 있습니다.");
+            throw new AuthException(AuthErrorCode.TOKEN_BLACKLISTED);
         }
 
         //토큰에서 정보를 꺼내고 새 AccessToken 발급하기

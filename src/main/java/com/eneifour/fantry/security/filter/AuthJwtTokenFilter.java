@@ -1,9 +1,8 @@
 package com.eneifour.fantry.security.filter;
 
-import com.eneifour.fantry.security.exception.exception.InvalidTokenTypeException;
-import com.eneifour.fantry.security.exception.exception.TimeoutAccessTokenException;
-import com.eneifour.fantry.security.exception.exception.TokenHeaderVerificationException;
-import com.eneifour.fantry.security.exception.exception.UnauthorizedException;
+import com.eneifour.fantry.security.config.SecurityConstants;
+import com.eneifour.fantry.security.exception.AuthErrorCode;
+import com.eneifour.fantry.security.exception.AuthException;
 import com.eneifour.fantry.security.model.RedisTokenService;
 import com.eneifour.fantry.security.util.JwtUtil;
 import io.jsonwebtoken.*;
@@ -17,10 +16,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -37,14 +36,16 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws IOException, ServletException, TimeoutAccessTokenException, InvalidTokenTypeException, UnauthorizedException {
+            throws IOException, ServletException, AuthException {
         //로그인이 필요없은 요청은 이 필터를 건너뛰기
-        List<String> passFilterUrls = Arrays.asList("/api/login", "/api/reissue", "/api/user");
         String requestURI = request.getRequestURI();
 
-        if(passFilterUrls.contains(request.getRequestURI())) {
-            filterChain.doFilter(request, response);
-            return;
+        AntPathMatcher matcher = new AntPathMatcher();
+        for(String pattern : SecurityConstants.PUBLIC_URIS){
+            if(matcher.match(pattern, requestURI)){
+                filterChain.doFilter(request,response);
+                return;
+            }
         }
 
         try {
@@ -61,14 +62,14 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
                 //accessToken인가?
                 String category = claims.get("category", String.class);
                 if (!"access".equals(category)) {
-                    throw new InvalidTokenTypeException("Access Token이 아닙니다.");
+                    throw new AuthException(AuthErrorCode.TOKEN_NOT_ACCESS_TOKEN);
                 }
 
                 //토큰 만료 여부 확인
                 if(!"/api/logout".equals(requestURI)) {
                     Date expiration = claims.getExpiration();
                     if(expiration == null || expiration.before(new Date())) {
-                        throw new TimeoutAccessTokenException("토큰 시간이 만료됨");
+                        throw new AuthException(AuthErrorCode.TOKEN_EXPIRED);
                     }
                 }
 
@@ -78,16 +79,16 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
                 int ver = jwtUtil.getVersion(claims);
 
                 if(username == null || tokenId == null){
-                    throw new InvalidTokenTypeException("토큰 정보가 누락되었습니다.");
+                    throw new AuthException(AuthErrorCode.TOKEN_MISSING);
                 }
 
                 if(redis.isBlackList(tokenId)){
-                    throw new UnauthorizedException("권한이 없습니다.");
+                    throw new AuthException(AuthErrorCode.TOKEN_BLACKLISTED);
                 }
 
                 int currentVer = redis.currentUserVersion(username);
                 if(currentVer != ver){
-                    throw new UnauthorizedException("버전이 일치하지 않습니다.");
+                    throw new AuthException(AuthErrorCode.AUTH_VERSION_MISMATCH);
                 }
 
                 //인증 객체
@@ -98,7 +99,7 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             } else {
                 //정상 헤더값이 아님
-                throw new TokenHeaderVerificationException("Authorization 헤더가 없거나 혹은 잘못된 형식입니다.");
+                throw new AuthException(AuthErrorCode.TOKEN_HEADER_INVALID);
             }
             filterChain.doFilter(request, response);
 
@@ -108,14 +109,14 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
                 // 만료된 토큰이지만 기본 검증은 수행
                 String category = expiredClaims.get("category", String.class);
                 if (!"access".equals(category)) {
-                    throw new InvalidTokenTypeException("Access Token이 아닙니다.");
+                    throw new AuthException(AuthErrorCode.TOKEN_NOT_ACCESS_TOKEN);
                 }
 
                 String tokenId = jwtUtil.getJwtId(expiredClaims);
                 String username = jwtUtil.getUsername(expiredClaims);
 
                 if(username == null || tokenId == null){
-                    throw new InvalidTokenTypeException("토큰 정보가 누락되었습니다.");
+                    throw new AuthException(AuthErrorCode.TOKEN_MISSING);
                 }
 
                 // 인증 객체 생성 (만료되었지만 로그아웃 처리를 위해)
@@ -126,20 +127,20 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
 
                 filterChain.doFilter(request, response);
             }else{
-                throw new TimeoutAccessTokenException("AccessToken이 만료되었습니다.");
+                throw new AuthException(AuthErrorCode.TOKEN_EXPIRED);
             }
         }catch (UnsupportedJwtException e) {
-            throw new InvalidTokenTypeException("지원하지 않는 JWT 형식입니다.");
+            throw new AuthException(AuthErrorCode.TOKEN_UNSUPPORTED_FORMAT);
         }catch (MalformedJwtException e) {
-            throw new InvalidTokenTypeException("잘못된 JWT 형식입니다.");
+            throw new AuthException(AuthErrorCode.TOKEN_MALFORMED_FORMAT);
         }catch (SignatureException e) {
-            throw new UnauthorizedException("JWT 서명 검증에 실패하였습니다.");
+            throw new AuthException(AuthErrorCode.TOKEN_SIGNATURE_INVALID);
         }catch (JwtException e){
-            throw new UnauthorizedException("유효하지 않은 토큰입니다.");
+            throw new AuthException(AuthErrorCode.TOKEN_INVALID);
         }
         catch (Exception e){
             //기타 예외
-            throw new UnauthorizedException("인증 에러가 발생했습니다: " + e.getMessage());
+            throw new AuthException(AuthErrorCode.AUTH_UNEXPECTED_ERROR);
         }
     }
 }

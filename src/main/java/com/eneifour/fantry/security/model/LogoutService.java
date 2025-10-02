@@ -1,7 +1,7 @@
 package com.eneifour.fantry.security.model;
 
-import com.eneifour.fantry.security.exception.exception.JwtRefreshTokenException;
-import com.eneifour.fantry.security.exception.exception.LogoutException;
+import com.eneifour.fantry.security.exception.AuthErrorCode;
+import com.eneifour.fantry.security.exception.AuthException;
 import com.eneifour.fantry.security.util.CookieUtil;
 import com.eneifour.fantry.security.util.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -24,12 +24,12 @@ public class LogoutService {
     private final JwtUtil jwtUtil;
     private final RedisTokenService redis;
 
-    public void logout(HttpServletRequest request, HttpServletResponse response) throws LogoutException{
+    public void logout(HttpServletRequest request, HttpServletResponse response) throws AuthException {
         // 1. 로그아웃 요청인지 확인
         String requestURI = request.getRequestURI();
         String requestMethod = request.getMethod();
         if(!requestURI.equals("^\\/logout$") && !requestMethod.equals("POST")) {
-            throw new LogoutException("로그인 요청이 아닙니다.");
+            throw new AuthException(AuthErrorCode.AUTH_NOT_LOGIN_REQUEST);
         }
 
         // 2. 쿠키에서 리프레시 토큰 가져오기
@@ -47,7 +47,7 @@ public class LogoutService {
         // 3. 유효성 체크
         //refreshToken 존재 확인
         if(refresh == null){
-            throw new LogoutException("refresh token is null: 리프레시 토큰이 존재하지 않습니다.");
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_MISSING);
         }
 
         //Refresh Token 만료 여부 체크
@@ -56,20 +56,20 @@ public class LogoutService {
             Jws<Claims> jws = jwtUtil.parseToken(refresh);
             claims = jws.getBody();
         }catch(ExpiredJwtException e){
-            throw new LogoutException("invalid refresh token: 리프레시 토큰이 만료되었습니다.");
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_EXPIRED);
         }catch(JwtException e){
-            throw new LogoutException("유효하지 않은 리프레시 토큰입니다.");
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_INVALID);
         }
 
         //category 확인(발급 시 페이로드에 명시)
         if(!"refresh".equals(jwtUtil.getCategory(claims))){
-            throw new LogoutException("invalid refresh token: 저장된 토큰이 없습니다.");
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_MISSING);
         }
 
         //Redis에 RefreshToken 존재 여부
         String username = jwtUtil.getUsername(claims);
         if(!redis.isExistRefreshToken(username)){
-            throw new LogoutException("Redis에 저장된 리프레시 토큰이 없습니다.");
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_NOT_IN_STORE);
         }
 
         // 4. 쿠키에서 refreshToken 삭제

@@ -3,9 +3,11 @@ package com.eneifour.fantry.security.model;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.domain.RoleType;
 import com.eneifour.fantry.member.model.JpaMemberRepository;
-import com.eneifour.fantry.security.dto.AccessTokenResponse;
+import com.eneifour.fantry.security.dto.MemberResponse;
+import com.eneifour.fantry.security.dto.loginResponse;
 import com.eneifour.fantry.security.dto.CustomUserDetails;
-import com.eneifour.fantry.security.dto.TokenResponse;
+import com.eneifour.fantry.security.exception.AuthErrorCode;
+import com.eneifour.fantry.security.exception.AuthException;
 import com.eneifour.fantry.security.exception.exception.UnauthorizedException;
 import com.eneifour.fantry.security.util.CookieUtil;
 import com.eneifour.fantry.security.util.JwtUtil;
@@ -29,7 +31,9 @@ public class LoginService {
     @Value("${spring.jwt.refresh-days}") long refreshDays;
     @Value("${spring.jwt.access-minutes}") long accessMinutes;
 
-    public AccessTokenResponse login(String username, String password, HttpServletResponse response){
+    private final JpaMemberRepository jpaMemberRepository;
+
+    public loginResponse login(String username, String password, HttpServletResponse response){
         try {
             // 1. 인증 시도
             Authentication authentication = authenticationManager.authenticate(
@@ -53,9 +57,20 @@ public class LoginService {
 
             //response.setHeader("accessToken", accessToken);
 
-            return new AccessTokenResponse(accessToken, accessTokenTtl);
+            // 5. 회원 정보도 넘겨줌
+            Member member = jpaMemberRepository.findById(username);
+            MemberResponse memberResponse = new MemberResponse();
+            memberResponse.setMemberId(member.getMemberId());
+            memberResponse.setId(member.getId());
+            memberResponse.setPassword(member.getPassword());
+            memberResponse.setName(member.getName());
+            memberResponse.setEmail(member.getEmail());
+            memberResponse.setTel(member.getTel());
+            memberResponse.setRole(String.valueOf(member.getRole().getRoleType()));
+
+            return new loginResponse(accessToken, accessTokenTtl, memberResponse);
         } catch (AuthenticationException e) {
-            throw new UnauthorizedException("아이디 또는 비밀번호가 일치하지 않습니다.");
+            throw new AuthException(AuthErrorCode.TOKEN_AUTHENTICATION_FAILED);
         }
     }
 }

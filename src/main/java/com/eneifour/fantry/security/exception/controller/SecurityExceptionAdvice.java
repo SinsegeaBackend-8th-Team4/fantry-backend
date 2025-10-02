@@ -2,7 +2,6 @@ package com.eneifour.fantry.security.exception.controller;
 
 import com.eneifour.fantry.security.exception.dto.ErrorResponse;
 import com.eneifour.fantry.security.exception.exception.*;
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

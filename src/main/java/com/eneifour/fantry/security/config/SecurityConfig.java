@@ -71,13 +71,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // 🔽 여기에 로그인 없이 접근을 허용할 URL 경로 목록을 작성합니다.
                         .requestMatchers(
-                                "/actuator/**",
-                                "/api/user/**",     //회원가입 관련
-                                "/api/send/**",     //메일 관련
-                                "/api/login", "/api/reissue",    //로그인 관련
-                                "/api/file/**",
-                                "/api/payment/**",
-                                "/webhook/**"
+                                SecurityConstants.PUBLIC_URIS
                         ).permitAll() // 위에 명시된 경로들은 모두 허용
 
                         // 여기에 관리자만 접근을 허용할 URL 경로 목록 작성

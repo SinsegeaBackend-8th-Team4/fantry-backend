@@ -1,6 +1,8 @@
 package com.eneifour.fantry.common.exception;
 
 import com.eneifour.fantry.common.util.file.FileException;
+import com.eneifour.fantry.member.exception.MemberException;
+import com.eneifour.fantry.security.exception.AuthException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,5 +25,27 @@ public class GlobalExceptionHandler {
                 ex.getErrorCode().getMessage()
         );
         return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
+    }
+
+    @ExceptionHandler(MemberException.class)
+    public ResponseEntity<ErrorResponse> handleFileException(MemberException e) {
+        log.error("회원에서 예외 발생: {}", e.getMemberCode().getMessage());
+        ErrorResponse response = ErrorResponse.of(
+                e.getMemberCode().getStatus(),
+                e.getMemberCode().getCode(),
+                e.getMemberCode().getMessage()
+        );
+        return new ResponseEntity<>(response, e.getMemberCode().getStatus());
+    }
+
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<ErrorResponse> handleFileException(AuthException e) {
+        log.error("인증에서 예외 발생: {}", e.getAuthErrorCode().getMessage());
+        ErrorResponse response = ErrorResponse.of(
+                e.getAuthErrorCode().getStatus(),
+                e.getAuthErrorCode().getCode(),
+                e.getAuthErrorCode().getMessage()
+        );
+        return new ResponseEntity<>(response, e.getAuthErrorCode().getStatus());
     }
 }

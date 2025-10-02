@@ -4,7 +4,7 @@ import com.eneifour.fantry.member.dto.MemberDTO;
 import com.eneifour.fantry.security.exception.exception.JwtRefreshTokenException;
 import com.eneifour.fantry.security.exception.exception.LogoutException;
 import com.eneifour.fantry.security.model.LoginService;
-import com.eneifour.fantry.security.dto.AccessTokenResponse;
+import com.eneifour.fantry.security.dto.loginResponse;
 import com.eneifour.fantry.security.dto.TokenResponse;
 import com.eneifour.fantry.security.model.LogoutService;
 import com.eneifour.fantry.security.model.ReissueService;
@@ -40,7 +40,7 @@ public class LoginController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody MemberDTO memberDTO, HttpServletResponse response) {
         // 서비스 메서드 호출
-        AccessTokenResponse accessToken = loginService.login(memberDTO.getUsername(), memberDTO.getPassword(), response);
+        loginResponse accessToken = loginService.login(memberDTO.getUsername(), memberDTO.getPassword(), response);
         return ResponseEntity.ok(accessToken);
     }
 
@@ -55,14 +55,14 @@ public class LoginController {
             int refreshTtlSec = (int)(refreshTtl * 24 * 60 * 60);
             CookieUtil.setRefreshCookie(response, tokenResponse.getRefreshToken(), refreshTtlSec);
 
-
-            return ResponseEntity.ok().body(tokenResponse);
+            return ResponseEntity.ok().body(tokenResponse.getAccessToken());
 
         }catch (JwtRefreshTokenException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
+    // 로그아웃 요청 처리
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         try {
