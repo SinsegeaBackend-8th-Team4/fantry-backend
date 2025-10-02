@@ -1,5 +1,7 @@
 package com.eneifour.fantry.auction.domain;
 
+import com.eneifour.fantry.auction.exception.AuctionException;
+import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import jakarta.persistence.*;
 import lombok.*;
@@ -60,7 +62,7 @@ public class Auction {
      */
     public void closeAsSold(int finalPrice) {
         if (this.saleStatus != SaleStatus.ACTIVE) {
-            throw new IllegalStateException("이미 마감 처리된 경매입니다. 현재 상태: " + this.saleStatus);
+            throw new AuctionException(ErrorCode.AUCTION_NOT_ACTIVE);
         }
         this.saleStatus = SaleStatus.SOLD;
         this.finalPrice = finalPrice;
@@ -71,7 +73,7 @@ public class Auction {
      */
     public void closeAsNotSold() {
         if (this.saleStatus != SaleStatus.ACTIVE) {
-            throw new IllegalStateException("이미 마감 처리된 경매입니다. 현재 상태: " + this.saleStatus);
+            throw new AuctionException(ErrorCode.AUCTION_NOT_ACTIVE);
         }
         this.saleStatus = SaleStatus.NOT_SOLD;
     }

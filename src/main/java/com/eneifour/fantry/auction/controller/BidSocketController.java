@@ -9,7 +9,7 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 @RequiredArgsConstructor
-public class BidController {
+public class BidSocketController {
     private final BidService bidService;
 
     @MessageMapping("/auctions/{auctionId}/bids")

@@ -2,6 +2,7 @@ package com.eneifour.fantry.auction.domain;
 
 
 import com.eneifour.fantry.member.domain.Member;
+import com.eneifour.fantry.payment.domain.Payment;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -44,5 +45,8 @@ public class Orders {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_id")
+    private Payment payment;
 
 }
