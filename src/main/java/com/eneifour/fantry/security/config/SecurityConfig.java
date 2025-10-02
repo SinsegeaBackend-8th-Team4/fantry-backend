@@ -48,6 +48,8 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/api/user/**",
                                 "/api/send/**",
+                                "/app/**",
+                                "/ws-auction/**",
                                 "/api/file/**",
                                 "/api/payment/**",
                                 "/webhook/**",

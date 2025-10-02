@@ -1,5 +1,7 @@
 package com.eneifour.fantry.common.exception;
 
+import com.eneifour.fantry.auction.exception.BusinessException;
+import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.common.util.file.FileException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,5 +25,12 @@ public class GlobalExceptionHandler {
                 ex.getErrorCode().getMessage()
         );
         return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorCode> handleAuctionException(BusinessException ex) {
+        ErrorCode errorCode = ex.getErrorCode();
+        log.error("Auction exception occurred [ Message: {}]",  errorCode.getMessage());
+        return new ResponseEntity<>(errorCode, ex.getErrorCode().getStatus());
     }
 }
