@@ -5,6 +5,7 @@ import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.common.util.file.FileException;
 import com.eneifour.fantry.member.exception.MemberException;
 import com.eneifour.fantry.security.exception.AuthException;
+import com.eneifour.fantry.cs.exception.CsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -54,7 +55,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorCode> handleAuctionException(BusinessException ex) {
         ErrorCode errorCode = ex.getErrorCode();
-        log.error("Auction exception occurred [ Message: {}]",  errorCode.getMessage());
+        log.error("Auction exception occurred [ Message: {}]", errorCode.getMessage());
         return new ResponseEntity<>(errorCode, ex.getErrorCode().getStatus());
+    }
+
+    @ExceptionHandler(CsException.class)
+    public ResponseEntity<ErrorResponse> handleCsException(CsException ex) {
+        log.error("CsException 발생: {}", ex.getErrorCode().getMessage());
+        ErrorResponse response = ErrorResponse.of(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getCode(),
+                ex.getErrorCode().getMessage()
+        );
+        return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
     }
 }

@@ -3,15 +3,16 @@ package com.eneifour.fantry.cs.domain;
 import com.eneifour.fantry.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @Entity
 @Builder
 @Table(name="inquiry")
@@ -25,22 +26,22 @@ public class Inquiry {
     private CsType csType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private Member createdBy;
+    @JoinColumn(name = "inquired_by")
+    private Member inquiredBy;
 
     private String title;
-
     private String content;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime inquiredAt;
 
     @Enumerated(EnumType.STRING)
     private InquiryStatus status;
 
     private String answerContent;
 
-    @UpdateTimestamp
+    @LastModifiedDate
     private LocalDateTime answeredAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -48,4 +49,11 @@ public class Inquiry {
     private Member answeredBy;
 
     private String comment;
+
+    public void addAnswer(String answerContent, Member answeredBy, String comment) {
+        this.answerContent = answerContent;
+        this.answeredBy = answeredBy;
+        this.comment = comment;
+        this.status = InquiryStatus.ANSWERED;
+    }
 }
