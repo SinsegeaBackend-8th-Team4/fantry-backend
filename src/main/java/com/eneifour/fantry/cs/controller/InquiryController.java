@@ -11,6 +11,7 @@ import com.eneifour.fantry.cs.repository.InquiryRepository;
 import com.eneifour.fantry.cs.service.InquiryService;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.model.JpaMemberRepository;
+import com.eneifour.fantry.security.util.SecurityUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,13 +39,11 @@ public class InquiryController {
     @PostMapping
     public ResponseEntity<InquirySummaryResponse> createInquiry(
             @RequestBody @Valid InquiryCreateRequest request
-            // @AuthenticationPrincipal UserDetailsImpl userDetails // 실제 연동 시 사용
     ){
-        // 임시멤버 생성, TODO : 로그인 기능 구현 완료시, 실제 로그인한 멤버로 가져오기
-        Member tempMember = memberRepository.findById(1)
-                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+        String id = SecurityUtil.getUserName();
+        Member member = memberRepository.findById(id);
 
-        InquirySummaryResponse response = inquiryService.create(request, tempMember);
+        InquirySummaryResponse response = inquiryService.create(request, member);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -57,10 +56,10 @@ public class InquiryController {
             @RequestParam ("files") List<MultipartFile> files
             // @AuthenticationPrincipal UserDetailsImpl userDetails // 실제 연동 시 사용
     ){
-        // 임시멤버 생성, TODO : 로그인 기능 구현 완료시, 실제 로그인한 멤버로 가져오기
-        Member tempMember = memberRepository.findById(1)
-                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
-                inquiryService.addAttachments(inquiryId, files, tempMember);
+        String id = SecurityUtil.getUserName();
+        Member member = memberRepository.findById(id);
+
+                inquiryService.addAttachments(inquiryId, files, member);
                 return ResponseEntity.ok().build();
     }
 
@@ -72,9 +71,10 @@ public class InquiryController {
             Pageable pageable
 //            @AuthenticationPrincipal UserDetails userDetails
     ){
-        Member tempMember = memberRepository.findById(1).orElseThrow(); // 테스트용 임시 멤버
+        String id = SecurityUtil.getUserName();
+        Member member = memberRepository.findById(id);
 
-        Page<InquirySummaryResponse> myInquiries = inquiryService.findMyInquiries(tempMember, pageable);
+        Page<InquirySummaryResponse> myInquiries = inquiryService.findMyInquiries(member, pageable);
         return ResponseEntity.ok(myInquiries);
     }
 
@@ -84,14 +84,15 @@ public class InquiryController {
     @GetMapping("/{inquiryId}")
     public ResponseEntity<InquiryDetailResponse> getMyInquiryDetail(@PathVariable int inquiryId) {
         // 임시멤버 생성, TODO : 로그인 기능 구현 완료시, 실제 로그인한 멤버로 가져오기
-        Member tempMember = memberRepository.findById(1)
-                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        String id = SecurityUtil.getUserName();
+        Member member = memberRepository.findById(id);
 
         // 서비스 호출 전, 컨트롤러에서 소유권 확인
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new CsException(CsErrorCode.INQUIRY_NOT_FOUND));
 
-        if (inquiry.getInquiredBy().getMemberId() != tempMember.getMemberId()) {
+        if (inquiry.getInquiredBy().getMemberId() != member.getMemberId()) {
             throw new CsException(CsErrorCode.ACCESS_DENIED);
         }
 
