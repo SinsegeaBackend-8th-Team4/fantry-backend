@@ -25,7 +25,7 @@ public class InquiryAdminController {
      * @param pageable 페이징 정보 (page, size, sort)
      * @return
      */
-    @GetMapping(value="/admin")
+    @GetMapping(value="/inquiries")
     public ResponseEntity<Page<InquirySummaryResponse>> searchInquiries(
             @ModelAttribute InquirySearchCondition condition,
             Pageable pageable
