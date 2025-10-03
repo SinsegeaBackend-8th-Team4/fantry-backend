@@ -22,7 +22,7 @@ public record InquiryCreateRequest(
     String content
 ){
     /***
-     * DTO를 엔티리로 변환하는 메서드
+     * DTO를 엔티티로 변환하는 메서드
      */
     public Inquiry toEntity(Member member, CsType csType){
         return Inquiry.builder()
