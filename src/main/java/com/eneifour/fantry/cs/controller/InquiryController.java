@@ -59,8 +59,8 @@ public class InquiryController {
         String id = SecurityUtil.getUserName();
         Member member = memberRepository.findById(id);
 
-                inquiryService.addAttachments(inquiryId, files, member);
-                return ResponseEntity.ok().build();
+        inquiryService.addAttachments(inquiryId, files, member);
+        return ResponseEntity.ok().build();
     }
 
     /**
