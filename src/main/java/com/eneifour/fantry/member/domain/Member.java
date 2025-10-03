@@ -32,7 +32,7 @@ public class Member {
     @Column(name = "is_active")
     private int isActive;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Role role;
 }
