@@ -25,7 +25,7 @@ public class InquirySearchCondition {
     private CsType csType;
 
     /**
-     * 검색할 작성자 이름
+     * 검색할 작성자 이름 (부분 일치)
      */
     private String memberName;
 }

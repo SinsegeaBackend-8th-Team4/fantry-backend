@@ -48,4 +48,21 @@ public abstract class AbstractSpecification<T, C> {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get(fieldName), value);
     }
+
+    /**
+     * 특정 필드에 대한 'like' 비교 조건을 생성하는 헬퍼(helper) 메서드입니다.
+     * 검색 조건 값이 null이거나 비어있을 경우, 조건을 추가하지 않도록 null을 반환합니다.
+     *
+     * @param fieldName 엔티티의 필드명 (e.g., "member.name")
+     * @param value 비교할 값
+     * @return 'like' 조건의 Specification. 비교할 값이 null이거나 비어있으면 null을 반환.
+     */
+    protected Specification<T> like(String fieldName, String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        String[] fields = fieldName.split("\\.");
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.like(fields.length > 1 ? root.join(fields[0]).get(fields[1]) : root.get(fieldName), "%" + value + "%");
+    }
 }

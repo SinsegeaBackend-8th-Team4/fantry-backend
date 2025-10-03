@@ -14,28 +14,22 @@ import org.springframework.stereotype.Component;
 public class InquirySpecification extends AbstractSpecification<Inquiry, InquirySearchCondition> {
 
     /**
-     * 검색 조건 DTO(InquirySearchCondition)를 기반으로 최종 Specification 객체를 조립합니다.
-     *
-     * @param condition 클라이언트로부터 받은 검색 조건
+     * 검색 조건 DTO(InquirySearchCondition)를 기반으로 최종 Specification 객체를 조립.
+     * @param condition 클라이언트로부터 받은 검색 조건 객체(집합)
      * @return 조립된 최종 Specification 객체
      */
     @Override
     public Specification<Inquiry> toSpecification(InquirySearchCondition condition) {
         // 기본 Specification (WHERE 1=1) 에서 시작
-        Specification<Inquiry> spec = base();
-
-        // N+1 문제 해결을 위한 fetch join 적용
-        spec = spec.and(fetchJoins());
-
-        // 조건 DTO의 status 필드가 null이 아니면, status 검색 조건을 추가
-        if (condition.getStatus() != null) {
-            spec = spec.and(equal("status", condition.getStatus()));
-        }
-
-        // 조건 DTO의 csType 필드가 null이 아니면, csType 검색 조건을 추가
-        if (condition.getCsType() != null) {
-            spec = spec.and(equal("csType", condition.getCsType()));
-        }
+        Specification<Inquiry> spec = base()
+                // N+1 문제 해결을 위한 fetch join 적용
+                .and(fetchJoins())
+                // 조건 DTO의 status 필드가 null이 아니면, status 검색 조건을 추가
+                .and(equal("status", condition.getStatus()))
+                // 조건 DTO의 csType 필드가 null이 아니면, csType 검색 조건을 추가
+                .and(equal("csType", condition.getCsType()))
+                // 조건 DTO의 memberName 필드가 null이 아니면, member.name like 검색 조건을 추가
+                .and(like("inquiredBy.name", condition.getMemberName()));
 
         return spec;
     }
@@ -52,7 +46,7 @@ public class InquirySpecification extends AbstractSpecification<Inquiry, Inquiry
         return (root, query, criteriaBuilder) -> {
             // 현재 쿼리의 반환 타입을 확인하여 count 쿼리인지 판별
             if (query.getResultType() != Long.class && query.getResultType() != long.class) {
-                // ToOne 관계인 createdBy와 answeredBy를 LEFT JOIN FETCH 함
+                // ToOne 관계인 inquiredBy와 answeredBy를 LEFT JOIN FETCH 함
                 root.fetch("inquiredBy", JoinType.LEFT);
                 root.fetch("answeredBy", JoinType.LEFT);
                 // Fetch Join으로 인해 발생할 수 있는 데이터 중복을 제거
