@@ -4,7 +4,6 @@ import com.eneifour.fantry.member.domain.RoleType;
 import com.eneifour.fantry.security.dto.TokenResponse;
 import com.eneifour.fantry.security.exception.AuthErrorCode;
 import com.eneifour.fantry.security.exception.AuthException;
-import com.eneifour.fantry.security.exception.exception.JwtRefreshTokenException;
 import com.eneifour.fantry.security.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
