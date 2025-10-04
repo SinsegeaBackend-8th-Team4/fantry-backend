@@ -3,8 +3,12 @@ package com.eneifour.fantry.checklist.controller;
 import com.eneifour.fantry.checklist.dto.ChecklistItemDto;
 import com.eneifour.fantry.checklist.service.ChecklistService;
 import com.eneifour.fantry.checklist.service.PricingService;
+import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,20 +24,28 @@ public class ChecklistController {
 
     // 카테고리별 체크리스트 목록 조회
     @GetMapping
-    public List<ChecklistItemDto> getChecklistsByCategory(@RequestParam int goodsCategoryId) {
-        return checklistService.getItemsByCategory(goodsCategoryId);
+    public ResponseEntity<InspectionApiResponse<List<ChecklistItemDto>>> getChecklistsByCategory(
+            @RequestParam @NotNull @Positive int goodsCategoryId) {
+        List<ChecklistItemDto> categories = checklistService.getItemsByCategory(goodsCategoryId);
+        return ResponseEntity.ok(InspectionApiResponse.ok(categories));
     }
 
     // 카테고리별 최신 기준가 조회
     @GetMapping("/pricing/baseline")
-    public Double getPriceBaselineByCategoryId(@RequestParam int goodsCategoryId) {
-        return pricingService.getLatestBaselineAmount(goodsCategoryId);
+    public ResponseEntity<InspectionApiResponse<Double>> getPriceBaselineByCategoryId(
+            @RequestParam @NotNull @Positive int goodsCategoryId) {
+        Double baseline = pricingService.getLatestBaselineAmount(goodsCategoryId);
+        return ResponseEntity.ok(InspectionApiResponse.ok(baseline));
     }
 
     // 예상가 계산
     @PostMapping("/pricing/estimate")
-    public double estimate(@RequestParam int goodsCategoryId, @RequestBody(required = false) Map<String, String> selections) {
+    public ResponseEntity<InspectionApiResponse<Double>> estimate(
+            @RequestParam @NotNull @Positive int goodsCategoryId,
+            @RequestBody(required = false) Map<String, String> selections) {
         if (selections == null) selections = Map.of();
-        return pricingService.estimate(goodsCategoryId, selections);
+        double estimate = pricingService.estimate(goodsCategoryId, selections);
+
+        return ResponseEntity.ok(InspectionApiResponse.ok(estimate));
     }
 }
