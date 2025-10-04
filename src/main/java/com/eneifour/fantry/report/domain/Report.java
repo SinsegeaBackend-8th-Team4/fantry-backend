@@ -2,13 +2,14 @@ package com.eneifour.fantry.report.domain;
 
 import com.eneifour.fantry.member.domain.Member;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Setter
 @Getter
 @Entity
 @Table(name="report")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Report {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,4 +32,12 @@ public class Report {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    public void update(String reportReason, ReportStatus reportStatus,
+                       String rejectedComment, Member member) {
+        this.reportReason = reportReason;
+        this.reportStatus = reportStatus;
+        this.rejectedComment = rejectedComment;
+        this.member = member;
+    }
 }

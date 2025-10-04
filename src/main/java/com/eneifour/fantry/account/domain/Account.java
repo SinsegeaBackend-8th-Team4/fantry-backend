@@ -2,11 +2,14 @@ package com.eneifour.fantry.account.domain;
 
 import com.eneifour.fantry.member.domain.Member;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 @Getter
 @Entity
 @Table(name = "account")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,4 +34,13 @@ public class Account {
     @ManyToOne
     @JoinColumn(name = "member_id")
     private Member member;
+
+    public void update(String accountNumber, String bankName,
+                       char isActive, char isRefundable, Member member) {
+        this.accountNumber = accountNumber;
+        this.bankName = bankName;
+        this.isActive = isActive;
+        this.isRefundable = isRefundable;
+        this.member = member;
+    }
 }
