@@ -5,6 +5,7 @@ import com.eneifour.fantry.member.domain.Role;
 import com.eneifour.fantry.member.domain.RoleType;
 import com.eneifour.fantry.member.dto.AuthCodeDTO;
 import com.eneifour.fantry.member.dto.MemberDTO;
+import com.eneifour.fantry.member.dto.MemberResponseDTO;
 import com.eneifour.fantry.member.model.JoinService;
 import com.eneifour.fantry.member.model.MemberService;
 import com.eneifour.fantry.member.model.RedisCodeService;
@@ -13,9 +14,7 @@ import com.eneifour.fantry.security.util.SecurityUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -87,14 +86,14 @@ public class MemberController {
     //모든 회원 가져오기
     @GetMapping("/member")
     public ResponseEntity<?> getMembers(){
-        List<Member> memberList = memberService.getMembers();
+        List<MemberResponseDTO> memberList = memberService.getMembers();
         return ResponseEntity.ok().body(Map.of("memberList", memberList));
     }
 
     //한명의 회원 가져오기
     @GetMapping("/member/{id}")
     public ResponseEntity<?> getMemberById(@PathVariable String id){
-        Member member = memberService.getMemberById(id);
+        MemberResponseDTO member = memberService.getMemberById(id);
         return ResponseEntity.ok().body(Map.of("member", member));
     }
 

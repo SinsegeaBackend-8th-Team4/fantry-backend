@@ -2,6 +2,7 @@ package com.eneifour.fantry.member.model;
 
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.domain.Role;
+import com.eneifour.fantry.member.dto.MemberResponseDTO;
 import com.eneifour.fantry.member.exception.MemberErrorCode;
 import com.eneifour.fantry.member.exception.MemberException;
 import com.eneifour.fantry.security.dto.MemberResponse;
@@ -32,17 +33,25 @@ public class MemberService {
     }
 
     //모든 회원 가져오기
-    public List<Member> getMembers(){
-        return jpaMemberRepository.findAll();
+    public List<MemberResponseDTO> getMembers(){
+        List<Member> members = jpaMemberRepository.findAll();
+        return MemberResponseDTO.of(members);
     }
 
     //하나의 회원 가져오기
-    public Member getMemberById(String id){
-        return jpaMemberRepository.findById(id);
+    public MemberResponseDTO getMemberById(String id) throws MemberException {
+        Member member = jpaMemberRepository.findById(id);
+        if(member == null){
+            throw new MemberException(MemberErrorCode.MEMBER_NOT_FOUND);
+        }
+        return new MemberResponseDTO(member);
     }
 
     //회원 추가하기
-    public void saveMember(Member member){
+    public void saveMember(Member member) throws MemberException {
+        if(jpaMemberRepository.existsById(member.getId())){
+            throw new MemberException(MemberErrorCode.MEMBER_ID_DUPLICATED);
+        }
         jpaMemberRepository.save(member);
     }
 
