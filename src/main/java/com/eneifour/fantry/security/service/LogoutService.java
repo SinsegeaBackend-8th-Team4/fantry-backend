@@ -1,4 +1,4 @@
-package com.eneifour.fantry.security.model;
+package com.eneifour.fantry.security.service;
 
 import com.eneifour.fantry.security.exception.AuthErrorCode;
 import com.eneifour.fantry.security.exception.AuthException;

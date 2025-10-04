@@ -1,11 +1,15 @@
-package com.eneifour.fantry.member.model;
+package com.eneifour.fantry.member.service;
 
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.domain.Role;
-import com.eneifour.fantry.member.dto.MemberResponseDTO;
+import com.eneifour.fantry.member.dto.MemberCreateRequest;
+import com.eneifour.fantry.member.dto.MemberResponse;
+import com.eneifour.fantry.member.dto.MemberUpdateRequest;
 import com.eneifour.fantry.member.exception.MemberErrorCode;
 import com.eneifour.fantry.member.exception.MemberException;
-import com.eneifour.fantry.security.dto.MemberResponse;
+import com.eneifour.fantry.member.repository.JpaMemberRepository;
+import com.eneifour.fantry.member.repository.RoleRepository;
+import com.eneifour.fantry.security.dto.TokenMemberResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,52 +20,48 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MemberService {
     private final JpaMemberRepository jpaMemberRepository;
+    private final RoleRepository roleRepository;
 
-    public MemberResponse findMemberResponseBy(String username) {
+    //토큰으로 회원 찾기
+    public TokenMemberResponse findMemberResponseBy(String username) {
         Member member = jpaMemberRepository.findById(username);
-
-        MemberResponse memberResponse = new MemberResponse();
-        memberResponse.setMemberId(member.getMemberId());
-        memberResponse.setId(member.getId());
-        memberResponse.setPassword(member.getPassword());
-        memberResponse.setName(member.getName());
-        memberResponse.setEmail(member.getEmail());
-        memberResponse.setTel(member.getTel());
-        memberResponse.setRole(String.valueOf(member.getRole().getRoleType()));
-
-        return memberResponse;
+        return TokenMemberResponse.from(member);
     }
 
     //모든 회원 가져오기
-    public List<MemberResponseDTO> getMembers(){
+    public List<MemberResponse> getMembers(){
         List<Member> members = jpaMemberRepository.findAll();
-        return MemberResponseDTO.of(members);
+        return MemberResponse.of(members);
     }
 
     //하나의 회원 가져오기
-    public MemberResponseDTO getMemberById(String id) throws MemberException {
+    public MemberResponse getMemberById(String id) throws MemberException {
         Member member = jpaMemberRepository.findById(id);
         if(member == null){
             throw new MemberException(MemberErrorCode.MEMBER_NOT_FOUND);
         }
-        return new MemberResponseDTO(member);
+        return new MemberResponse(member);
     }
 
     //회원 추가하기
-    public void saveMember(Member member) throws MemberException {
-        if(jpaMemberRepository.existsById(member.getId())){
+    public void saveMember(MemberCreateRequest memberRequest) throws MemberException {
+        if(jpaMemberRepository.existsById(memberRequest.getId())){
             throw new MemberException(MemberErrorCode.MEMBER_ID_DUPLICATED);
         }
+        Role role = roleRepository.findById(memberRequest.getRoleId()).orElseThrow(() -> new MemberException(MemberErrorCode.ROLE_NOT_FOUND));
+        Member member = memberRequest.toEntity(role);
         jpaMemberRepository.save(member);
     }
 
     //회원 수정하기
     @Transactional
-    public Member updateMember(Member member) throws MemberException {
-        if(!jpaMemberRepository.existsById(member.getId())){
+    public void updateMember(MemberUpdateRequest memberUpdateRequest) throws MemberException {
+        Member member = jpaMemberRepository.findById(memberUpdateRequest.getId());
+        if(member == null){
             throw new MemberException(MemberErrorCode.MEMBER_NOT_FOUND);
         }
-        return jpaMemberRepository.save(member);
+        memberUpdateRequest.applyTo(member);
+        //return jpaMemberRepository.save(member);
     }
 
     //회원 삭제하기

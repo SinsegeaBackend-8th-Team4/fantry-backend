@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 //조회를 위한 DTO
 @Getter
-public class MemberResponseDTO {
+public class MemberResponse {
     private final int memberId;
     private final String id;
     private final String password;
@@ -22,7 +22,7 @@ public class MemberResponseDTO {
     private final int isActive;
     private final RoleType roleType;
 
-    public MemberResponseDTO(Member member) {
+    public MemberResponse(Member member) {
         this.memberId = member.getMemberId();
         this.id = member.getId();
         this.password = member.getPassword();
@@ -36,9 +36,9 @@ public class MemberResponseDTO {
     }
 
     // Entity 리스트를 DTO 리스트로 변환하는 정적 팩토리 메서드
-    public static List<MemberResponseDTO> of(List<Member> members) {
+    public static List<MemberResponse> of(List<Member> members) {
         return members.stream()
-                .map(MemberResponseDTO::new)
+                .map(MemberResponse::new)
                 .collect(Collectors.toList());
     }
 }

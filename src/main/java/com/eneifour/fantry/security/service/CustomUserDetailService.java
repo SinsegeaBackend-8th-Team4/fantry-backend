@@ -1,7 +1,7 @@
-package com.eneifour.fantry.security.model;
+package com.eneifour.fantry.security.service;
 
 import com.eneifour.fantry.member.domain.Member;
-import com.eneifour.fantry.member.model.JpaMemberRepository;
+import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import com.eneifour.fantry.security.dto.CustomUserDetails;
 import com.eneifour.fantry.security.exception.AuthErrorCode;
 import com.eneifour.fantry.security.exception.AuthException;

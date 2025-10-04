@@ -10,7 +10,7 @@ import com.eneifour.fantry.cs.exception.CsException;
 import com.eneifour.fantry.cs.repository.InquiryRepository;
 import com.eneifour.fantry.cs.service.InquiryService;
 import com.eneifour.fantry.member.domain.Member;
-import com.eneifour.fantry.member.model.JpaMemberRepository;
+import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import com.eneifour.fantry.security.util.SecurityUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

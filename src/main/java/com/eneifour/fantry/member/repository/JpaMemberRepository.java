@@ -1,4 +1,4 @@
-package com.eneifour.fantry.member.model;
+package com.eneifour.fantry.member.repository;
 
 import com.eneifour.fantry.member.domain.Member;
 import org.springframework.data.jpa.repository.JpaRepository;

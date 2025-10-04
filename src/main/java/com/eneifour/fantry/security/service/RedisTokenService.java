@@ -1,4 +1,4 @@
-package com.eneifour.fantry.security.model;
+package com.eneifour.fantry.security.service;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
