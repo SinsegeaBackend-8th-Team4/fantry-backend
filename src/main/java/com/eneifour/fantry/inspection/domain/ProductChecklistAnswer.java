@@ -1,6 +1,5 @@
 package com.eneifour.fantry.inspection.domain;
 
-import com.eneifour.fantry.checklist.domain.ChecklistItemCategoryMap;
 import com.eneifour.fantry.checklist.domain.ChecklistTemplate;
 import jakarta.persistence.*;
 import lombok.*;

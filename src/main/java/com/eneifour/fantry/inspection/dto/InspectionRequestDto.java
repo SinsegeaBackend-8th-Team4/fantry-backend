@@ -40,13 +40,6 @@ public class InspectionRequestDto {
      * @return ProductInspection 엔티티 객체
      */
     public ProductInspection toEntity(int memberId) {
-        String checklistAnswersJson = null;
-        try {
-            checklistAnswersJson = new ObjectMapper().writeValueAsString(this.answers);
-        } catch (JsonProcessingException e) {
-            // e.printStackTrace();
-        }
-
         return ProductInspection.builder()
                 .memberId(memberId)
                 .goodsCategoryId(this.goodsCategoryId)
