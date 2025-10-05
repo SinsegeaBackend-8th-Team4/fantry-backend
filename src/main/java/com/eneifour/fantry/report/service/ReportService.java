@@ -1,7 +1,7 @@
 package com.eneifour.fantry.report.service;
 
 import com.eneifour.fantry.member.domain.Member;
-import com.eneifour.fantry.member.model.JpaMemberRepository;
+import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import com.eneifour.fantry.report.domain.Report;
 import com.eneifour.fantry.report.domain.ReportStatus;
 import com.eneifour.fantry.report.dto.ReportRequest;
@@ -28,12 +28,12 @@ public class ReportService {
 
     //한명의 회원 신고 내역 가져오기
     public List<ReportResponse> getReportsByMemberId(int memberId){
-        return ReportResponse.fromList(reportRepository.findReportsByMemberId(memberId));
+        return ReportResponse.fromList(reportRepository.findByMember_MemberId(memberId));
     }
 
     //하나의 특정 신고 내역 가져오기
     public ReportResponse getReport(int reportId){
-        Report report = reportRepository.findById(reportId);
+        Report report = reportRepository.findByReportId(reportId);
         if(report == null){
             throw new ReportException(ReportErrorCode.REPORT_NOT_FOUND);
         }
@@ -62,7 +62,7 @@ public class ReportService {
     //신고 수정하기
     @Transactional
     public void updateReport(int reportId, ReportRequest reportRequest) throws ReportException {
-        Report report = reportRepository.findById(reportId);
+        Report report = reportRepository.findByReportId(reportId);
         if(report == null){
             throw new ReportException(ReportErrorCode.REPORT_NOT_FOUND);
         }

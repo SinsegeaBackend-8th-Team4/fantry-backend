@@ -1,6 +1,5 @@
 package com.eneifour.fantry.account.controller;
 
-import com.eneifour.fantry.account.domain.Account;
 import com.eneifour.fantry.account.dto.AccountRequest;
 import com.eneifour.fantry.account.dto.AccountResponse;
 import com.eneifour.fantry.account.service.AccountService;

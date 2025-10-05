@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface AddressRepository extends JpaRepository<Address, Integer> {
-    public List<Address> findAddressByMemberId(int memberId);
-    public Address findById(int addressId);
+    public List<Address> findByMember_MemberId(int memberId);
+    public Address findByAddressId(int addressId);
 }

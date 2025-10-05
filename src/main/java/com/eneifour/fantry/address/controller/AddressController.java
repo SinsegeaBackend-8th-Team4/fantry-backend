@@ -1,6 +1,5 @@
 package com.eneifour.fantry.address.controller;
 
-import com.eneifour.fantry.address.domain.Address;
 import com.eneifour.fantry.address.dto.AddressRequest;
 import com.eneifour.fantry.address.dto.AddressResponse;
 import com.eneifour.fantry.address.service.AddressService;

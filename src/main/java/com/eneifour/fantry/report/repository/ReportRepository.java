@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ReportRepository extends JpaRepository<Report, Integer> {
-    public List<Report> findReportsByMemberId(int memberId);
-    public Report findById(int reportId);
+    public List<Report> findByMember_MemberId(int memberId);
+    public Report findByReportId(int reportId);
 }

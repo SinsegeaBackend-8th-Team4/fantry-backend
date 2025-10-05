@@ -7,7 +7,7 @@ import com.eneifour.fantry.address.exception.AddressErrorCode;
 import com.eneifour.fantry.address.exception.AddressException;
 import com.eneifour.fantry.address.repository.AddressRepository;
 import com.eneifour.fantry.member.domain.Member;
-import com.eneifour.fantry.member.model.JpaMemberRepository;
+import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,12 +27,12 @@ public class AddressService {
 
     //회원 한명의 모든 배송지 주소 가져오기
     public List<AddressResponse> getAddressesByMember(int memberId){
-        return AddressResponse.fromList(addressRepository.findAddressByMemberId(memberId));
+        return AddressResponse.fromList(addressRepository.findByMember_MemberId(memberId));
     }
 
     //하나의 특정 배송지 내역 가져오기
     public AddressResponse getAddress(int addressId){
-        Address address = addressRepository.findById(addressId);
+        Address address = addressRepository.findByAddressId(addressId);
         if(address == null){
             throw new AddressException(AddressErrorCode.ADDRESS_NOT_FOUND);
         }
@@ -62,7 +62,7 @@ public class AddressService {
     //배송지 수정하기
     @Transactional
     public void updateAddress(int addressId, AddressRequest addressRequest) throws AddressException {
-        Address address = addressRepository.findById(addressId);
+        Address address = addressRepository.findByAddressId(addressId);
         if(address == null){
             throw new AddressException(AddressErrorCode.ADDRESS_NOT_FOUND);
         }

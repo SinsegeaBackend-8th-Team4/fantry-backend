@@ -7,13 +7,12 @@ import com.eneifour.fantry.account.exception.AccountErrorCode;
 import com.eneifour.fantry.account.exception.AccountException;
 import com.eneifour.fantry.account.repository.accountRepository;
 import com.eneifour.fantry.member.domain.Member;
-import com.eneifour.fantry.member.model.JpaMemberRepository;
+import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +27,7 @@ public class AccountService {
 
     //한명의 대한 모든 계좌 가져오기
     public List<AccountResponse> getAccountsByMember(int memberId){
-        return AccountResponse.fromList(accountRepository.findByMemberId(memberId));
+        return AccountResponse.fromList(accountRepository.findByMember_MemberId(memberId));
     }
 
     //하나의 특정 계좌 정보 가져오기
