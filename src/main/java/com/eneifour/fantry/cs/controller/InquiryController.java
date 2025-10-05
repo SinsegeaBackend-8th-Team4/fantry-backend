@@ -1,13 +1,9 @@
 package com.eneifour.fantry.cs.controller;
 
 
-import com.eneifour.fantry.cs.domain.Inquiry;
 import com.eneifour.fantry.cs.dto.InquiryCreateRequest;
-import com.eneifour.fantry.cs.dto.InquiryDetailResponse;
+import com.eneifour.fantry.cs.dto.InquiryDetailUserResponse;
 import com.eneifour.fantry.cs.dto.InquirySummaryResponse;
-import com.eneifour.fantry.cs.exception.CsErrorCode;
-import com.eneifour.fantry.cs.exception.CsException;
-import com.eneifour.fantry.cs.repository.InquiryRepository;
 import com.eneifour.fantry.cs.service.InquiryService;
 import com.eneifour.fantry.member.domain.Member;
 
@@ -32,7 +28,6 @@ public class InquiryController {
 
     private final InquiryService inquiryService;
     private final JpaMemberRepository memberRepository;
-    private final InquiryRepository inquiryRepository; // 소유권 확인을 위해 추가
 
     /**
      * 문의 글(텍스트) 생성
@@ -75,7 +70,7 @@ public class InquiryController {
         String id = SecurityUtil.getUserName();
         Member member = memberRepository.findById(id);
 
-        Page<InquirySummaryResponse> myInquiries = inquiryService.findMyInquiries(member, pageable);
+        Page<InquirySummaryResponse> myInquiries = inquiryService.getMyInquiries(member, pageable);
         return ResponseEntity.ok(myInquiries);
     }
 
@@ -83,21 +78,13 @@ public class InquiryController {
      * 나의 문의 상세 조회
      */
     @GetMapping("/{inquiryId}")
-    public ResponseEntity<InquiryDetailResponse> getMyInquiryDetail(@PathVariable int inquiryId) {
-        // 임시멤버 생성, TODO : 로그인 기능 구현 완료시, 실제 로그인한 멤버로 가져오기
-
+    public ResponseEntity<InquiryDetailUserResponse> getMyInquiryDetail(@PathVariable int inquiryId) {
         String id = SecurityUtil.getUserName();
         Member member = memberRepository.findById(id);
 
-        // 서비스 호출 전, 컨트롤러에서 소유권 확인
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new CsException(CsErrorCode.INQUIRY_NOT_FOUND));
-
-        if (inquiry.getInquiredBy().getMemberId() != member.getMemberId()) {
-            throw new CsException(CsErrorCode.ACCESS_DENIED);
-        }
-
-        InquiryDetailResponse response = inquiryService.getInquiry(inquiryId);
+        InquiryDetailUserResponse response = inquiryService.getMyInquiry(inquiryId, member);
         return ResponseEntity.ok(response);
     }
+
+
 }

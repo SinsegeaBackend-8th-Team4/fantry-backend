@@ -33,4 +33,5 @@ public class InquiryAdminController {
         Page<InquirySummaryResponse> results = inquiryService.searchInquires(condition, pageable);
         return ResponseEntity.ok(results);
     }
+
 }
