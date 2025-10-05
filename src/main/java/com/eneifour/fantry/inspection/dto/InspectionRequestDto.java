@@ -1,8 +1,6 @@
 package com.eneifour.fantry.inspection.dto;
 
 import com.eneifour.fantry.inspection.domain.ProductInspection;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
