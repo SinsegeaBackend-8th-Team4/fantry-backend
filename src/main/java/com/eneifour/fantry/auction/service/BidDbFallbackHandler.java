@@ -11,7 +11,7 @@ import com.eneifour.fantry.auction.exception.MemberException;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
 import com.eneifour.fantry.auction.repository.BidRepository;
 import com.eneifour.fantry.member.domain.Member;
-import com.eneifour.fantry.member.model.JpaMemberRepository;
+import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
