@@ -1,7 +1,6 @@
 package com.eneifour.fantry.security.dto;
 
 import com.eneifour.fantry.member.domain.Member;
-import com.eneifour.fantry.member.domain.Role;
 import com.eneifour.fantry.member.domain.RoleType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;

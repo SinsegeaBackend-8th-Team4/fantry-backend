@@ -1,4 +1,4 @@
-package com.eneifour.fantry.security.model;
+package com.eneifour.fantry.security.service;
 
 import com.eneifour.fantry.member.domain.RoleType;
 import com.eneifour.fantry.security.dto.TokenResponse;
