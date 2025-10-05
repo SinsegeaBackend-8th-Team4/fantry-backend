@@ -6,11 +6,11 @@ import lombok.Getter;
 public class loginResponse {
     private String accessToken;
     private long expSec;
-    private MemberResponse memberResponse;
+    private TokenMemberResponse tokenMemberResponse;
 
-    public loginResponse(String accessToken, long expSec, MemberResponse memberResponse) {
+    public loginResponse(String accessToken, long expSec, TokenMemberResponse tokenMemberResponse) {
         this.accessToken = accessToken;
         this.expSec = expSec;
-        this.memberResponse = memberResponse;
+        this.tokenMemberResponse = tokenMemberResponse;
     }
 }
