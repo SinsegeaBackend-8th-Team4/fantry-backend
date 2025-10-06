@@ -93,8 +93,6 @@ public class ProductInspection {
     private List<InspectionFile> files = new ArrayList<>();
 
     // ** Enum 정의 **
-    public enum InspectionStatus { DRAFT, SUBMITTED, FIRST_REVIEWED, OFFLINE_INSPECTING, COMPLETED, REJECTED }
-    public enum InventoryStatus { PENDING, ACTIVE, SOLD, CANCELED }
     public enum SourceType { CONSIGNMENT, PURCHASED }
     public enum FinalGrade { A, B, C }
 }
