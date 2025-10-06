@@ -1,18 +1,13 @@
 package com.eneifour.fantry.payment.exception;
 
-public class CreatePaymentFailedException extends RuntimeException {
-    public CreatePaymentFailedException(Throwable cause) {
-        super(cause);
-    }
+import com.eneifour.fantry.payment.domain.PaymentErrorCode;
 
-    public CreatePaymentFailedException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public CreatePaymentFailedException(String message) {
-        super(message);
-    }
-
+public class CreatePaymentFailedException extends PaymentException {
     public CreatePaymentFailedException() {
+        super(PaymentErrorCode.CREATE_PAYMENT_FAILED);
+    }
+
+    public CreatePaymentFailedException(Throwable cause) {
+        super(PaymentErrorCode.CREATE_PAYMENT_FAILED, cause);
     }
 }
