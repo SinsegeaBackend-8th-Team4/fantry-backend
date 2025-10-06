@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,14 +28,10 @@ public class PaymentController {
             @Valid
             @RequestBody
             PaymentCreateRequest paymentCreateRequest
-    ) {
-        try {
+    ) throws NoSuchAlgorithmException, ClassNotFoundException {
             Payment createdPayment = paymentService.createPayment(paymentCreateRequest);
             PaymentResponse response = PaymentMapper.entityToResponse(createdPayment, PaymentResponse.class);
             return ResponseEntity.ok(new ApiResponse<>(true, response));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
     }
 
     @GetMapping("/api/payments/{orderId}/verify")
