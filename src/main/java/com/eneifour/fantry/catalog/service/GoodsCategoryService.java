@@ -1,6 +1,6 @@
 package com.eneifour.fantry.catalog.service;
 
-import com.eneifour.fantry.catalog.dto.GoodsCategoryDto;
+import com.eneifour.fantry.catalog.dto.GoodsCategoryResponse;
 import com.eneifour.fantry.catalog.repository.GoodsCategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,10 +21,10 @@ public class GoodsCategoryService {
      * 모든 굿즈 카테고리 목록을 조회
      * @return 모든 굿즈 카테고리 DTO 리스트
      */
-    public List<GoodsCategoryDto> getAllCategories() {
+    public List<GoodsCategoryResponse> getAllCategories() {
         return goodsCategoryRepository.findAll()
                 .stream()
-                .map(GoodsCategoryDto::from)
+                .map(GoodsCategoryResponse::from)
                 .toList();
     }
 }

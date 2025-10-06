@@ -1,7 +1,7 @@
 package com.eneifour.fantry.inspection.controller;
 
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
-import com.eneifour.fantry.inspection.dto.InspectionListDto;
+import com.eneifour.fantry.inspection.dto.InspectionListResponse;
 import com.eneifour.fantry.inspection.service.InspectionService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
 import com.eneifour.fantry.inspection.support.api.InspectionPageResponse;
@@ -31,14 +31,14 @@ public class AdminInspectionController {
      * - page/size/sort는 스프링 Pageable로 자동 파싱 (예: ?page=0&size=20&sort=submittedAt,desc)
      */
     @GetMapping
-    public InspectionApiResponse<InspectionPageResponse<InspectionListDto>> listByStatus(
+    public InspectionApiResponse<InspectionPageResponse<InspectionListResponse>> listByStatus(
             @RequestParam InspectionStatus status,
             @PageableDefault(size=20, sort="submittedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         log.debug("status={}", status);
         log.debug("pageable={}", pageable);
 
-        InspectionPageResponse<InspectionListDto> data = inspectionService.getInspectionsByStatus(status, pageable);
+        InspectionPageResponse<InspectionListResponse> data = inspectionService.getInspectionsByStatus(status, pageable);
         log.debug("data={}", data);
         return InspectionApiResponse.ok(data);
     }

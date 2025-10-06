@@ -17,7 +17,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-public class InspectionRequestDto {
+public class InspectionRequest {
     private Integer goodsCategoryId;
     private Integer artistId;
     private Integer albumId;

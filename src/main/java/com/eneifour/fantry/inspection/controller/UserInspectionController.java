@@ -1,6 +1,6 @@
 package com.eneifour.fantry.inspection.controller;
 
-import com.eneifour.fantry.inspection.dto.InspectionRequestDto;
+import com.eneifour.fantry.inspection.dto.InspectionRequest;
 import com.eneifour.fantry.inspection.service.InspectionService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class UserInspectionController {
      */
     @PostMapping
     public InspectionApiResponse<Integer> createInspection(
-            @RequestPart("request")InspectionRequestDto request,
+            @RequestPart("request") InspectionRequest request,
             @RequestPart("files") List<MultipartFile> files) {
 
         int memberId = 1; // TODO : 인증

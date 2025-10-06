@@ -1,6 +1,6 @@
 package com.eneifour.fantry.catalog.service;
 
-import com.eneifour.fantry.catalog.dto.AlbumDto;
+import com.eneifour.fantry.catalog.dto.AlbumResponse;
 import com.eneifour.fantry.catalog.exception.CatalogErrorCode;
 import com.eneifour.fantry.catalog.repository.AlbumRepository;
 import com.eneifour.fantry.catalog.repository.ArtistRepository;
@@ -27,13 +27,13 @@ public class AlbumService {
      * @return 해당 아티스트의 앨범 DTO 리스트
      * @throws BusinessException 요청한 아티스트 ID가 존재하지 않을 경우 발생
      */
-    public List<AlbumDto> getAllAlbumByArtist(Integer artistId){
+    public List<AlbumResponse> getAllAlbumByArtist(Integer artistId){
         // 아티스트 존재 여부 검증
         artistRepository.findById(artistId).orElseThrow(()->new BusinessException(CatalogErrorCode.ARTIST_NOT_FOUND));
 
         return albumRepository.findAlbumsByArtistArtistIdOrderByReleaseDateDesc(artistId)
                 .stream()
-                .map(AlbumDto::from)
+                .map(AlbumResponse::from)
                 .toList();
     }
 }

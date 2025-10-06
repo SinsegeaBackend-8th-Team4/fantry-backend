@@ -9,8 +9,8 @@ import com.eneifour.fantry.inspection.domain.InspectionFile;
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
 import com.eneifour.fantry.inspection.domain.ProductChecklistAnswer;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
-import com.eneifour.fantry.inspection.dto.InspectionListDto;
-import com.eneifour.fantry.inspection.dto.InspectionRequestDto;
+import com.eneifour.fantry.inspection.dto.InspectionListResponse;
+import com.eneifour.fantry.inspection.dto.InspectionRequest;
 import com.eneifour.fantry.inspection.repository.InspectionFileRepository;
 import com.eneifour.fantry.inspection.repository.InspectionRepository;
 import com.eneifour.fantry.inspection.repository.ProductChecklistAnswerRepository;
@@ -52,7 +52,7 @@ public class InspectionService {
      * @return 검수 ID
      */
     @Transactional
-    public int createInspection(int memberId, InspectionRequestDto requestDto, List<MultipartFile> files) {
+    public int createInspection(int memberId, InspectionRequest requestDto, List<MultipartFile> files) {
         // 파일 유효성 검증
         if (files == null || files.isEmpty()) {
             throw new BusinessException(InspectionErrorCode.EMPTY_FILE_ATTACHED);
@@ -114,8 +114,8 @@ public class InspectionService {
      * @param pageable spring 요청 파라미터
      * @return
      */
-    public InspectionPageResponse<InspectionListDto> getInspectionsByStatus(InspectionStatus status, Pageable pageable){
-        Page<InspectionListDto> page = inspectionRepository.findAllByInspectionStatus(status, pageable);
+    public InspectionPageResponse<InspectionListResponse> getInspectionsByStatus(InspectionStatus status, Pageable pageable){
+        Page<InspectionListResponse> page = inspectionRepository.findAllByInspectionStatus(status, pageable);
 
         return InspectionPageResponse.fromPage(page);
     }

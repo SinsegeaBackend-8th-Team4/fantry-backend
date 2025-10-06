@@ -2,7 +2,7 @@ package com.eneifour.fantry.inspection.repository;
 
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
-import com.eneifour.fantry.inspection.dto.InspectionListDto;
+import com.eneifour.fantry.inspection.dto.InspectionListResponse;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 public interface InspectionRepository extends JpaRepository<ProductInspection, Integer> {
     // 검수상태에 따른 검수 페이지 조회
     @Query(value = """
-        select new com.eneifour.fantry.inspection.dto.InspectionListDto(
+        select new com.eneifour.fantry.inspection.dto.InspectionListResponse(
             i.productInspectionId,
             i.submissionUuid,
             i.memberId, m.name,
@@ -35,5 +35,5 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         left join Album al on al.albumId = i.albumId
         where i.inspectionStatus = :status
         """)
-    Page<InspectionListDto> findAllByInspectionStatus(@Param("status") InspectionStatus status, Pageable pageable);
+    Page<InspectionListResponse> findAllByInspectionStatus(@Param("status") InspectionStatus status, Pageable pageable);
 }

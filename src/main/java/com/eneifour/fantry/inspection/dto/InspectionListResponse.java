@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * FE에서 관리자 페이지의 1차 온라인 검수 리스트 조회 응답 DTO
  */
 @Builder
-public record InspectionListDto(
+public record InspectionListResponse(
         int productInspectionId,
         String submissionUuid,
         int memberId,

@@ -1,6 +1,6 @@
 package com.eneifour.fantry.checklist.controller;
 
-import com.eneifour.fantry.checklist.dto.ChecklistItemDto;
+import com.eneifour.fantry.checklist.dto.ChecklistItemResponse;
 import com.eneifour.fantry.checklist.service.ChecklistService;
 import com.eneifour.fantry.checklist.service.PricingService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
@@ -23,9 +23,9 @@ public class ChecklistController {
 
     // 카테고리별 체크리스트 목록 조회
     @GetMapping
-    public InspectionApiResponse<List<ChecklistItemDto>> getChecklistsByCategory(
+    public InspectionApiResponse<List<ChecklistItemResponse>> getChecklistsByCategory(
             @RequestParam @NotNull @Positive int goodsCategoryId) {
-        List<ChecklistItemDto> categories = checklistService.getItemsByCategory(goodsCategoryId);
+        List<ChecklistItemResponse> categories = checklistService.getItemsByCategory(goodsCategoryId);
         return InspectionApiResponse.ok(categories);
     }
 
