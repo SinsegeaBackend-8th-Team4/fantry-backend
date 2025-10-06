@@ -1,5 +1,6 @@
 package com.eneifour.fantry.inspection.dto;
 
+import com.eneifour.fantry.inspection.domain.InspectionStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -54,7 +55,7 @@ public class InspectionRequestDto {
                 .shippingAddressDetail(this.shippingAddressDetail)
                 .bankName(this.bankName)
                 .bankAccount(this.bankAccount)
-                .inspectionStatus(ProductInspection.InspectionStatus.SUBMITTED)
+                .inspectionStatus(InspectionStatus.SUBMITTED)
                 .submittedAt(LocalDateTime.now())
                 .build();
     }
