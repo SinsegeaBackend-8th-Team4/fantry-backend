@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import java.time.OffsetDateTime;
 
+/**
+ * 모든 검수 API 성공 포맷 래퍼
+ */
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
 @Builder
