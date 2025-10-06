@@ -8,7 +8,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,28 +23,28 @@ public class ChecklistController {
 
     // 카테고리별 체크리스트 목록 조회
     @GetMapping
-    public ResponseEntity<InspectionApiResponse<List<ChecklistItemDto>>> getChecklistsByCategory(
+    public InspectionApiResponse<List<ChecklistItemDto>> getChecklistsByCategory(
             @RequestParam @NotNull @Positive int goodsCategoryId) {
         List<ChecklistItemDto> categories = checklistService.getItemsByCategory(goodsCategoryId);
-        return ResponseEntity.ok(InspectionApiResponse.ok(categories));
+        return InspectionApiResponse.ok(categories);
     }
 
     // 카테고리별 최신 기준가 조회
     @GetMapping("/pricing/baseline")
-    public ResponseEntity<InspectionApiResponse<Double>> getPriceBaselineByCategoryId(
+    public InspectionApiResponse<Double> getPriceBaselineByCategoryId(
             @RequestParam @NotNull @Positive int goodsCategoryId) {
         Double baseline = pricingService.getLatestBaselineAmount(goodsCategoryId);
-        return ResponseEntity.ok(InspectionApiResponse.ok(baseline));
+        return InspectionApiResponse.ok(baseline);
     }
 
     // 예상가 계산
     @PostMapping("/pricing/estimate")
-    public ResponseEntity<InspectionApiResponse<Double>> estimate(
+    public InspectionApiResponse<Double> estimate(
             @RequestParam @NotNull @Positive int goodsCategoryId,
             @RequestBody(required = false) Map<String, String> selections) {
         if (selections == null) selections = Map.of();
         double estimate = pricingService.estimate(goodsCategoryId, selections);
 
-        return ResponseEntity.ok(InspectionApiResponse.ok(estimate));
+        return InspectionApiResponse.ok(estimate);
     }
 }

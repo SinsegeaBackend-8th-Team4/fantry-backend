@@ -5,8 +5,6 @@ import com.eneifour.fantry.inspection.service.InspectionService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -15,21 +13,27 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+/**
+ * 유저용 검수 컨트롤러
+ */
 @Slf4j
 @RestController
-@RequestMapping("/api/inspection")
+@RequestMapping("/api/inspections")
 @RequiredArgsConstructor
-public class InspectionController {
+public class UserInspectionController {
     private final InspectionService inspectionService;
 
+    /**
+     * 1차 검수 신청 생성
+     */
     @PostMapping
-    public ResponseEntity<InspectionApiResponse<Integer>> createInspection(
-            @RequestPart("request")InspectionRequestDto inspectionRequestDto,
+    public InspectionApiResponse<Integer> createInspection(
+            @RequestPart("request")InspectionRequestDto request,
             @RequestPart("files") List<MultipartFile> files) {
 
-        int memberId = 1; // 임시
-        int inspectionID = inspectionService.createInspection(memberId, inspectionRequestDto, files);
+        int memberId = 1; // TODO : 인증
+        int inspectionID = inspectionService.createInspection(memberId, request, files);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(InspectionApiResponse.ok(inspectionID));
+        return InspectionApiResponse.ok(inspectionID);
     }
 }

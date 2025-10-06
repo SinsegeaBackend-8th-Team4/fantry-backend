@@ -4,7 +4,6 @@ import com.eneifour.fantry.catalog.dto.GoodsCategoryDto;
 import com.eneifour.fantry.catalog.service.GoodsCategoryService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,8 +18,8 @@ public class GoodsCategoryController {
 
     // 굿즈 카테고리 전체 조회
     @GetMapping
-    public ResponseEntity<InspectionApiResponse<List<GoodsCategoryDto>>> getGoodsCategories() {
+    public InspectionApiResponse<List<GoodsCategoryDto>> getGoodsCategories() {
         List<GoodsCategoryDto> categories = goodsCategoryService.getAllCategories();
-        return ResponseEntity.ok(InspectionApiResponse.ok(categories));
+        return InspectionApiResponse.ok(categories);
     }
 }
