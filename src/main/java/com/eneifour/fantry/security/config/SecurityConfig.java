@@ -2,7 +2,7 @@ package com.eneifour.fantry.security.config;
 
 import com.eneifour.fantry.common.config.CorsProperties;
 import com.eneifour.fantry.security.filter.AuthJwtTokenFilter;
-import com.eneifour.fantry.security.model.CustomUserDetailService;
+import com.eneifour.fantry.security.service.CustomUserDetailService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

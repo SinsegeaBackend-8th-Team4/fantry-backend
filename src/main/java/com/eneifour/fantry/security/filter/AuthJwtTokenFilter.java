@@ -3,7 +3,7 @@ package com.eneifour.fantry.security.filter;
 import com.eneifour.fantry.security.config.SecurityConstants;
 import com.eneifour.fantry.security.exception.AuthErrorCode;
 import com.eneifour.fantry.security.exception.AuthException;
-import com.eneifour.fantry.security.model.RedisTokenService;
+import com.eneifour.fantry.security.service.RedisTokenService;
 import com.eneifour.fantry.security.util.JwtUtil;
 import io.jsonwebtoken.*;
 import jakarta.servlet.FilterChain;
