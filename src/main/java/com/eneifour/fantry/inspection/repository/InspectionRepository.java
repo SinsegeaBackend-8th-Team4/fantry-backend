@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface InspectionRepository extends JpaRepository<ProductInspection, Integer> {
     // 검수상태에 따른 검수 페이지 조회
@@ -33,7 +35,7 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         join GoodsCategory gc on gc.goodsCategoryId = i.goodsCategoryId
         join Artist a on a.artistId = i.artistId
         left join Album al on al.albumId = i.albumId
-        where i.inspectionStatus = :status
+        where i.inspectionStatus IN :statuses
         """)
-    Page<InspectionListResponse> findAllByInspectionStatus(@Param("status") InspectionStatus status, Pageable pageable);
+    Page<InspectionListResponse> findAllByInspectionStatusIn(@Param("statuses") List<InspectionStatus> statuses, Pageable pageable);
 }

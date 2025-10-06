@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * 관리자용 컨트롤러
  */
@@ -25,39 +27,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminInspectionController {
     private final InspectionService inspectionService;
 
-    /**
+       /**
      * 상태별 신청 목록 (페이지)
-     * - status: SUBMITTED / FIRST_REVIEWED / COMPLETED / REJECTED
-     * - page/size/sort는 스프링 Pageable로 자동 파싱 (예: ?page=0&size=20&sort=submittedAt,desc)
+     * @param statuses 조회할 검수 상태 목록 (e.g. ?statuses=SUBMITTED,FIRST_REVIEWED)
+     * @param pageable 페이지네이션, 정렬 정보 (e.g. ?page=0&size=20&sort=submittedAt,desc)
+     * @return 페이징 처리된 검수 목록
      */
     @GetMapping
     public InspectionApiResponse<InspectionPageResponse<InspectionListResponse>> listByStatus(
-            @RequestParam InspectionStatus status,
+            @RequestParam List<InspectionStatus> statuses,
             @PageableDefault(size=20, sort="submittedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        log.debug("status={}", status);
-        log.debug("pageable={}", pageable);
-
-        InspectionPageResponse<InspectionListResponse> data = inspectionService.getInspectionsByStatus(status, pageable);
-        log.debug("data={}", data);
+        InspectionPageResponse<InspectionListResponse> data = inspectionService.getInspectionsByStatuses(statuses, pageable);
         return InspectionApiResponse.ok(data);
     }
-
-    /**
-     * [POST] 1차 검수 승인/반려 (온라인 → 오프라인/반려)
-     * - 요청 바디: { decision: APPROVE | REJECT, reason?: string }
-     * - APPROVE → status: FIRST_REVIEWED
-     * - REJECT  → status: REJECTED (reason 저장)
-     */
-    // @PostMapping("/{inspectionId}/first-review")
-    // public InspectionApiResponse<Void> firstReview(@PathVariable int inspectionId,
-    //    @RequestBody FirstReviewRequest req) { ... }
-
-    /**
-     * 상세 조회
-     * - FE 상세 화면 필요 시 사용
-     */
-    // @GetMapping("/{inspectionId}")
-    // public InspectionApiResponse<InspectionDetailDto> getDetail(@PathVariable int inspectionId) { ... }
 }
 

@@ -110,13 +110,12 @@ public class InspectionService {
 
     /**
      * 검수 상태 별 페이지 조회
-     * @param status 검수 상태
-     * @param pageable spring 요청 파라미터
-     * @return
+     * @param statuses 조회할 검수 상태 목록 (e.g. ?statuses=SUBMITTED,FIRST_REVIEWED)
+     * @param pageable 페이지네이션, 정렬 정보 (e.g. ?page=0&size=20&sort=submittedAt,desc)
+     * @return 페이징 처리된 검수 목록
      */
-    public InspectionPageResponse<InspectionListResponse> getInspectionsByStatus(InspectionStatus status, Pageable pageable){
-        Page<InspectionListResponse> page = inspectionRepository.findAllByInspectionStatus(status, pageable);
-
+    public InspectionPageResponse<InspectionListResponse> getInspectionsByStatuses(List<InspectionStatus> statuses, Pageable pageable){
+        Page<InspectionListResponse> page = inspectionRepository.findAllByInspectionStatusIn(statuses, pageable);
         return InspectionPageResponse.fromPage(page);
     }
 }
