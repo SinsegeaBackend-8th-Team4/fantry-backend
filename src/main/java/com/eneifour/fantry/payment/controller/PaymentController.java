@@ -86,7 +86,7 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<ResponseCreatedPayment>> requestPaymentCreate(
             @Valid
             @RequestBody
-            RequestPaymentCreate requestPaymentCreate
+            PaymentCreateRequestDto paymentCreateRequestDto
     ) {
         try {
             Payment createdPayment = paymentService.createPayment(requestPaymentCreate);

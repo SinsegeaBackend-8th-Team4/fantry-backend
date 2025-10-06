@@ -2,23 +2,25 @@ package com.eneifour.fantry.payment.service;
 
 import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
-import com.eneifour.fantry.payment.domain.request.RequestPaymentApprove;
-import com.eneifour.fantry.payment.domain.request.RequestPaymentCancel;
-import com.eneifour.fantry.payment.domain.request.RequestPaymentCreate;
-import com.eneifour.fantry.payment.exception.*;
+import com.eneifour.fantry.payment.dto.PaymentCancelRequestDto;
+import com.eneifour.fantry.payment.dto.PaymentCreateRequestDto;
+import com.eneifour.fantry.payment.exception.ConcurrentPaymentException;
+import com.eneifour.fantry.payment.exception.CreatePaymentFailedException;
+import com.eneifour.fantry.payment.exception.NotFoundPaymentException;
+import com.eneifour.fantry.payment.exception.NotFoundReceiptException;
 import com.eneifour.fantry.payment.mapper.PaymentMapper;
 import com.eneifour.fantry.payment.repository.PaymentRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.TimeoutException;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -39,10 +41,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public Payment createPayment(RequestPaymentCreate requestPaymentCreate) throws CreatePaymentFailedException {
+    public Payment createPayment(PaymentCreateRequestDto paymentCreateRequestDto) throws CreatePaymentFailedException {
         Payment payment;
         try {
-            payment = PaymentMapper.requestToEntity(requestPaymentCreate);
+            payment = PaymentMapper.requestToEntity(paymentCreateRequestDto);
             paymentRepository.save(payment);
         } catch (NoSuchAlgorithmException e) {
             throw new CreatePaymentFailedException(e);
@@ -128,28 +130,14 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public void cancelPayment(RequestPaymentCancel requestPaymentCancel) {
-        Payment payment = paymentRepository.findByReceiptId(requestPaymentCancel.getReceiptId())
+    public BootpayReceiptDto cancelPayment(PaymentCancelRequestDto paymentCancelRequestDto) {
+        Payment payment = paymentRepository.findByReceiptId(paymentCancelRequestDto.getReceiptId())
                 .orElseThrow(NotFoundReceiptException::new);
-        BootpayReceiptDto resultReceipt = new BootpayReceiptDto();
-        resultReceipt.setReceiptId(payment.getReceiptId());
-        try {
-            resultReceipt = bootpayService.getReceiptViaWebClient(payment.getReceiptId());
-            int availableCancelPrice = resultReceipt.getPrice() - resultReceipt.getCancelledPrice();
-            int requestCancelPrice = Integer.parseInt(requestPaymentCancel.getCancelPrice());
-            if (requestCancelPrice > availableCancelPrice) {
-                throw new CancellableAmountExceededException();
-            }
-            BootpayReceiptDto bootpayReceiptDto = bootpayService.cancellationViaWebClient(payment.getReceiptId(), requestPaymentCancel.getCancelReason(), requestPaymentCancel.getMemberId(), resultReceipt.getOrderId(), requestPaymentCancel.getCancelPrice(), requestPaymentCancel.getBankDataDto());
-            PaymentMapper.updateFromDto(payment, bootpayReceiptDto);
-            paymentRepository.save(payment);
-        } catch (RuntimeException e) {
-            if (e.getCause() instanceof TimeoutException) {
-                ghostPaymentService.createGhostPayment(resultReceipt.getReceiptId());
-            }
-            throw e;
-        } catch (Exception e) {
-            throw new CompletionException(e);
-        }
+
+        BootpayReceiptDto resultReceipt = bootpayService.getReceiptViaWebClient(payment.getReceiptId());
+        BootpayReceiptDto cancelResult = bootpayService.cancellationViaWebClient(payment.getReceiptId(), paymentCancelRequestDto.getCancelReason(), paymentCancelRequestDto.getMemberId(), resultReceipt.getOrderId(), paymentCancelRequestDto.getCancelPrice(), paymentCancelRequestDto.getBankDataDto());
+        PaymentMapper.updateFromDto(payment, cancelResult);
+        paymentRepository.save(payment);
+        return cancelResult;
     }
 }
