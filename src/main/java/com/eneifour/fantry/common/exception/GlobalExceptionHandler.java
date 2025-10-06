@@ -1,9 +1,12 @@
 package com.eneifour.fantry.common.exception;
 
+import com.eneifour.fantry.account.exception.AccountException;
+import com.eneifour.fantry.address.exception.AddressException;
 import com.eneifour.fantry.auction.exception.BusinessException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.common.util.file.FileException;
 import com.eneifour.fantry.member.exception.MemberException;
+import com.eneifour.fantry.report.exception.ReportException;
 import com.eneifour.fantry.security.exception.AuthException;
 import com.eneifour.fantry.cs.exception.CsException;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +60,39 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ex.getErrorCode();
         log.error("Auction exception occurred [ Message: {}]", errorCode.getMessage());
         return new ResponseEntity<>(errorCode, ex.getErrorCode().getStatus());
+    }
+
+    @ExceptionHandler(ReportException.class)
+    public ResponseEntity<ErrorResponse> handleFileException(ReportException ex) {
+        log.error("신고에서 예외 발생: {}",  ex.getReportErrorCode().getMessage());
+        ErrorResponse response = ErrorResponse.of(
+                ex.getReportErrorCode().getStatus(),
+                ex.getReportErrorCode().getCode(),
+                ex.getReportErrorCode().getMessage()
+        );
+        return new ResponseEntity<>(response, ex.getReportErrorCode().getStatus());
+    }
+
+    @ExceptionHandler(AddressException.class)
+    public ResponseEntity<ErrorResponse> handleFileException(AddressException ex) {
+        log.error("배송지에서 예외 발생: {}",   ex.getAddressErrorCode().getMessage());
+        ErrorResponse response = ErrorResponse.of(
+                ex.getAddressErrorCode().getStatus(),
+                ex.getAddressErrorCode().getCode(),
+                ex.getAddressErrorCode().getMessage()
+        );
+        return new ResponseEntity<>(response, ex.getAddressErrorCode().getStatus());
+    }
+
+    @ExceptionHandler(AccountException.class)
+    public ResponseEntity<ErrorResponse> handleFileException(AccountException ex) {
+        log.error("계좌에서 예외 발생: {}", ex.getAccountErrorCode().getMessage());
+        ErrorResponse response = ErrorResponse.of(
+                ex.getAccountErrorCode().getStatus(),
+                ex.getAccountErrorCode().getCode(),
+                ex.getAccountErrorCode().getMessage()
+        );
+        return new ResponseEntity<>(response, ex.getAccountErrorCode().getStatus());
     }
 
     @ExceptionHandler(CsException.class)
