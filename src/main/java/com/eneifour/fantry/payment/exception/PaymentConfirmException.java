@@ -1,18 +1,19 @@
 package com.eneifour.fantry.payment.exception;
 
-public class PaymentConfirmException extends RuntimeException {
+import com.eneifour.fantry.payment.domain.PaymentErrorCode;
+import lombok.Getter;
+
+@Getter
+public class PaymentConfirmException extends PaymentException {
+    private final PaymentErrorCode errorCode;
+
     public PaymentConfirmException() {
-    }
-
-    public PaymentConfirmException(String message) {
-        super(message);
-    }
-
-    public PaymentConfirmException(String message, Throwable cause) {
-        super(message, cause);
+        super(PaymentErrorCode.PAYMENT_CONFIRM_FAILED);
+        this.errorCode = PaymentErrorCode.PAYMENT_CONFIRM_FAILED;
     }
 
     public PaymentConfirmException(Throwable cause) {
-        super(cause);
+        super(PaymentErrorCode.PAYMENT_CONFIRM_FAILED, cause);
+        this.errorCode = PaymentErrorCode.PAYMENT_CONFIRM_FAILED;
     }
 }

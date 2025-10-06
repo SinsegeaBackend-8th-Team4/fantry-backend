@@ -1,4 +1,4 @@
-package com.eneifour.fantry.payment.domain.response;
+package com.eneifour.fantry.payment.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
