@@ -1,10 +1,10 @@
-package com.eneifour.fantry.security.model;
+package com.eneifour.fantry.security.service;
 
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.domain.RoleType;
-import com.eneifour.fantry.member.model.JpaMemberRepository;
+import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import com.eneifour.fantry.security.dto.CustomUserDetails;
-import com.eneifour.fantry.security.dto.MemberResponse;
+import com.eneifour.fantry.security.dto.TokenMemberResponse;
 import com.eneifour.fantry.security.dto.loginResponse;
 import com.eneifour.fantry.security.exception.AuthErrorCode;
 import com.eneifour.fantry.security.exception.AuthException;
@@ -58,16 +58,9 @@ public class LoginService {
 
             // 5. 회원 정보도 넘겨줌
             Member member = jpaMemberRepository.findById(username);
-            MemberResponse memberResponse = new MemberResponse();
-            memberResponse.setMemberId(member.getMemberId());
-            memberResponse.setId(member.getId());
-            memberResponse.setPassword(member.getPassword());
-            memberResponse.setName(member.getName());
-            memberResponse.setEmail(member.getEmail());
-            memberResponse.setTel(member.getTel());
-            memberResponse.setRole(String.valueOf(member.getRole().getRoleType()));
+            TokenMemberResponse tokenMemberResponse = TokenMemberResponse.from(member);
 
-            return new loginResponse(accessToken, accessTokenTtl, memberResponse);
+            return new loginResponse(accessToken, accessTokenTtl, tokenMemberResponse);
         } catch (AuthenticationException e) {
             throw new AuthException(AuthErrorCode.TOKEN_AUTHENTICATION_FAILED);
         }

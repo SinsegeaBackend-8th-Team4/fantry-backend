@@ -1,4 +1,4 @@
-package com.eneifour.fantry.member.model;
+package com.eneifour.fantry.member.service;
 
 import com.eneifour.fantry.member.dto.AuthCodeDTO;
 import com.eneifour.fantry.member.dto.MemberDTO;

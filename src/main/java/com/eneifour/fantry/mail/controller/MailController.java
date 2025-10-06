@@ -3,7 +3,7 @@ package com.eneifour.fantry.mail.controller;
 import com.eneifour.fantry.mail.MailRequest;
 import com.eneifour.fantry.mail.model.MailService;
 import com.eneifour.fantry.member.dto.MemberDTO;
-import com.eneifour.fantry.member.model.RedisCodeService;
+import com.eneifour.fantry.member.service.RedisCodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.eneifour.fantry.member.model;
+package com.eneifour.fantry.member.service;
 
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.domain.Role;
@@ -6,6 +6,8 @@ import com.eneifour.fantry.member.domain.RoleType;
 import com.eneifour.fantry.member.dto.MemberDTO;
 import com.eneifour.fantry.member.exception.MemberErrorCode;
 import com.eneifour.fantry.member.exception.MemberException;
+import com.eneifour.fantry.member.repository.JpaMemberRepository;
+import com.eneifour.fantry.member.repository.RoleRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -14,7 +16,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class JoinService {
-    private final JpaRoleRepository jpaRoleRepository;
+    private final RoleRepository roleRepository;
     private final JpaMemberRepository jpaMemberRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
@@ -51,7 +53,7 @@ public class JoinService {
         member.setEmail(memberDTO.getEmail());
         member.setTel(memberDTO.getPhone());
 
-        Role role = jpaRoleRepository.findByRoleType(default_role);
+        Role role = roleRepository.findByRoleType(default_role);
         if(role == null){
             throw new MemberException(MemberErrorCode.MEMBER_ROLE_NOT_FOUND);
         }
