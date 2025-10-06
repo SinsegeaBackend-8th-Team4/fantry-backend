@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentCancelResponseDto {
+public class PaymentCancelResponse {
     private String receiptId;
     private String orderId;
     private Integer cancelledPrice;

@@ -15,7 +15,7 @@ import lombok.Setter;
 @Builder
 @Getter
 @Setter
-public class PaymentCancelRequestDto {
+public class PaymentCancelRequest {
     @JsonAlias({"receipt_id", "receiptId"})
     @NotBlank(message = "고유 영수증 번호가 누락되었습니다.")
     private String receiptId;

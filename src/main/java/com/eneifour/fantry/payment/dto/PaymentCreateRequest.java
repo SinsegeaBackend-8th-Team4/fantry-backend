@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentCreateRequestDto {
+public class PaymentCreateRequest {
     @NotBlank(message = "멤버 아이디가 누락되었습니다.")
     @JsonAlias({"member_id", "memberId"})
     private String memberId;

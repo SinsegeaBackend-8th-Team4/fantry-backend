@@ -2,8 +2,8 @@ package com.eneifour.fantry.payment.service;
 
 import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
-import com.eneifour.fantry.payment.dto.PaymentCancelRequestDto;
-import com.eneifour.fantry.payment.dto.PaymentCreateRequestDto;
+import com.eneifour.fantry.payment.dto.PaymentCancelRequest;
+import com.eneifour.fantry.payment.dto.PaymentCreateRequest;
 import com.eneifour.fantry.payment.exception.ConcurrentPaymentException;
 import com.eneifour.fantry.payment.exception.CreatePaymentFailedException;
 import com.eneifour.fantry.payment.exception.NotFoundPaymentException;
@@ -52,10 +52,10 @@ public class PaymentServiceImpl implements PaymentService {
      */
     @Override
     @Transactional
-    public Payment createPayment(PaymentCreateRequestDto paymentCreateRequestDto) throws CreatePaymentFailedException {
+    public Payment createPayment(PaymentCreateRequest paymentCreateRequest) throws CreatePaymentFailedException {
         Payment payment;
         try {
-            payment = PaymentMapper.requestToEntity(paymentCreateRequestDto);
+            payment = PaymentMapper.requestToEntity(paymentCreateRequest);
             paymentRepository.save(payment);
         } catch (NoSuchAlgorithmException e) {
             throw new CreatePaymentFailedException(e);
@@ -136,8 +136,8 @@ public class PaymentServiceImpl implements PaymentService {
      */
     @Override
     @Transactional
-    public BootpayReceiptDto cancelPayment(String orderId, PaymentCancelRequestDto paymentCancelRequestDto) {
-        Payment payment = paymentRepository.findByReceiptId(paymentCancelRequestDto.getReceiptId())
+    public BootpayReceiptDto cancelPayment(String orderId, PaymentCancelRequest paymentCancelRequest) {
+        Payment payment = paymentRepository.findByReceiptId(paymentCancelRequest.getReceiptId())
                 .orElseThrow(NotFoundReceiptException::new);
 
         if(!orderId.equals(payment.getOrderId())) {
@@ -145,7 +145,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         BootpayReceiptDto resultReceipt = bootpayService.getReceiptViaWebClient(payment.getReceiptId());
-        BootpayReceiptDto cancelResult = bootpayService.cancellationViaWebClient(payment.getReceiptId(), paymentCancelRequestDto.getCancelReason(), paymentCancelRequestDto.getMemberId(), resultReceipt.getOrderId(), paymentCancelRequestDto.getCancelPrice(), paymentCancelRequestDto.getBankDataDto());
+        BootpayReceiptDto cancelResult = bootpayService.cancellationViaWebClient(payment.getReceiptId(), paymentCancelRequest.getCancelReason(), paymentCancelRequest.getMemberId(), resultReceipt.getOrderId(), paymentCancelRequest.getCancelPrice(), paymentCancelRequest.getBankDataDto());
         PaymentMapper.updateFromDto(payment, cancelResult);
         paymentRepository.save(payment);
         return cancelResult;

@@ -2,8 +2,8 @@ package com.eneifour.fantry.payment.service;
 
 import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
-import com.eneifour.fantry.payment.dto.PaymentCancelRequestDto;
-import com.eneifour.fantry.payment.dto.PaymentCreateRequestDto;
+import com.eneifour.fantry.payment.dto.PaymentCancelRequest;
+import com.eneifour.fantry.payment.dto.PaymentCreateRequest;
 
 import java.security.NoSuchAlgorithmException;
 
@@ -22,11 +22,11 @@ public interface PaymentService {
      * 클라이언트로부터 받은 결제 정보를 기반으로 Payment 엔티티를 생성하고 저장합니다.
      * </p>
      *
-     * @param paymentCreateRequestDto 결제 생성 요청 정보
+     * @param paymentCreateRequest 결제 생성 요청 정보
      * @return 생성된 Payment 엔티티
      * @throws NoSuchAlgorithmException 암호화 알고리즘 오류 시
      */
-    Payment createPayment(PaymentCreateRequestDto paymentCreateRequestDto) throws NoSuchAlgorithmException;
+    Payment createPayment(PaymentCreateRequest paymentCreateRequest) throws NoSuchAlgorithmException;
 
     /**
      * 결제를 승인하고 비즈니스 로직을 실행합니다.
@@ -48,11 +48,11 @@ public interface PaymentService {
      * </p>
      *
      * @param orderId 결제 취소 주문 아이디
-     * @param paymentCancelRequestDto 결제 취소 요청 정보
+     * @param paymentCancelRequest 결제 취소 요청 정보
      * @return 취소된 결제의 영수증 정보
      * @throws Exception Bootpay API 호출 실패 시
      */
-    BootpayReceiptDto cancelPayment(String orderId,PaymentCancelRequestDto paymentCancelRequestDto) throws Exception;
+    BootpayReceiptDto cancelPayment(String orderId, PaymentCancelRequest paymentCancelRequest) throws Exception;
 
     /**
      * Bootpay로부터 영수증 정보를 조회합니다.

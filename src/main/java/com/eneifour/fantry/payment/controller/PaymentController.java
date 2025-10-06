@@ -26,10 +26,10 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<PaymentResponse>> requestPaymentCreate(
             @Valid
             @RequestBody
-            PaymentCreateRequestDto paymentCreateRequestDto
+            PaymentCreateRequest paymentCreateRequest
     ) {
         try {
-            Payment createdPayment = paymentService.createPayment(paymentCreateRequestDto);
+            Payment createdPayment = paymentService.createPayment(paymentCreateRequest);
             PaymentResponse response = PaymentMapper.entityToResponse(createdPayment, PaymentResponse.class);
             return ResponseEntity.ok(new ApiResponse<>(true, response));
         } catch (Exception e) {
@@ -50,22 +50,22 @@ public class PaymentController {
             @PathVariable("orderId") String orderId,
             @Valid
             @RequestBody
-            PaymentApproveDto paymentApproveDto
+            PaymentApproveRequest paymentApproveRequest
     ) throws Exception {
-        log.info("PaymentApproveDto : {}", paymentApproveDto);
-        paymentService.purchaseItem(orderId, paymentApproveDto.getReceiptData());
+        log.info("PaymentApproveDto : {}", paymentApproveRequest);
+        paymentService.purchaseItem(orderId, paymentApproveRequest.getReceiptData());
         return ResponseEntity.ok(new ApiResponse<>(true, "결제가 완료되었습니다.", null));
     }
 
     @PostMapping("/api/payments/{orderId}/cancel")
-    public ResponseEntity<ApiResponse<PaymentCancelResponseDto>> requestPaymentCancel(
+    public ResponseEntity<ApiResponse<PaymentCancelResponse>> requestPaymentCancel(
             @PathVariable("orderId") String orderId,
             @Valid
             @RequestBody
-            PaymentCancelRequestDto paymentCancelRequestDto
+            PaymentCancelRequest paymentCancelRequest
     ) throws Exception {
-        BootpayReceiptDto dto = paymentService.cancelPayment(orderId,paymentCancelRequestDto);
-        return ResponseEntity.ok(new ApiResponse<>(true, new PaymentCancelResponseDto()));
+        BootpayReceiptDto dto = paymentService.cancelPayment(orderId, paymentCancelRequest);
+        return ResponseEntity.ok(new ApiResponse<>(true, new PaymentCancelResponse()));
     }
 
     @PostMapping("/webhook/bootpay")

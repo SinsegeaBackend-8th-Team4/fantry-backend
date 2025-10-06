@@ -4,7 +4,7 @@ import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.domain.PaymentStatus;
 import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
 import com.eneifour.fantry.payment.domain.bootpay.BootPayStatus;
-import com.eneifour.fantry.payment.dto.PaymentCreateRequestDto;
+import com.eneifour.fantry.payment.dto.PaymentCreateRequest;
 import com.eneifour.fantry.payment.dto.PaymentResponse;
 import com.eneifour.fantry.payment.util.Encryptor;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -16,10 +16,10 @@ import java.security.NoSuchAlgorithmException;
 @RequiredArgsConstructor
 public class PaymentMapper {
 
-    public static Payment requestToEntity(PaymentCreateRequestDto paymentCreateRequestDto) throws NoSuchAlgorithmException {
-        Integer itemId = Integer.parseInt(paymentCreateRequestDto.getItemId());
-        Integer price = Integer.parseInt(paymentCreateRequestDto.getPrice());
-        String orderId = Encryptor.createOrderId(paymentCreateRequestDto.getMemberId(), itemId);
+    public static Payment requestToEntity(PaymentCreateRequest paymentCreateRequest) throws NoSuchAlgorithmException {
+        Integer itemId = Integer.parseInt(paymentCreateRequest.getItemId());
+        Integer price = Integer.parseInt(paymentCreateRequest.getPrice());
+        String orderId = Encryptor.createOrderId(paymentCreateRequest.getMemberId(), itemId);
         Payment payment = new Payment();
         payment.setOrderId(orderId);
         payment.setPrice(price);

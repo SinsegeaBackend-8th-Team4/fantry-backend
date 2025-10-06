@@ -8,7 +8,7 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-public class PaymentApproveDto {
+public class PaymentApproveRequest {
     @JsonAlias("receiptData")
     private String receiptData;
 }

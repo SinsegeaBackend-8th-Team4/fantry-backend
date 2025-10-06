@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PaymentVerifyDto {
+public class PaymentVerifyRequest {
     @JsonAlias({"receiptId", "receipt_id"})
     private String receiptId;
 }
