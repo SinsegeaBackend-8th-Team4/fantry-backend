@@ -18,25 +18,24 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.Map;
 
-@Slf4j
+/**
+ * Bootpay 외부 결제 API와 통신하는 서비스 클래스입니다.
+ * <p>
+ * 이 서비스는 Bootpay의 REST API를 WebClient를 통해 호출하며,
+ * 토큰 발급, 결제 조회, 결제 승인, 결제 취소 등의 기능을 제공합니다.
+ * </p>
+ *
+ * @see BootpayReceiptDto
+ * @see BootpayValidator
+ */
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class BootpayService {
     private final BootpayValidator bootpayValidator;
     private final ObjectMapper objectMapper;
-    private final WebClient webClient;
+    private final WebClient bootpayWebClient;
     private final BootpayProperties bootpayProperties;
-
-    public BootpayService(
-            BootpayValidator bootpayValidator,
-            ObjectMapper objectMapper,
-            WebClient bootpayWebClient,
-            BootpayProperties bootpayProperties
-    ) {
-        this.bootpayValidator = bootpayValidator;
-        this.objectMapper = objectMapper;
-        this.webClient = bootpayWebClient;
-        this.bootpayProperties = bootpayProperties;
-    }
 
     /**
      * WebClient를 사용하여 Bootpay API 접근 토큰을 발급받습니다.
@@ -50,7 +49,7 @@ public class BootpayService {
                     "private_key", bootpayProperties.getSecretKey()
             );
 
-            Map<String, Object> response = webClient.post()
+            Map<String, Object> response = bootpayWebClient.post()
                     .uri("/request/token")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(request)
@@ -84,7 +83,7 @@ public class BootpayService {
         try {
             String token = getAccessTokenViaWebClient();
             log.info("토큰 : {}", token);
-            Map<String, Object> response = webClient.get()
+            Map<String, Object> response = bootpayWebClient.get()
                     .uri("/receipt/" + receiptId)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .retrieve()
@@ -119,7 +118,7 @@ public class BootpayService {
 
             Map<String, Object> request = Map.of("receipt_id", receiptId);
 
-            Map<String, Object> response = webClient.post()
+            Map<String, Object> response = bootpayWebClient.post()
                     .uri("/confirm")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -159,7 +158,7 @@ public class BootpayService {
         try {
             String token = getAccessTokenViaWebClient();
             Map<String, Object> request = Map.of("receipt_id", receiptId, "cancel_message", cancelReason, "cancel_username", memberId, "cancel_id", orderId, "cancel_price", cancelPrice);
-            Map<String, Object> response = webClient.post()
+            Map<String, Object> response = bootpayWebClient.post()
                     .uri("/cancel")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -171,7 +170,6 @@ public class BootpayService {
             BootpayReceiptDto dto = objectMapper.convertValue(response, BootpayReceiptDto.class);
             log.info("WebClient 결제 취소 성공. receiptId: {}", receiptId);
             return dto;
-
         } catch (WebClientResponseException e) {
             log.error("Bootpay API 오류. receiptId: {}, status: {}", receiptId, e.getStatusCode(), e);
             throw handleWebClientResponseException(e);
@@ -181,6 +179,15 @@ public class BootpayService {
         }
     }
 
+    /**
+     * WebClient 응답 예외를 Bootpay 커스텀 예외로 변환합니다.
+     * <p>
+     * Bootpay API 오류 응답을 파싱하여 적절한 비즈니스 예외로 변환합니다.
+     * </p>
+     *
+     * @param e WebClient 응답 예외
+     * @return 변환된 BootpayException
+     */
     private BootpayException handleWebClientResponseException(WebClientResponseException e) {
         Map<String, Object> response = e.getResponseBodyAs(new ParameterizedTypeReference<>() {
         });

@@ -1,130 +1,79 @@
 package com.eneifour.fantry.payment.controller;
 
-import com.eneifour.fantry.payment.Constants;
 import com.eneifour.fantry.payment.domain.Payment;
-import com.eneifour.fantry.payment.domain.request.RequestPaymentApprove;
-import com.eneifour.fantry.payment.domain.request.RequestPaymentCancel;
-import com.eneifour.fantry.payment.domain.request.RequestPaymentCreate;
-import com.eneifour.fantry.payment.domain.response.ApiResponse;
-import com.eneifour.fantry.payment.domain.response.ResponseCreatedPayment;
+import com.eneifour.fantry.payment.domain.PaymentStatus;
+import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
+import com.eneifour.fantry.payment.dto.*;
 import com.eneifour.fantry.payment.mapper.PaymentMapper;
 import com.eneifour.fantry.payment.service.PaymentService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
-@Slf4j
 @RestController
+@RequiredArgsConstructor
+@Slf4j
 public class PaymentController {
     private final PaymentService paymentService;
 
-    public PaymentController(PaymentService paymentService) {
-        this.paymentService = paymentService;
-    }
-
-    @GetMapping("/api/payment/history/{userId}/{pageNumber}")
-    public ResponseEntity<List<Payment>> getUserPayments(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable("userId") Integer userId,
-            @PathVariable(value = "pageNumber", required = false) Integer pageNumber
-    ) {
-        int page = 0;
-        if (pageNumber != null && pageNumber > 0) {
-            page = pageNumber - 1;
-        }
-        return null;
-    }
-
-    @GetMapping("/api/payment/history/{pageNumber}")
-    public ResponseEntity<ApiResponse<List<Payment>>> getHistory(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Min(1)
-            @PathVariable(value = "pageNumber") Integer pageNumber,
-            @RequestParam(value = "sort", defaultValue = "DESC") String sort,
-            @Min(1)
-            @Max(100)
-            @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize
-    ) {
-        if (pageNumber < 1) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, "페이지 번호는 1 이상이어야 합니다."));
-        }
-
-        String sortDirection = sort.toUpperCase(Locale.ROOT);
-        if (!Constants.Sort.ASC.equals(sortDirection) && !Constants.Sort.DESC.equals(sortDirection)) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, "정렬 방향은 ASC 또는 DESC만 가능합니다."));
-        }
-
-        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        try {
-            List<Payment> payments = paymentService.getPayment(pageable, Constants.Sort.DESC.equals(sortDirection));
-            if (payments.isEmpty()) {
-                return ResponseEntity.ok(new ApiResponse<>(true, List.of()));
-            } else {
-                return ResponseEntity.ok(new ApiResponse<>(true, payments));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.ok(new ApiResponse<>(false, "서버에 문제가 발생하였습니다."));
-        }
-    }
-
-    @PostMapping("/api/payment/create")
-    public ResponseEntity<ApiResponse<ResponseCreatedPayment>> requestPaymentCreate(
+    @PostMapping("/api/payments")
+    public ResponseEntity<ApiResponse<PaymentResponse>> requestPaymentCreate(
             @Valid
             @RequestBody
             PaymentCreateRequestDto paymentCreateRequestDto
     ) {
         try {
-            Payment createdPayment = paymentService.createPayment(requestPaymentCreate);
-            ResponseCreatedPayment response = PaymentMapper.entityToResponse(createdPayment, ResponseCreatedPayment.class);
+            Payment createdPayment = paymentService.createPayment(paymentCreateRequestDto);
+            PaymentResponse response = PaymentMapper.entityToResponse(createdPayment, PaymentResponse.class);
             return ResponseEntity.ok(new ApiResponse<>(true, response));
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
     }
 
-    @PostMapping("/api/payment/approve")
+    @GetMapping("/api/payments/{orderId}/verify")
+    public ResponseEntity<ApiResponse<Payment>> requestPaymentVerify(
+            @PathVariable("orderId") String orderId
+    ) {
+        Payment payment = paymentService.verifyPayment(orderId);
+        return ResponseEntity.ok(new ApiResponse<>(payment.getStatus() == PaymentStatus.COMPLETE, payment, null));
+    }
+
+    @PostMapping("/api/payments/{orderId}/approve")
     public ResponseEntity<ApiResponse<String>> requestPaymentApprove(
+            @PathVariable("orderId") String orderId,
             @Valid
             @RequestBody
-            RequestPaymentApprove requestPaymentApprove
+            PaymentApproveDto paymentApproveDto
     ) throws Exception {
-        log.info("RequestPaymentApprove : {}", requestPaymentApprove);
-        paymentService.purchaseItem(requestPaymentApprove);
+        log.info("PaymentApproveDto : {}", paymentApproveDto);
+        paymentService.purchaseItem(orderId, paymentApproveDto.getReceiptData());
         return ResponseEntity.ok(new ApiResponse<>(true, "결제가 완료되었습니다.", null));
     }
 
-    @PostMapping("/api/payment/cancel")
-    public ResponseEntity<Void> requestPaymentCancel(
+    @PostMapping("/api/payments/{orderId}/cancel")
+    public ResponseEntity<ApiResponse<PaymentCancelResponseDto>> requestPaymentCancel(
+            @PathVariable("orderId") String orderId,
             @Valid
             @RequestBody
-            RequestPaymentCancel requestPaymentCancel
+            PaymentCancelRequestDto paymentCancelRequestDto
     ) throws Exception {
-        paymentService.cancelPayment(requestPaymentCancel);
-        return null;
+        BootpayReceiptDto dto = paymentService.cancelPayment(orderId,paymentCancelRequestDto);
+        return ResponseEntity.ok(new ApiResponse<>(true, new PaymentCancelResponseDto()));
     }
 
-    @PostMapping("/webhook")
-    public ResponseEntity<String> onReceiveWebhook(
+    @PostMapping("/webhook/bootpay")
+    public ResponseEntity<?> onReceiveWebhook(
             @RequestBody String webhook
     ) throws Exception {
-        log.info(webhook);
-        paymentService.handleWebhook(webhook);
-        return ResponseEntity.ok("{\"success\":true}");
+        paymentService.onBootpayWebhook(webhook);
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
     @ExceptionHandler(value = {MethodArgumentNotValidException.class})

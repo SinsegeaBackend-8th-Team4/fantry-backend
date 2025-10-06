@@ -26,6 +26,7 @@ public class BootpayValidator {
             case RC_CANCEL_CRITICAL_ERROR -> new ConfirmPaymentCancelCriticalException();
             case RC_CONFIRM_FAILED -> new ConfirmPaymentApproveFailedException();
             case RC_CONFIRM_CRITICAL_FAILED -> new ConfirmPaymentApproveCriticalException();
+            case RC_ALREADY_CANCELLED -> new AlreadyCancelledPaymentException();
         };
     }
 }
