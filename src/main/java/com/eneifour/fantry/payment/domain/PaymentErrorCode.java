@@ -55,7 +55,10 @@ public enum PaymentErrorCode {
     TOKEN_ISSUED_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAY022", "토큰 발급에 실패했습니다."),
 
     // 중복 취소 에러 (400)
-    RC_ALREADY_CANCELLED(HttpStatus.BAD_REQUEST, "PAY023", "이미 취소된 결제입니다.");
+    RC_ALREADY_CANCELLED(HttpStatus.BAD_REQUEST, "PAY023", "이미 취소된 결제입니다."),
+
+    // 주문번호 불일치 에러 (400)
+    ORDER_ID_MISMATCH(HttpStatus.BAD_REQUEST, "PAY024", "주문번호가 일치하지 않습니다.");
 
     private final HttpStatus status;
     private final String code;
