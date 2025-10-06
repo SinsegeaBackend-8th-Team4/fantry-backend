@@ -4,7 +4,7 @@ import com.eneifour.fantry.common.util.file.FileMeta;
 import lombok.Builder;
 
 @Builder
-public record FileUploadResponse(
+public record FileUploadResponseDto(
         int filemetaId,
         String originalFileName,
         String storedFileName,
@@ -13,8 +13,8 @@ public record FileUploadResponse(
         String fileType,
         String fileExt
 ) {
-    public static FileUploadResponse from(FileMeta fileMeta, String fileUrl) {
-        return FileUploadResponse.builder()
+    public static FileUploadResponseDto from(FileMeta fileMeta, String fileUrl) {
+        return FileUploadResponseDto.builder()
                 .filemetaId(fileMeta.getFilemetaId())
                 .originalFileName(fileMeta.getOriginalFileName())
                 .storedFileName(fileMeta.getStoredFileName())
