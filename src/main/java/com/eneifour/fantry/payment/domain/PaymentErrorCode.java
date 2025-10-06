@@ -1,4 +1,4 @@
-package com.eneifour.fantry.payment.exception;
+package com.eneifour.fantry.payment.domain;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +52,10 @@ public enum PaymentErrorCode {
     PRODUCT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "PAY021", "판매 불가능한 상품입니다."),
 
     // 토큰 발급 에러 (500)
-    TOKEN_ISSUED_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAY022", "토큰 발급에 실패했습니다.");
+    TOKEN_ISSUED_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAY022", "토큰 발급에 실패했습니다."),
+
+    // 중복 취소 에러 (400)
+    RC_ALREADY_CANCELLED(HttpStatus.BAD_REQUEST, "PAY023", "이미 취소된 결제입니다.");
 
     private final HttpStatus status;
     private final String code;

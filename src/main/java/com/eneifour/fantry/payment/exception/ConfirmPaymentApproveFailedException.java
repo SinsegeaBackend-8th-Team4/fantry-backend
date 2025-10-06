@@ -1,5 +1,7 @@
 package com.eneifour.fantry.payment.exception;
 
+import com.eneifour.fantry.payment.domain.PaymentErrorCode;
+
 public class ConfirmPaymentApproveFailedException extends BootpayException {
     public ConfirmPaymentApproveFailedException() {
         super(PaymentErrorCode.RC_CONFIRM_FAILED);

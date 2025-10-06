@@ -6,6 +6,7 @@ import com.eneifour.fantry.auction.exception.BusinessException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.common.util.file.FileException;
 import com.eneifour.fantry.member.exception.MemberException;
+import com.eneifour.fantry.payment.domain.PaymentErrorCode;
 import com.eneifour.fantry.report.exception.ReportException;
 import com.eneifour.fantry.security.exception.AuthException;
 import com.eneifour.fantry.cs.exception.CsException;

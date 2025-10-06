@@ -1,5 +1,6 @@
 package com.eneifour.fantry.payment.exception;
 
+import com.eneifour.fantry.payment.domain.PaymentErrorCode;
 import lombok.Getter;
 
 @Getter

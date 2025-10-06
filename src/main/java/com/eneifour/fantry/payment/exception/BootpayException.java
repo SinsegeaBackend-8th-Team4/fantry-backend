@@ -1,21 +1,16 @@
 package com.eneifour.fantry.payment.exception;
 
-import lombok.Getter;
+import com.eneifour.fantry.payment.domain.PaymentErrorCode;
 
 /**
- * Payment 예외처리
+ * Bootpay API 관련 예외
  */
-@Getter
-public class BootpayException extends RuntimeException {
-    private final PaymentErrorCode errorCode;
-
+public class BootpayException extends PaymentException {
     public BootpayException(PaymentErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
+        super(errorCode);
     }
 
     public BootpayException(PaymentErrorCode errorCode, Throwable cause) {
-        super(errorCode.getMessage(), cause);
-        this.errorCode = errorCode;
+        super(errorCode, cause);
     }
 }
