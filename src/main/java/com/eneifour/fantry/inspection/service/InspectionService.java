@@ -6,12 +6,15 @@ import com.eneifour.fantry.checklist.repository.ChecklistItemRepository;
 import com.eneifour.fantry.common.util.file.FileMeta;
 import com.eneifour.fantry.common.util.file.FileService;
 import com.eneifour.fantry.inspection.domain.InspectionFile;
+import com.eneifour.fantry.inspection.domain.InspectionStatus;
 import com.eneifour.fantry.inspection.domain.ProductChecklistAnswer;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
+import com.eneifour.fantry.inspection.dto.InspectionListDto;
 import com.eneifour.fantry.inspection.dto.InspectionRequestDto;
 import com.eneifour.fantry.inspection.repository.InspectionFileRepository;
 import com.eneifour.fantry.inspection.repository.InspectionRepository;
 import com.eneifour.fantry.inspection.repository.ProductChecklistAnswerRepository;
+import com.eneifour.fantry.inspection.support.api.InspectionPageResponse;
 import com.eneifour.fantry.inspection.support.exception.BusinessException;
 import com.eneifour.fantry.inspection.support.exception.InspectionErrorCode;
 import com.eneifour.fantry.member.domain.Member;
@@ -21,6 +24,8 @@ import com.eneifour.fantry.member.repository.MemberRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,7 +34,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class InspectionService {
     private final InspectionRepository inspectionRepository;
     private final InspectionFileRepository inspectionFileRepository;
@@ -39,6 +44,14 @@ public class InspectionService {
     private final ProductChecklistAnswerRepository productChecklistAnswerRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * 1차 온라인 검수 신청
+     * @param memberId 작성자
+     * @param requestDto 검수 신청 데이터
+     * @param files 검수 파일 데이터
+     * @return 검수 ID
+     */
+    @Transactional
     public int createInspection(int memberId, InspectionRequestDto requestDto, List<MultipartFile> files) {
         // 파일 유효성 검증
         if (files == null || files.isEmpty()) {
@@ -93,5 +106,17 @@ public class InspectionService {
         
         // 검수 ID 반환
         return savedInspection.getProductInspectionId();
+    }
+
+    /**
+     * 검수 상태 별 페이지 조회
+     * @param status 검수 상태
+     * @param pageable spring 요청 파라미터
+     * @return
+     */
+    public InspectionPageResponse<InspectionListDto> getInspectionsByStatus(InspectionStatus status, Pageable pageable){
+        Page<InspectionListDto> page = inspectionRepository.findAllByInspectionStatus(status, pageable);
+
+        return InspectionPageResponse.fromPage(page);
     }
 }
