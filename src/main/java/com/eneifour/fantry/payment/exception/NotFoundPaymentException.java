@@ -1,18 +1,9 @@
 package com.eneifour.fantry.payment.exception;
 
-public class NotFoundPaymentException extends RuntimeException {
-    public NotFoundPaymentException(Throwable cause) {
-        super(cause);
-    }
+import com.eneifour.fantry.payment.domain.PaymentErrorCode;
 
-    public NotFoundPaymentException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public NotFoundPaymentException(String message) {
-        super(message);
-    }
-
+public class NotFoundPaymentException extends PaymentException {
     public NotFoundPaymentException() {
+        super(PaymentErrorCode.PAYMENT_NOT_FOUND);
     }
 }

@@ -5,10 +5,12 @@ import com.eneifour.fantry.address.exception.AddressException;
 import com.eneifour.fantry.auction.exception.BusinessException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.common.util.file.FileException;
+import com.eneifour.fantry.cs.exception.CsException;
 import com.eneifour.fantry.member.exception.MemberException;
+import com.eneifour.fantry.payment.exception.BootpayException;
+import com.eneifour.fantry.payment.exception.PaymentException;
 import com.eneifour.fantry.report.exception.ReportException;
 import com.eneifour.fantry.security.exception.AuthException;
-import com.eneifour.fantry.cs.exception.CsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -64,7 +66,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ReportException.class)
     public ResponseEntity<ErrorResponse> handleFileException(ReportException ex) {
-        log.error("신고에서 예외 발생: {}",  ex.getReportErrorCode().getMessage());
+        log.error("신고에서 예외 발생: {}", ex.getReportErrorCode().getMessage());
         ErrorResponse response = ErrorResponse.of(
                 ex.getReportErrorCode().getStatus(),
                 ex.getReportErrorCode().getCode(),
@@ -75,7 +77,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AddressException.class)
     public ResponseEntity<ErrorResponse> handleFileException(AddressException ex) {
-        log.error("배송지에서 예외 발생: {}",   ex.getAddressErrorCode().getMessage());
+        log.error("배송지에서 예외 발생: {}", ex.getAddressErrorCode().getMessage());
         ErrorResponse response = ErrorResponse.of(
                 ex.getAddressErrorCode().getStatus(),
                 ex.getAddressErrorCode().getCode(),
@@ -98,6 +100,28 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CsException.class)
     public ResponseEntity<ErrorResponse> handleCsException(CsException ex) {
         log.error("CsException 발생: {}", ex.getErrorCode().getMessage());
+        ErrorResponse response = ErrorResponse.of(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getCode(),
+                ex.getErrorCode().getMessage()
+        );
+        return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
+    }
+
+    @ExceptionHandler(BootpayException.class)
+    public ResponseEntity<ErrorResponse> handleBootpayException(BootpayException ex) {
+        log.error("BootpayException 발생: {}", ex.getMessage(), ex);
+        ErrorResponse response = ErrorResponse.of(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getCode(),
+                ex.getErrorCode().getMessage()
+        );
+        return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
+    }
+
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentException(PaymentException ex) {
+        log.error("PaymentException 발생: {}", ex.getMessage(), ex);
         ErrorResponse response = ErrorResponse.of(
                 ex.getErrorCode().getStatus(),
                 ex.getErrorCode().getCode(),
