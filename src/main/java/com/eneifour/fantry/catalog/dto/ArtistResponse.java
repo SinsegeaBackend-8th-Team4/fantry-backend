@@ -2,9 +2,9 @@ package com.eneifour.fantry.catalog.dto;
 
 import com.eneifour.fantry.catalog.domain.Artist;
 
-public record ArtistDto(int artistId, String nameKo, String nameEn) {
-    public static ArtistDto from(Artist a) {
-        return new ArtistDto(
+public record ArtistResponse(int artistId, String nameKo, String nameEn) {
+    public static ArtistResponse from(Artist a) {
+        return new ArtistResponse(
                 a.getArtistId(),
                 a.getNameKo(),
                 a.getNameEn()

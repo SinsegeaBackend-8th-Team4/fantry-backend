@@ -1,8 +1,12 @@
 package com.eneifour.fantry.checklist.service;
 
+import com.eneifour.fantry.catalog.exception.CatalogErrorCode;
+import com.eneifour.fantry.catalog.repository.GoodsCategoryRepository;
 import com.eneifour.fantry.checklist.domain.PricingRule;
+import com.eneifour.fantry.checklist.exception.ChecklistErrorCode;
 import com.eneifour.fantry.checklist.repository.PriceBaselineRepository;
 import com.eneifour.fantry.checklist.repository.PricingRuleRepository;
+import com.eneifour.fantry.inspection.support.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,6 +16,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 가격(기준가, 예상가, 평균가) 관련 비즈니스 로직을 처리하는 서비스
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -19,55 +26,75 @@ import java.util.Map;
 public class PricingService {
     private final PriceBaselineRepository priceBaselineRepository;
     private final PricingRuleRepository pricingRuleRepository;
+    private final GoodsCategoryRepository goodsCategoryRepository;
 
-    // 카테고리별 최신 기준가 조회
+    /**
+     * 특정 카테고리의 가장 최신 기준가 조회
+     * @param goodsCategoryId 조회할 굿즈 카테고리의 ID
+     * @return 최신 기준가
+     * @throws BusinessException 요청한 카테고리가 없거나, 기준가가 없을 경우 발생
+     */
     public Double getLatestBaselineAmount(int goodsCategoryId) {
-        return priceBaselineRepository.findTopAmount(goodsCategoryId, LocalDateTime.now()).orElse(null);
+        // 카테고리 존재 여부 검증
+        goodsCategoryRepository.findById(goodsCategoryId).orElseThrow(()->new BusinessException(CatalogErrorCode.CATEGORY_NOT_FOUND));
+        // 최신 기준가 조회 및 예외 처리
+        return priceBaselineRepository.findTopAmount(goodsCategoryId, LocalDateTime.now())
+                .orElseThrow(()->new BusinessException(ChecklistErrorCode.BASELINE_NOT_FOUND));
     }
 
-    // 예상가 계산
+    /**
+     * 사용자 체크리스트 선택지 바탕으로 상품의 예상가 계싼
+     * @param goodsCategoryId 예상가를 계산할 굿즈 카테고리 ID
+     * @param selections 사용자가 선택한 체크리스트 항목들
+     * @return 계산된 예상가
+     */
     public double estimate(int goodsCategoryId, Map<String, String> selections) {
-        Double baselineObj = getLatestBaselineAmount(goodsCategoryId);
-        log.debug("baselineObj: {}", baselineObj);
+        // 카테고리 별 최신 기준가 조회
+        Double baseline = priceBaselineRepository.findTopAmount(goodsCategoryId, LocalDateTime.now()).orElse(0.0); // 기준가 없으면 0 반환
+        log.debug("카테고리 '{}'의 기준가: {}", goodsCategoryId, baseline);
         // 기준가 없으면 0 반환
-        if(baselineObj == null) return 0.0;
-        double baseline = baselineObj;
+        if(baseline == 0.0) return 0.0;
 
-        // 룰 조회
+        // 적용 가능한 가격 정책 조회
         List<PricingRule> rules = pricingRuleRepository.findActiveForEstimate(goodsCategoryId, selections.keySet());
 
-        // 사용자가 고른 값과 일치하는 룰 적용
-        List<PricingRule> applied = rules.stream()
-                .filter(r -> {
-                    String v = selections.get(r.getItemKey()); // 사용자 답변
-                    return v != null && v.equals(r.getOptionValue());
+        // 사용자가 고른 값과 일치하는 정책 적용
+        List<PricingRule> appliedRule = rules.stream()
+                .filter(rule -> {
+                    String userAnswer = selections.get(rule.getItemKey()); // 사용자 답변
+                    return userAnswer != null && userAnswer.equals(rule.getOptionValue());
                 }).toList();
 
-        // 퍼센트 적용
-        double pctSum = applied.stream()
+        // 정책 유형별 값 계산
+        // 퍼센트 타입
+        double pctSum = appliedRule.stream()
                 .filter(r->r.getEffectiveType() == PricingRule.EffectiveType.PCT)
                 .mapToDouble(PricingRule::getPctValue)
                 .sum();
 
-        double absSum = applied.stream()
+        // 절대값 타입
+        double absSum = appliedRule.stream()
                 .filter(r -> r.getEffectiveType() == PricingRule.EffectiveType.ABS)
                 .mapToDouble(PricingRule::getAbsValue)
                 .sum();
 
-        double capMul = applied.stream()
+        // 최저가 보장 타입
+        double capMul = appliedRule.stream()
                 .filter(r -> r.getEffectiveType() == PricingRule.EffectiveType.CAP)
                 .mapToDouble(PricingRule::getCapMinMultiplier)
                 .max()
                 .orElse(0.0);
 
-        double price = baseline * (1.0 + pctSum) + absSum;
+        // 최종 예상가 계산 (기준가 * (1 + 퍼센트 합)) + 절대값 합
+        double estimatedPrice = baseline * (1.0 + pctSum) + absSum;
 
         // CAP 있으면 최저가 보정
         if (capMul > 0.0) {
             double floor = baseline * capMul;
-            if (price < floor) price = floor;
+            if (estimatedPrice < floor) estimatedPrice = floor;
         }
 
-        return price;
+        log.debug("최종 계산된 예상가: {}", estimatedPrice);
+        return estimatedPrice;
     }
 }
