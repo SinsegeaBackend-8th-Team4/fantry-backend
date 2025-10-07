@@ -38,7 +38,7 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws IOException, ServletException, AuthException {
 
-        // Security Config에서 permitAll 요청은 해당 필터를 거치지 않으므로 제거하였습니다.
+
         String requestURI = request.getRequestURI();
         AntPathMatcher matcher = new AntPathMatcher();
         for (String pattern : SecurityConstants.PUBLIC_URIS) {
