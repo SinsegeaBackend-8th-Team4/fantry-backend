@@ -1,19 +1,19 @@
 package com.eneifour.fantry.cs.domain;
 
 import com.eneifour.fantry.common.domain.BaseAuditingEntity;
+import com.eneifour.fantry.common.util.file.FileMeta;
 import com.eneifour.fantry.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
-@Builder
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Entity
+@Builder
 @Table(name="faq")
 public class Faq extends BaseAuditingEntity {
     @Id
@@ -24,16 +24,49 @@ public class Faq extends BaseAuditingEntity {
     @JoinColumn(name = "cs_type_id")
     private CsType csType;
 
-    private String question;
+    private String title;
 
-    private String answer;
+    @Lob
+    private String content;
 
     @Enumerated(EnumType.STRING)
     private CsStatus status;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", updatable = false)
+    private Member createdBy;
 
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "updated_by")
+    private Member updatedBy;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "faq", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FaqAttachment> attachments = new ArrayList<>();
+
+    public void update(String title, String content, CsType csType, Member modifier) {
+        this.title = title;
+        this.content = content;
+        this.csType = csType;
+        this.updatedBy = modifier;
+    }
+
+    public void addAttachment(FileMeta fileMeta) {
+        FaqAttachment attachment = FaqAttachment.builder()
+                .faq(this)
+                .filemeta(fileMeta)
+                .build();
+        this.attachments.add(attachment);
+    }
+
+    public void clearAttachments() {
+        this.attachments.clear();
+    }
+
+    /**
+     * FAQ의 상태(공개/비공개 등)를 변경합니다.
+     */
+    public void changeStatus(CsStatus status) {
+        this.status = status;
+    }
 }

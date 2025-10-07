@@ -1,13 +1,13 @@
 package com.eneifour.fantry.cs.service;
 
+import com.eneifour.fantry.common.util.HtmlSanitizer;
 import com.eneifour.fantry.common.util.file.FileMeta;
 import com.eneifour.fantry.common.util.file.FileService;
 import com.eneifour.fantry.cs.domain.CsType;
 import com.eneifour.fantry.cs.domain.Inquiry;
 import com.eneifour.fantry.cs.dto.*;
-import com.eneifour.fantry.cs.exception.CsErrorCode;
+import com.eneifour.fantry.cs.exception.InquiryErrorCode;
 import com.eneifour.fantry.cs.exception.CsException;
-import com.eneifour.fantry.cs.repository.CsAttachmentRepository;
 import com.eneifour.fantry.cs.repository.CsTypeRepository;
 import com.eneifour.fantry.cs.repository.InquiryRepository;
 import com.eneifour.fantry.cs.repository.InquirySpecification;
@@ -34,9 +34,11 @@ public class InquiryService {
     private final InquiryRepository inquiryRepository;
     private final InquirySpecification inquirySpecification;
     private final FileService fileService;
-    private final CsAttachmentRepository csAttachmentRepository;
     private final CsTypeRepository csTypeRepository;
+    // 파일 저장경로
     private final String SUB_DIRECTORY = "cs/inquiry";
+    // XSS 보안 적용을 위해 미리 정의해놓은 객체 주입
+    private final HtmlSanitizer htmlSanitizer;
 
     /**************************
      * 유저 기능
@@ -45,7 +47,7 @@ public class InquiryService {
     // 1:1 문의 작성(유저), Json 형식의 텍스트만 먼저 테이블에 insert
     public InquirySummaryResponse create(InquiryCreateRequest request, Member member) {
         CsType csType = csTypeRepository.findById(request.csTypeId())
-                .orElseThrow(() -> new CsException(CsErrorCode.CSTYPE_NOT_FOUND));
+                .orElseThrow(() -> new CsException(InquiryErrorCode.CSTYPE_NOT_FOUND));
         Inquiry inquiry = request.toEntity(member, csType);
         Inquiry saveInquiry = inquiryRepository.save(inquiry);
 
@@ -55,10 +57,10 @@ public class InquiryService {
     // 1:1 문의 작성(유저), 텍스트 인서트 후 MultipartFile 파일을 인서트
     public void addAttachments(int inquiryId, List<MultipartFile> files, Member member) {
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new CsException(CsErrorCode.INQUIRY_NOT_FOUND));
+                .orElseThrow(() -> new CsException(InquiryErrorCode.INQUIRY_NOT_FOUND));
 
         if(inquiry.getInquiredBy().getMemberId() != member.getMemberId()){
-            throw new CsException(CsErrorCode.ACCESS_DENIED);
+            throw new CsException(InquiryErrorCode.ACCESS_DENIED);
         }
 
         List<FileMeta> savedFileMetas = fileService.uploadFiles(files, SUB_DIRECTORY, member);
@@ -81,7 +83,7 @@ public class InquiryService {
     @Transactional(readOnly = true)
     public InquiryDetailUserResponse getMyInquiry(int inquiryId, Member member) {
         Inquiry inquiry = inquiryRepository.findWithAttachmentsById(inquiryId)
-                .orElseThrow(() -> new CsException(CsErrorCode.INQUIRY_NOT_FOUND));
+                .orElseThrow(() -> new CsException(InquiryErrorCode.INQUIRY_NOT_FOUND));
 
         validateOwnership(inquiry, member);
 
@@ -107,24 +109,31 @@ public class InquiryService {
     @Transactional(readOnly = true)
     public InquiryDetailAdminResponse getInquiryForAdmin(int id) {
         Inquiry inquiry = inquiryRepository.findWithAttachmentsById(id)
-                .orElseThrow(() -> new CsException(CsErrorCode.INQUIRY_NOT_FOUND));
+                .orElseThrow(() -> new CsException(InquiryErrorCode.INQUIRY_NOT_FOUND));
 
         List<String> urls = getAttachmentUrls(inquiry);
 
         return InquiryDetailAdminResponse.from(inquiry, urls);
     }
 
-    // 문의 처리(답변)
+    /**
+     * 관리자가 문의에 답변을 등록/수정합니다.
+     * 외부로부터 받은 HTML 콘텐츠는 XSS 공격 방지를 위해 소독 처리합니다.
+     */
     public InquiryDetailAdminResponse answerInquiry(int inquiryId, InquiryAnswerRequest answerRequest, Member admin) {
         Inquiry inquiry = inquiryRepository.findWithAttachmentsById(inquiryId)
-                .orElseThrow(() -> new CsException(CsErrorCode.INQUIRY_NOT_FOUND));
+                .orElseThrow(() -> new CsException(InquiryErrorCode.INQUIRY_NOT_FOUND));
+
+        // 소독 처리
+        String sanitizedAnswer = htmlSanitizer.sanitize(answerRequest.getAnswerContent());
+        // String sanitizedComment = htmlSanitizer.sanitize(answerRequest.getComment()); // 코멘트는 스마트에디터 확장시를 대비해 주석처리
 
         switch (answerRequest.getReqStatus()) {
-            case ANSWERED -> inquiry.answer(answerRequest.getAnswerContent(), answerRequest.getComment(), admin);
+            case ANSWERED -> inquiry.answer(sanitizedAnswer, answerRequest.getComment(), admin);
             case ON_HOLD -> inquiry.putOnHold(answerRequest.getComment(), admin);
             case IN_PROGRESS -> inquiry.startProgress(answerRequest.getComment(), admin);
             case REJECTED -> inquiry.reject(answerRequest.getComment(), admin);
-            case PENDING -> throw new CsException(CsErrorCode.IMPOSSIBLE_STATUS_CHANGE);
+            case PENDING -> throw new CsException(InquiryErrorCode.IMPOSSIBLE_STATUS_CHANGE);
         }
 
         List<String> urls = getAttachmentUrls(inquiry);
@@ -135,7 +144,7 @@ public class InquiryService {
     // 사용자 검증 헬퍼 메서드
     private void validateOwnership(Inquiry inquiry, Member member) {
         if (inquiry.getInquiredBy().getMemberId() != member.getMemberId()) {
-            throw new CsException(CsErrorCode.ACCESS_DENIED);
+            throw new CsException(InquiryErrorCode.ACCESS_DENIED);
         }
     }
 

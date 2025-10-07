@@ -1,7 +1,7 @@
 package com.eneifour.fantry.cs.domain;
 
 import com.eneifour.fantry.common.util.file.FileMeta;
-import com.eneifour.fantry.cs.exception.CsErrorCode;
+import com.eneifour.fantry.cs.exception.InquiryErrorCode;
 import com.eneifour.fantry.cs.exception.CsException;
 import com.eneifour.fantry.member.domain.Member;
 import jakarta.persistence.*;
@@ -35,6 +35,7 @@ public class Inquiry {
     private Member inquiredBy;
 
     private String title;
+
     private String content;
 
     @CreatedDate
@@ -44,6 +45,7 @@ public class Inquiry {
     @Enumerated(EnumType.STRING)
     private InquiryStatus status;
 
+    @Lob // 해당 필드는 대용략 텍스트임을 명시(스마트에디터)
     private String answerContent;
 
     @LastModifiedDate
@@ -60,7 +62,7 @@ public class Inquiry {
 
     public void answer(String answerContent, String comment, Member admin) {
         if (answerContent == null || answerContent.isBlank()) {
-            throw new CsException(CsErrorCode.ANSWER_CONTENT_IS_REQUIRED);
+            throw new CsException(InquiryErrorCode.ANSWER_CONTENT_IS_REQUIRED);
         }
         this.status = InquiryStatus.ANSWERED;
         this.answerContent = answerContent;
