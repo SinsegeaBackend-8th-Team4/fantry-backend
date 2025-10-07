@@ -12,6 +12,7 @@ import com.eneifour.fantry.member.repository.RoleRepository;
 import com.eneifour.fantry.security.dto.TokenMemberResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.List;
 public class MemberService {
     private final JpaMemberRepository jpaMemberRepository;
     private final RoleRepository roleRepository;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     //토큰으로 회원 찾기
     public TokenMemberResponse findMemberResponseBy(String username) {
@@ -50,6 +52,7 @@ public class MemberService {
         }
         Role role = roleRepository.findById(memberRequest.getRoleId()).orElseThrow(() -> new MemberException(MemberErrorCode.ROLE_NOT_FOUND));
         Member member = memberRequest.toEntity(role);
+        member.setPassword(bCryptPasswordEncoder.encode(memberRequest.getPassword()));
         jpaMemberRepository.save(member);
     }
 
