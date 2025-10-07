@@ -49,7 +49,11 @@ public enum BootpayError {
      * - DNS Resolve Timeout으로 인한 에러
      * - IDC 내 두 Router 간 네트워크 지연으로 인한 에러
      */
-    RC_CONFIRM_CRITICAL_FAILED("RC_CONFIRM_CRITICAL_FAILED");
+    RC_CONFIRM_CRITICAL_FAILED("RC_CONFIRM_CRITICAL_FAILED"),
+    /*이미 취소처리가 된 결제건을 재취소하려고 할때 에러가 발생하는 케이스
+     */
+    RC_ALREADY_CANCELLED("RC_ALREADY_CANCELLED");
+
 
 
     private final String code;

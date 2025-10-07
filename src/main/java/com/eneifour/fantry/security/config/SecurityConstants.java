@@ -13,7 +13,7 @@ public class SecurityConstants {
             "/app/**",
             "/ws-auction/**",
             "/api/file/**",
-            "/api/payment/**",
+            "/api/payments/**",
             "/webhook/**",
             "/static/**"
     };

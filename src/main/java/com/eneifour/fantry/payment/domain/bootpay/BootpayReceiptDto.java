@@ -1,5 +1,6 @@
 package com.eneifour.fantry.payment.domain.bootpay;
 
+import com.eneifour.fantry.payment.domain.Payment;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -69,7 +70,7 @@ public class BootpayReceiptDto {
     @JsonAlias("card_data")
     private CardDataDto cardDataDto;
     @JsonAlias("phone_data")
-    private Map<String,Object> phoneData;
+    private Map<String, Object> phoneData;
     @JsonAlias("bank_data")
     private BankDataDto bankDataDto;
     @JsonAlias("vbank_data")
@@ -84,4 +85,11 @@ public class BootpayReceiptDto {
     private PointDataDto tossPointData;
     @JsonAlias("webhook_type")
     private String webhookType;
+
+    public boolean verify(Payment payment) {
+        return payment.getReceiptId().equals(receiptId)
+                && payment.getOrderId().equals(orderId)
+                && payment.getPrice().equals(price)
+                && payment.getOrderName().equals(orderName);
+    }
 }

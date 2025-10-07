@@ -1,7 +1,13 @@
 package com.eneifour.fantry.payment.exception;
 
-public class PaymentAmountMismatchException extends RuntimeException {
-    public PaymentAmountMismatchException(String message) {
-        super(message);
+import com.eneifour.fantry.payment.domain.PaymentErrorCode;
+
+public class PaymentAmountMismatchException extends PaymentException {
+    public PaymentAmountMismatchException() {
+        super(PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH);
+    }
+
+    public PaymentAmountMismatchException(Throwable cause) {
+        super(PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH, cause);
     }
 }
