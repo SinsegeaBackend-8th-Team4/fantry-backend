@@ -1,5 +1,6 @@
 package com.eneifour.fantry.cs.domain;
 
+import com.eneifour.fantry.common.domain.BaseAuditingEntity;
 import com.eneifour.fantry.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name="faq")
-public class Faq {
+public class Faq extends BaseAuditingEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int faqId;
@@ -29,14 +30,6 @@ public class Faq {
 
     @Enumerated(EnumType.STRING)
     private CsStatus status;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private Member createdBy;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "updated_by")
-    private Member updatedBy;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

@@ -8,22 +8,26 @@ import com.eneifour.fantry.cs.service.InquiryService;
 import com.eneifour.fantry.member.domain.Member;
 
 import com.eneifour.fantry.member.repository.JpaMemberRepository;
+import com.eneifour.fantry.security.dto.CustomUserDetails;
 import com.eneifour.fantry.security.util.SecurityUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/cs/inquiries")
+@RequestMapping("/api/cs/inquiry")
 public class InquiryController {
 
     private final InquiryService inquiryService;
@@ -34,10 +38,11 @@ public class InquiryController {
      */
     @PostMapping
     public ResponseEntity<InquirySummaryResponse> createInquiry(
-            @RequestBody @Valid InquiryCreateRequest request
+            @RequestBody @Valid InquiryCreateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ){
-        String id = SecurityUtil.getUserName();
-        Member member = memberRepository.findById(id);
+        Member member = userDetails.getMember();
+
 
         InquirySummaryResponse response = inquiryService.create(request, member);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -49,11 +54,11 @@ public class InquiryController {
     @PostMapping(value = "/{inquiryId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> addAttachments(
             @PathVariable int inquiryId,
-            @RequestParam ("files") List<MultipartFile> files
-            // @AuthenticationPrincipal UserDetailsImpl userDetails // 실제 연동 시 사용
+            @RequestParam ("files") List<MultipartFile> files,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+
     ){
-        String id = SecurityUtil.getUserName();
-        Member member = memberRepository.findById(id);
+        Member member = userDetails.getMember();
 
         inquiryService.addAttachments(inquiryId, files, member);
         return ResponseEntity.ok().build();
@@ -64,11 +69,11 @@ public class InquiryController {
      */
     @GetMapping
     public ResponseEntity<Page<InquirySummaryResponse>> getMyInquiries(
-            Pageable pageable
-//            @AuthenticationPrincipal UserDetails userDetails
+            Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ){
-        String id = SecurityUtil.getUserName();
-        Member member = memberRepository.findById(id);
+        Member member = userDetails.getMember();
+        log.warn("목록조회요청받음 : " + member);
 
         Page<InquirySummaryResponse> myInquiries = inquiryService.getMyInquiries(member, pageable);
         return ResponseEntity.ok(myInquiries);
@@ -78,9 +83,11 @@ public class InquiryController {
      * 나의 문의 상세 조회
      */
     @GetMapping("/{inquiryId}")
-    public ResponseEntity<InquiryDetailUserResponse> getMyInquiryDetail(@PathVariable int inquiryId) {
-        String id = SecurityUtil.getUserName();
-        Member member = memberRepository.findById(id);
+    public ResponseEntity<InquiryDetailUserResponse> getMyInquiryDetail(
+            @PathVariable int inquiryId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Member member = userDetails.getMember();
 
         InquiryDetailUserResponse response = inquiryService.getMyInquiry(inquiryId, member);
         return ResponseEntity.ok(response);
