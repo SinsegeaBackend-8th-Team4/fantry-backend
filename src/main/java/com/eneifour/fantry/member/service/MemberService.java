@@ -76,6 +76,17 @@ public class MemberService {
         jpaMemberRepository.deleteById(id);
     }
 
+    //회원 삭제하기(플래그 변경)
+    @Transactional
+    public void deactiveateMember(String id) {
+        Member member = jpaMemberRepository.findById(id);
+        if(member == null){
+            throw new MemberException(MemberErrorCode.MEMBER_NOT_FOUND);
+        }
+        member.setIsActive(1);
+        jpaMemberRepository.save(member);
+    }
+
     //한명의 회원의 권한을 수정하기
     @Transactional
     public void updateMemberRole(String id, Role role) throws MemberException {

@@ -66,6 +66,13 @@ public class MemberController {
         return ResponseEntity.ok().body(Map.of("result", "회원이 성공적으로 삭제됨"));
     }
 
+    //회원 삭제하기(플래그 변경)
+    @PutMapping("/{id}/delete")
+    public ResponseEntity<?> deleteMemberById(@PathVariable String id){
+        memberService.deactiveateMember(id);
+        return ResponseEntity.ok().body(Map.of("result", "회원이 성공적으로 비활성화 됨"));
+    }
+
     //회원의 권한을 수정
     @PutMapping("/{id}/role")
     public ResponseEntity<?> updateMemberRole(@PathVariable String id, @RequestBody Role role){
