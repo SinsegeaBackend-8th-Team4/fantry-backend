@@ -8,7 +8,6 @@ public class SecurityConstants {
             "/api/login",
             "/api/reissue",
             "/api/user/**",
-            "/api/type**",
             "/api/send/**",
             "/app/**",
             "/ws-auction/**",
