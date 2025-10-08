@@ -2,6 +2,11 @@ package com.eneifour.fantry.inspection.repository;
 
 import com.eneifour.fantry.inspection.domain.ProductChecklistAnswer;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
+@Repository
 public interface ProductChecklistAnswerRepository extends JpaRepository<ProductChecklistAnswer, Integer> {
+    List<ProductChecklistAnswer> findByProductInspection_ProductInspectionId(int productInspectionId);
 }

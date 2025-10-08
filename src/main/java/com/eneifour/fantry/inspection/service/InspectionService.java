@@ -9,7 +9,9 @@ import com.eneifour.fantry.inspection.domain.InspectionFile;
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
 import com.eneifour.fantry.inspection.domain.ProductChecklistAnswer;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
+import com.eneifour.fantry.inspection.dto.InspectionDetailResponse;
 import com.eneifour.fantry.inspection.dto.InspectionListResponse;
+import com.eneifour.fantry.inspection.dto.InspectionRejectRequest;
 import com.eneifour.fantry.inspection.dto.InspectionRequest;
 import com.eneifour.fantry.inspection.repository.InspectionFileRepository;
 import com.eneifour.fantry.inspection.repository.InspectionRepository;
@@ -30,7 +32,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -117,5 +121,77 @@ public class InspectionService {
     public InspectionPageResponse<InspectionListResponse> getInspectionsByStatuses(List<InspectionStatus> statuses, Pageable pageable){
         Page<InspectionListResponse> page = inspectionRepository.findAllByInspectionStatusIn(statuses, pageable);
         return InspectionPageResponse.fromPage(page);
+    }
+
+    /**
+     * 검수 상세 정보 조회
+     * @param productInspectionId 검수 ID
+     * @return 검수 상세 정보 DTO
+     */
+    public InspectionDetailResponse getInspectionDetail(int productInspectionId){
+        // 1. 기본 상세 정보 조회
+        ProductInspection inspection = findInspectionById(productInspectionId); // 없을 경우 예외 처리
+
+        InspectionDetailResponse response = inspectionRepository.findInspectionDetailById(inspection.getProductInspectionId())
+                .orElseThrow(() -> new BusinessException(InspectionErrorCode.INSPECTION_NOT_FOUND));
+
+        // 2. 파일 목록 조회 및 설정
+        List<InspectionDetailResponse.FileInfo> files = inspectionRepository.findFilesById(productInspectionId);
+        response.setFiles(files);
+
+        // 3. 체크리스트 답변 목록 조회 및 설정
+        List<ProductChecklistAnswer> answers = productChecklistAnswerRepository.findByProductInspection_ProductInspectionId(productInspectionId);
+        List<InspectionDetailResponse.ChecklistAnswerInfo> answerInfos = answers.stream()
+                .map(answer -> InspectionDetailResponse.ChecklistAnswerInfo.builder()
+                        .itemKey(answer.getId().getItemKey())
+                        .itemLabel(answer.getItemLabel())
+                        .answerValue(answer.getAnswerValue())
+                        .build())
+                .collect(Collectors.toList());
+        response.setAnswers(answerInfos);
+
+        return response;
+    }
+
+    /**
+     * 1차 검수 승인
+     */
+    @Transactional
+    public void approveFirstInspection(int productInspectionId){
+        ProductInspection inspection = findInspectionById(productInspectionId);
+
+        // 검수 상태가 SUBMITTED 아닐 경우 예외 처리
+        if (inspection.getInspectionStatus() != InspectionStatus.SUBMITTED) {
+            throw new BusinessException(InspectionErrorCode.NOT_SUBMITTED_STATUS_FOR_FIRST_INSPECTION);
+        }
+
+        inspection.setInspectionStatus(InspectionStatus.FIRST_REVIEWED);
+        inspection.setOnlineInspectedAt(LocalDateTime.now());
+        inspection.setUpdatedAt(LocalDateTime.now());
+    }
+
+    /**
+     * 1차 검수 반려
+     */
+    @Transactional
+    public void rejectFirstInspection(int productInspectionId, InspectionRejectRequest request) {
+        ProductInspection inspection = findInspectionById(productInspectionId);
+
+        // 검수 상태가 SUBMITTED 아닐 경우 예외 처리
+        if (inspection.getInspectionStatus() != InspectionStatus.SUBMITTED) {
+            throw new BusinessException(InspectionErrorCode.NOT_SUBMITTED_STATUS_FOR_FIRST_INSPECTION);
+        }
+
+        inspection.setInspectionStatus(InspectionStatus.FIRST_REJECTED);
+        inspection.setFirstRejectionReason(request.getRejectionReason());
+        inspection.setOnlineInspectedAt(LocalDateTime.now());
+        inspection.setUpdatedAt(LocalDateTime.now());
+    }
+
+    /**
+     * 검수 ID로 검수 조회
+     */
+    private ProductInspection findInspectionById(int productInspectionId){
+        return inspectionRepository.findById(productInspectionId).orElseThrow(() -> new BusinessException(InspectionErrorCode.INSPECTION_NOT_FOUND));
     }
 }
