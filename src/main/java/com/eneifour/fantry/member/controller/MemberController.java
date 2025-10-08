@@ -79,4 +79,11 @@ public class MemberController {
         memberService.updateMemberRole(id, role);
         return ResponseEntity.ok().body(Map.of("result", "회원의 권한이 성공적으로 수정되었습니다."));
     }
+
+    //비밀번호 2차 인증
+    @GetMapping("/{id}/verifyPassword")
+    public ResponseEntity<?> verifyPassword(@PathVariable String id, @RequestParam String password){
+        Boolean result = memberService.verifyPassword(id, password);
+        return ResponseEntity.ok().body(Map.of("result", result));
+    }
 }

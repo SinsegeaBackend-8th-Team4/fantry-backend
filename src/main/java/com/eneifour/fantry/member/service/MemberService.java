@@ -13,6 +13,7 @@ import com.eneifour.fantry.security.dto.TokenMemberResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class MemberService {
     private final JpaMemberRepository jpaMemberRepository;
     private final RoleRepository roleRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     //토큰으로 회원 찾기
     public TokenMemberResponse findMemberResponseBy(String username) {
@@ -95,5 +97,19 @@ public class MemberService {
             throw new MemberException(MemberErrorCode.MEMBER_NOT_FOUND);
         }
         member.setRole(role);
+    }
+
+    //마이페이지 2차 인증을 위한 비밀번호 일치 여부 검증
+    public boolean verifyPassword(String id, String password) throws MemberException {
+        Member member = jpaMemberRepository.findById(id);
+        if(member == null){
+            throw new MemberException(MemberErrorCode.MEMBER_NOT_FOUND);
+        }
+        if(passwordEncoder.matches(password, member.getPassword())){
+            //비밀번호 일치: 2차 인증 성공
+            return true;
+        }else{
+            throw new MemberException(MemberErrorCode.MEMBER_INVALID_PASSWORD);
+        }
     }
 }
