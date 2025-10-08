@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ChecklistItemRepository extends JpaRepository<ChecklistItem, Integer> {
@@ -18,4 +19,6 @@ public interface ChecklistItemRepository extends JpaRepository<ChecklistItem, In
         order by i.orderIndex asc
     """)
     List<ChecklistItem> findByCategoryId(int categoryId);
+
+    Optional<ChecklistItem> findByItemKey(String itemKey);
 }
