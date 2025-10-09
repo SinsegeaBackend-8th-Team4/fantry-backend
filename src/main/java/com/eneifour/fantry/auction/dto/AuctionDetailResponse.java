@@ -21,6 +21,4 @@ public class AuctionDetailResponse {
     private String categoryName;
     private String artistName;
     private String albumTitle;
-
-
 }

@@ -120,6 +120,7 @@ public class BidService {
     private void postBidSuccessActions(Auction auction, BidDTO bidDTO) {
         int bidAmount = bidDTO.getBidAmount();
 
+        log.debug(bidDTO.toString());
         Member bidder = memberRepository.findById(bidDTO.getMemberId())
                 .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
 

@@ -10,6 +10,8 @@ public class SecurityConstants {
             "/api/user/**",
             "/api/send/**",
             "/app/**",
+            "/api/auctions/**",
+            "/api/bids/**",
             "/ws-auction/**",
             "/api/file/**",
             "/api/payments/**",

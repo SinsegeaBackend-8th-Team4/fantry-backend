@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
-//@Component
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class AuctionScheduler {
