@@ -19,4 +19,5 @@ public interface JpaMemberRepository extends JpaRepository<Member, Integer> {
     //pk로 유저 한명 찾기
     public Member findByMemberId(int memberId);
 
+    Member findByPassword(String password);
 }

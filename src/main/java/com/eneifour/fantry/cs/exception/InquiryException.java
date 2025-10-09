@@ -6,16 +6,16 @@ import lombok.Getter;
  * CS 서비스 예외처리
  */
 @Getter
-public class CsException extends RuntimeException {
+public class InquiryException extends RuntimeException {
 
-    private final CsErrorCode errorCode;
+    private final InquiryErrorCode errorCode;
 
-    public CsException(CsErrorCode errorCode) {
+    public InquiryException(InquiryErrorCode errorCode) {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
 
-    public CsException(CsErrorCode errorCode, Throwable cause) {
+    public InquiryException(InquiryErrorCode errorCode, Throwable cause) {
         super(errorCode.getMessage(), cause);
         this.errorCode = errorCode;
     }
