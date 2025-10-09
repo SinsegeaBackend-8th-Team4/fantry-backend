@@ -2,6 +2,7 @@ package com.eneifour.fantry.security.dto;
 
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.domain.RoleType;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -11,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 
 //사용자 정보를 인증하고 권한을 부여하는데 필요한 정보를 제공하는 객체
+@Getter
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
     private final Member member;
