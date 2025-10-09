@@ -2,8 +2,8 @@ package com.eneifour.fantry.inspection.repository;
 
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
-import com.eneifour.fantry.inspection.dto.InspectionDetailResponse;
 import com.eneifour.fantry.inspection.dto.InspectionListResponse;
+import com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -48,12 +48,12 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
      * @return 조회된 검수 상세 정보
      */
     @Query("""
-        select new com.eneifour.fantry.inspection.dto.InspectionDetailResponse(
+        select new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse(
             i.productInspectionId, i.submissionUuid, i.inspectionStatus, i.submittedAt,
             i.itemName, i.itemDescription, i.hashtags,
             gc.name, a.nameKo, al.title,
             i.expectedPrice, i.marketAvgPrice, i.sellerHopePrice,
-            new com.eneifour.fantry.inspection.dto.InspectionDetailResponse$UserInfo(m.name, m.email, m.tel),
+            new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse$UserInfo(m.name, m.email, m.tel),
             i.bankName, i.bankAccount,
             i.shippingAddress, i.shippingAddressDetail,
             i.templateId, i.templateVersion
@@ -63,9 +63,9 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         join GoodsCategory gc on gc.goodsCategoryId = i.goodsCategoryId
         join Artist a on a.artistId = i.artistId
         left join Album al on al.albumId = i.albumId
-        where i.productInspectionId = :id 
+        where i.productInspectionId = :id
         """)
-    Optional<InspectionDetailResponse> findInspectionDetailById(@Param("id") int productInspectionId);
+    Optional<OnlineInspectionDetailResponse> findInspectionDetailById(@Param("id") int productInspectionId);
 
     /**
      * 검수 ID로 검수 파일 정보 목록 조회
@@ -73,7 +73,7 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
      * @return 조회된 파일 정보 DTO 리스트
      */
     @Query("""
-        select new com.eneifour.fantry.inspection.dto.InspectionDetailResponse$FileInfo(
+        select new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse$FileInfo(
             f.inspectionFileId,
             fm.storedFilePath,
             fm.fileType
@@ -82,6 +82,5 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         join f.fileMeta fm
         where f.productInspection.productInspectionId = :id
         """)
-    List<InspectionDetailResponse.FileInfo> findFilesById(@Param("id") int productInspectionId);
-
+    List<OnlineInspectionDetailResponse.FileInfo> findFilesById(@Param("id") int productInspectionId);
 }

@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Getter
 @NoArgsConstructor
-public class InspectionDetailResponse {
+public class OnlineInspectionDetailResponse {
     // ** 기본 정보 **
     private int productInspectionId;
     private String submissionUuid;
@@ -59,7 +59,7 @@ public class InspectionDetailResponse {
 
     // JPQL 프로젝션을 위한 생성자
     @Builder
-    public InspectionDetailResponse(int productInspectionId, String submissionUuid, InspectionStatus inspectionStatus, LocalDateTime submittedAt, String itemName, String itemDescription, String hashtags, String goodsCategoryName, String artistName, String albumTitle, BigDecimal expectedPrice, BigDecimal marketAvgPrice, BigDecimal sellerHopePrice, UserInfo seller, String bankName, String bankAccount, String shippingAddress, String shippingAddressDetail, Integer templateId, Integer templateVersion) {
+    public OnlineInspectionDetailResponse(int productInspectionId, String submissionUuid, InspectionStatus inspectionStatus, LocalDateTime submittedAt, String itemName, String itemDescription, String hashtags, String goodsCategoryName, String artistName, String albumTitle, BigDecimal expectedPrice, BigDecimal marketAvgPrice, BigDecimal sellerHopePrice, UserInfo seller, String bankName, String bankAccount, String shippingAddress, String shippingAddressDetail, Integer templateId, Integer templateVersion) {
         this.productInspectionId = productInspectionId;
         this.submissionUuid = submissionUuid;
         this.inspectionStatus = inspectionStatus;

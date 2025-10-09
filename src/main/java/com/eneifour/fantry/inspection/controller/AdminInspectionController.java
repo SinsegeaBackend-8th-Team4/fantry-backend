@@ -1,9 +1,10 @@
 package com.eneifour.fantry.inspection.controller;
 
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
-import com.eneifour.fantry.inspection.dto.InspectionDetailResponse;
 import com.eneifour.fantry.inspection.dto.InspectionListResponse;
 import com.eneifour.fantry.inspection.dto.InspectionRejectRequest;
+import com.eneifour.fantry.inspection.dto.OfflineInspectionDetailResponse;
+import com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse;
 import com.eneifour.fantry.inspection.service.InspectionService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
 import com.eneifour.fantry.inspection.support.api.InspectionPageResponse;
@@ -45,14 +46,25 @@ public class AdminInspectionController {
     }
 
     /**
-     * 관리자 검수 상세 조회
+     * 관리자 1차 온라인 검수 상세 조회
      * @param productInspectionId 조회할 검수 ID
-     * @return 검수 상세 정보
+     * @return 1차 온라인 검수 상세 정보
      */
-    @GetMapping("/{productInspectionId}")
-    public InspectionApiResponse<InspectionDetailResponse> getInspectionDetail (@PathVariable int productInspectionId) {
-        InspectionDetailResponse inspectionDetail = inspectionService.getInspectionDetail(productInspectionId);
-        return InspectionApiResponse.ok(inspectionDetail);
+    @GetMapping("/online/{productInspectionId}")
+    public InspectionApiResponse<OnlineInspectionDetailResponse> getOnlineInspectionDetail (@PathVariable int productInspectionId) {
+        OnlineInspectionDetailResponse onlineInspectionDetail = inspectionService.getOnlineInspectionDetail(productInspectionId);
+        return InspectionApiResponse.ok(onlineInspectionDetail);
+    }
+
+    /**
+     * 관리자 2차 오프라인 검수 상세 조회
+     * @param productInspectionId 조회할 검수 ID
+     * @return 2차 오프라인 상세 정보
+     */
+    @GetMapping("/offline/{productInspectionId}")
+    public InspectionApiResponse<OfflineInspectionDetailResponse> getOfflineInspectionDetail (@PathVariable int productInspectionId) {
+        OfflineInspectionDetailResponse offlineInspectionDetail = inspectionService.getOfflineInspectionDetail(productInspectionId);
+        return InspectionApiResponse.ok(offlineInspectionDetail);
     }
 
     /**
