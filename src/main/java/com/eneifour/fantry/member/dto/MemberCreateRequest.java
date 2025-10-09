@@ -25,7 +25,7 @@ public class MemberCreateRequest {
         member.setTel(this.tel);
         member.setSns(this.sns);
         member.setRole(role);
-        member.setIsActive(1); // 가입 시 기본 활성 상태
+        member.setIsActive(0); // 가입 시 기본 활성 상태
         return member;
     }
 }

@@ -66,10 +66,24 @@ public class MemberController {
         return ResponseEntity.ok().body(Map.of("result", "회원이 성공적으로 삭제됨"));
     }
 
+    //회원 삭제하기(플래그 변경)
+    @PutMapping("/{id}/delete")
+    public ResponseEntity<?> deleteMemberById(@PathVariable String id){
+        memberService.deactiveateMember(id);
+        return ResponseEntity.ok().body(Map.of("result", "회원이 성공적으로 비활성화 됨"));
+    }
+
     //회원의 권한을 수정
     @PutMapping("/{id}/role")
     public ResponseEntity<?> updateMemberRole(@PathVariable String id, @RequestBody Role role){
         memberService.updateMemberRole(id, role);
         return ResponseEntity.ok().body(Map.of("result", "회원의 권한이 성공적으로 수정되었습니다."));
+    }
+
+    //비밀번호 2차 인증
+    @GetMapping("/{id}/verifyPassword")
+    public ResponseEntity<?> verifyPassword(@PathVariable String id, @RequestParam String password){
+        Boolean result = memberService.verifyPassword(id, password);
+        return ResponseEntity.ok().body(Map.of("result", result));
     }
 }
