@@ -140,10 +140,6 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
         }catch (JwtException e){
             throw new AuthException(AuthErrorCode.TOKEN_INVALID);
         }
-        catch (Exception e){
-            //기타 예외
-            log.error("알 수 없는 인증 에러가 발생했습니다.", e);
-            throw new AuthException(AuthErrorCode.AUTH_UNEXPECTED_ERROR);
-        }
+
     }
 }
