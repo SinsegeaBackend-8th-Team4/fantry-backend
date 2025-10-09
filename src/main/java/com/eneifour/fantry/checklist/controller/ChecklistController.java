@@ -1,6 +1,6 @@
 package com.eneifour.fantry.checklist.controller;
 
-import com.eneifour.fantry.checklist.dto.ChecklistItemResponse;
+import com.eneifour.fantry.checklist.dto.OnlineChecklistResponse;
 import com.eneifour.fantry.checklist.service.ChecklistService;
 import com.eneifour.fantry.checklist.service.PricingService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -23,10 +22,10 @@ public class ChecklistController {
 
     // 카테고리별 체크리스트 목록 조회
     @GetMapping
-    public InspectionApiResponse<List<ChecklistItemResponse>> getChecklistsByCategory(
+    public InspectionApiResponse<OnlineChecklistResponse> getChecklistsByCategory(
             @RequestParam @NotNull @Positive int goodsCategoryId) {
-        List<ChecklistItemResponse> categories = checklistService.getItemsByCategory(goodsCategoryId);
-        return InspectionApiResponse.ok(categories);
+        OnlineChecklistResponse checklistResponse = checklistService.getChecklist(goodsCategoryId);
+        return InspectionApiResponse.ok(checklistResponse);
     }
 
     // 카테고리별 최신 기준가 조회
