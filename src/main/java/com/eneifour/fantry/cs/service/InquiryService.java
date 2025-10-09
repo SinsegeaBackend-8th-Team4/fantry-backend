@@ -48,6 +48,7 @@ public class InquiryService {
     public InquirySummaryResponse create(InquiryCreateRequest request, Member member) {
         CsType csType = csTypeRepository.findById(request.csTypeId())
                 .orElseThrow(() -> new InquiryException(InquiryErrorCode.CSTYPE_NOT_FOUND));
+
         Inquiry inquiry = request.toEntity(member, csType);
         Inquiry saveInquiry = inquiryRepository.save(inquiry);
 
@@ -84,6 +85,7 @@ public class InquiryService {
     public InquiryDetailUserResponse getMyInquiry(int inquiryId, Member member) {
         Inquiry inquiry = inquiryRepository.findWithAttachmentsById(inquiryId)
                 .orElseThrow(() -> new InquiryException(InquiryErrorCode.INQUIRY_NOT_FOUND));
+
 
         validateOwnership(inquiry, member);
 

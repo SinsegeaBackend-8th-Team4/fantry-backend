@@ -8,16 +8,16 @@ import lombok.Setter;
 @Setter
 public class MemberUpdateRequest {
     private String id;
-    private String password;
     private String name;
     private String tel;
     private String email;
+    private int isActive;
 
     public void applyTo(Member member){
         member.setId(this.id);
-        member.setPassword(this.password);
         member.setName(this.name);
         member.setTel(this.tel);
         member.setEmail(this.email);
+        member.setIsActive(this.isActive);
     }
 }

@@ -140,6 +140,5 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
         }catch (JwtException e){
             throw new AuthException(AuthErrorCode.TOKEN_INVALID);
         }
-
     }
 }

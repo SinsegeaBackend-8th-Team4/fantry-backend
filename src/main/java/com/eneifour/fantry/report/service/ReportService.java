@@ -31,6 +31,11 @@ public class ReportService {
         return ReportResponse.fromList(reportRepository.findByMember_MemberId(memberId));
     }
 
+    //구제 신청 상태(RECEIVED)의 신고 내역만 가져오기
+    public List<ReportResponse> getReceivedReports(){
+        return ReportResponse.fromList(reportRepository.findByReportStatus(ReportStatus.RECEIVED));
+    }
+
     //하나의 특정 신고 내역 가져오기
     public ReportResponse getReport(int reportId){
         Report report = reportRepository.findByReportId(reportId);
