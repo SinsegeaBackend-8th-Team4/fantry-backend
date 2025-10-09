@@ -41,6 +41,6 @@ public enum AuthErrorCode {
     AUTH_UNEXPECTED_ERROR(HttpStatus.UNAUTHORIZED, "T499", "인증 에러가 발생했습니다. (기타 예외)");
 
     private final HttpStatus status;
-    private final String message;
     private final String code;
+    private final String message;
 }

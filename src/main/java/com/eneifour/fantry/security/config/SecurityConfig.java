@@ -2,7 +2,7 @@ package com.eneifour.fantry.security.config;
 
 import com.eneifour.fantry.common.config.CorsProperties;
 import com.eneifour.fantry.security.filter.AuthJwtTokenFilter;
-import com.eneifour.fantry.security.model.CustomUserDetailService;
+import com.eneifour.fantry.security.service.CustomUserDetailService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -111,21 +111,5 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration); // 모든 URL에 적용
         return source;
-    }
-
-    /***
-     * 배포 테스용 임시 user
-     * @author 재환
-     */
-    @Bean
-    public UserDetailsService userDetailsService() {
-        // 'user'라는 아이디와 'password'라는 비밀번호를 가진 테스트용 계정을 생성합니다.
-        // {noop}은 비밀번호를 암호화하지 않고 평문으로 사용하겠다는 의미입니다. (개발용)
-        UserDetails user = User.withUsername("user")
-                .password("{noop}password")
-                .roles("USER")
-                .build();
-
-        return new InMemoryUserDetailsManager(user);
     }
 }

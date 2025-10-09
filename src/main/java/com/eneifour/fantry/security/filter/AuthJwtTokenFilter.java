@@ -3,18 +3,21 @@ package com.eneifour.fantry.security.filter;
 import com.eneifour.fantry.security.config.SecurityConstants;
 import com.eneifour.fantry.security.exception.AuthErrorCode;
 import com.eneifour.fantry.security.exception.AuthException;
-import com.eneifour.fantry.security.model.RedisTokenService;
+import com.eneifour.fantry.security.service.CustomUserDetailService;
+import com.eneifour.fantry.security.service.RedisTokenService;
 import com.eneifour.fantry.security.util.JwtUtil;
 import io.jsonwebtoken.*;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -25,25 +28,22 @@ import java.util.List;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor // @author 재환
 public class AuthJwtTokenFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final RedisTokenService redis;
-
-    public AuthJwtTokenFilter(JwtUtil jwtUtil, RedisTokenService redis) {
-        this.jwtUtil = jwtUtil;
-        this.redis = redis;
-    }
+    private final CustomUserDetailService userDetailService; //@author 재환
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws IOException, ServletException, AuthException {
-        //로그인이 필요없은 요청은 이 필터를 건너뛰기
-        String requestURI = request.getRequestURI();
 
+
+        String requestURI = request.getRequestURI();
         AntPathMatcher matcher = new AntPathMatcher();
-        for(String pattern : SecurityConstants.PUBLIC_URIS){
-            if(matcher.match(pattern, requestURI)){
-                filterChain.doFilter(request,response);
+        for (String pattern : SecurityConstants.PUBLIC_URIS) {
+            if (matcher.match(pattern, requestURI)) {
+                filterChain.doFilter(request, response);
                 return;
             }
         }
@@ -51,6 +51,7 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
         try {
             //요청 헤더에서 JWT 추출
             String authorizationHeader = request.getHeader("Authorization");
+
             //넘어온 헤더 값이 정상
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String accessToken = authorizationHeader.substring(7);
@@ -91,11 +92,12 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
                     throw new AuthException(AuthErrorCode.AUTH_VERSION_MISMATCH);
                 }
 
-                //인증 객체
-                String role = claims.get("role", String.class);
-                GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_"+role);
+                UserDetails userDetails = userDetailService.loadUserByUsername(username);
+                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities());
 
-                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username,null, List.of(authority));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             } else {
                 //정상 헤더값이 아님
@@ -140,6 +142,7 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
         }
         catch (Exception e){
             //기타 예외
+            log.error("알 수 없는 인증 에러가 발생했습니다.", e);
             throw new AuthException(AuthErrorCode.AUTH_UNEXPECTED_ERROR);
         }
     }

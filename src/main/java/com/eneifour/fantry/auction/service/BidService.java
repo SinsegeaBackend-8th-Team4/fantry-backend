@@ -2,7 +2,7 @@ package com.eneifour.fantry.auction.service;
 
 import com.eneifour.fantry.auction.exception.*;
 import com.eneifour.fantry.member.domain.Member;
-import com.eneifour.fantry.member.model.JpaMemberRepository;
+import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import com.eneifour.fantry.auction.domain.Auction;
 import com.eneifour.fantry.auction.domain.Bid;
 import com.eneifour.fantry.auction.domain.SaleStatus;

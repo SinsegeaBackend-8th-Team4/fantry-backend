@@ -1,52 +1,61 @@
 package com.eneifour.fantry.payment.service;
 
-import com.eneifour.fantry.payment.annotation.RequireBootpayToken;
-import com.eneifour.fantry.payment.domain.GhostPayment;
-import com.eneifour.fantry.payment.domain.GhostPaymentStatus;
 import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
-import com.eneifour.fantry.payment.domain.bootpay.BootpayStatus;
-import com.eneifour.fantry.payment.domain.request.RequestPaymentApprove;
-import com.eneifour.fantry.payment.domain.request.RequestPaymentCancel;
-import com.eneifour.fantry.payment.domain.request.RequestPaymentCreate;
-import com.eneifour.fantry.payment.exception.*;
+import com.eneifour.fantry.payment.dto.PaymentCancelRequest;
+import com.eneifour.fantry.payment.dto.PaymentCreateRequest;
+import com.eneifour.fantry.payment.exception.ConcurrentPaymentException;
+import com.eneifour.fantry.payment.exception.CreatePaymentFailedException;
+import com.eneifour.fantry.payment.exception.NotFoundPaymentException;
+import com.eneifour.fantry.payment.exception.NotFoundReceiptException;
+import com.eneifour.fantry.payment.exception.OrderIdMismatchException;
 import com.eneifour.fantry.payment.mapper.PaymentMapper;
-import com.eneifour.fantry.payment.repository.GhostPaymentRepository;
 import com.eneifour.fantry.payment.repository.PaymentRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
-@Slf4j
+/**
+ * PaymentService의 구현체입니다.
+ * <p>
+ * 결제 생성, 승인, 취소, 검증 및 Webhook 처리 등의 핵심 비즈니스 로직을 구현합니다.
+ * JPA의 낙관적 락(@Version)을 활용하여 동시성 문제를 제어합니다.
+ * </p>
+ *
+ * @see PaymentService
+ * @see Payment
+ */
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+@Slf4j
 public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
-    private final GhostPaymentRepository ghostPaymentRepository;
+    private final GhostPaymentService ghostPaymentService;
+    private final BootpayWebhookService bootpayWebhookService;
     private final BootpayService bootpayService;
+    private final ObjectMapper objectMapper;
 
-    public PaymentServiceImpl(
-            PaymentRepository paymentRepository,
-            GhostPaymentRepository ghostPaymentRepository,
-            BootpayService bootpayService
-    ) {
-        this.paymentRepository = paymentRepository;
-        this.ghostPaymentRepository = ghostPaymentRepository;
-        this.bootpayService = bootpayService;
-    }
-
+    /**
+     * {@inheritDoc}
+     * <p>
+     * PaymentMapper를 통해 DTO를 엔티티로 변환하고 데이터베이스에 저장합니다.
+     * </p>
+     */
     @Override
     @Transactional
-    public Payment createPayment(RequestPaymentCreate requestPaymentCreate) throws CreatePaymentFailedException {
+    public Payment createPayment(PaymentCreateRequest paymentCreateRequest) throws CreatePaymentFailedException {
         Payment payment;
         try {
-            payment = PaymentMapper.requestToEntity(requestPaymentCreate);
+            payment = PaymentMapper.requestToEntity(paymentCreateRequest);
             paymentRepository.save(payment);
         } catch (NoSuchAlgorithmException e) {
             throw new CreatePaymentFailedException(e);
@@ -54,97 +63,91 @@ public class PaymentServiceImpl implements PaymentService {
         return payment;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public List<Payment> getPayment(Pageable pageable, boolean desanding) {
-        Page<Payment> page;
-        if (desanding) {
-            page = paymentRepository.findAllDesc(pageable);
-        } else {
-            page = paymentRepository.findAllAsc(pageable);
-        }
-        return page.stream().toList();
-    }
-
-    @Override
-    public List<Payment> getPayment(Integer integer, Pageable pageable) {
-        return List.of();
-    }
-
-    @Override
-    @RequireBootpayToken
     public BootpayReceiptDto getPreReceipt(String receiptId) throws Exception {
-        return bootpayService.getReceipt(receiptId);
+        return bootpayService.getReceiptViaWebClient(receiptId);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Webhook 데이터를 파싱하여 webhook_type에 따라 적절한 핸들러 메서드를 호출합니다.
+     * </p>
+     */
     @Override
     @Transactional
-    public void handleWebhook(String webhookData) throws Exception {
-        BootpayReceiptDto result = bootpayService.convertWebhook(webhookData);
-        if (BootpayStatus.fromCode(result.getStatus()) == BootpayStatus.CLOSE_PAYMENT) {
-            Optional<Payment> existedPayment = paymentRepository.findByOrderId(result.getOrderId());
-            Payment payment = PaymentMapper.dtoToEntity(result);
-            existedPayment.ifPresent(p -> {
-                payment.setPaymentId(p.getPaymentId());
-                paymentRepository.save(payment);
-            });
+    public void onBootpayWebhook(String webhookData) throws Exception {
+        Map<String, Object> result = objectMapper.readValue(webhookData, new TypeReference<>() {
+        });
+        BootpayReceiptDto bootpayReceiptDto = objectMapper.convertValue(result, BootpayReceiptDto.class);
+        switch (String.valueOf(result.get("webhook_type"))) {
+            case "PAYMENT_COMPLETED" -> bootpayWebhookService.onPaymentComplete(bootpayReceiptDto);
+            case "PAYMENT_CANCELLED" -> bootpayWebhookService.onPaymentCancelled(bootpayReceiptDto);
+            case "PAYMENT_PARTIAL_CANCELLED" -> bootpayWebhookService.onPaymentPartialCancelled(bootpayReceiptDto);
+            case "PAYMENT_CONFIRM_FAILED" -> bootpayWebhookService.onPaymentConfirmFailed(bootpayReceiptDto);
+            case "PAYMENT_CANCEL_FAILED" -> bootpayWebhookService.onPaymentCancelFailed(bootpayReceiptDto);
+            case "PAYMENT_REQUEST_FAILED" -> bootpayWebhookService.onPaymentRequestFailed(bootpayReceiptDto);
+            case "PAYMENT_EXPIRED" -> bootpayWebhookService.onPaymentExpired(result);
+            default -> bootpayWebhookService.onError(result);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    @RequireBootpayToken
+    public Payment verifyPayment(String orderId) {
+        return paymentRepository.findByOrderId(orderId).orElseThrow(NotFoundPaymentException::new);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * 낙관적 락(@Version)을 사용하여 동시성을 제어합니다.
+     * ObjectOptimisticLockingFailureException 발생 시 유령 결제로 등록합니다.
+     * </p>
+     *
+     * @throws ConcurrentPaymentException 동시성 문제 발생 시
+     */
+    @Override
     @Transactional
-    public void purchaseItem(RequestPaymentApprove requestPaymentApprove) throws Exception {
-        BootpayReceiptDto confirmReceiptResult = null;
+    public void purchaseItem(String orderId, String data) throws JsonProcessingException {
+        BootpayReceiptDto receiptFromClient = objectMapper.readValue(data, BootpayReceiptDto.class);
         try {
-            Optional<Payment> result = paymentRepository.findByOrderId(requestPaymentApprove.getOrderId());
-            Payment payment = result.orElseThrow(() -> new NotFoundPaymentException("거래를 찾을 수 없습니다."));
+            Payment payment = paymentRepository.findByOrderId(receiptFromClient.getOrderId())
+                    .orElseThrow(NotFoundPaymentException::new);
 
-            if (payment.getStatus() != 100) {
-                throw new ProductNotAvailableForSaleException("상품이 판매 가능한 상태가 아닙니다.");
-            }
-
-            String receiptId = requestPaymentApprove.getReceiptId();
-            BootpayReceiptDto preReceiptResult = bootpayService.getReceipt(receiptId);
-            log.info("preReceiptResult : {}", preReceiptResult);
-
-            if (payment.getPrice() - preReceiptResult.getPrice() != 0) {
-                throw new PaymentAmountMismatchException("결제 금액이 상이합니다.");
-            }
-
-            Optional<Payment> checkResult = paymentRepository.findByOrderId(requestPaymentApprove.getOrderId());
-            Payment checkPayment = checkResult.orElseThrow(() -> new NotFoundPaymentException("거래를 찾을 수 없습니다."));
-            if (checkPayment.getStatus() != 100) {
-                throw new ProductNotAvailableForSaleException("상품이 판매 가능한 상태가 아닙니다.");
-            }
-
-            confirmReceiptResult = bootpayService.approve(receiptId);
-            log.info("confirmReceiptResult : {}", confirmReceiptResult);
-
-            Payment paidPayment = PaymentMapper.dtoToEntity(confirmReceiptResult);
-            paidPayment.setPaymentId(payment.getPaymentId());
-            paidPayment.setVersion(payment.getVersion());
-            log.info("receiptPayment : {}", paidPayment);
-            paymentRepository.save(paidPayment);
+            BootpayReceiptDto receiptFromBootpay = bootpayService.getReceiptViaWebClient(receiptFromClient.getReceiptId());
+            bootpayWebhookService.processPaymentVerification(payment, receiptFromBootpay);
         } catch (ObjectOptimisticLockingFailureException e) {
-            GhostPayment ghostPayment = new GhostPayment();
-            ghostPayment.setReceiptId(confirmReceiptResult.getReceiptId());
-            ghostPayment.setStatus(GhostPaymentStatus.CANCEL_RESERVATION);
-            ghostPaymentRepository.save(ghostPayment);
+            ghostPaymentService.createGhostPayment(receiptFromClient.getReceiptId());
+            throw new ConcurrentPaymentException(e);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Bootpay 취소 API를 호출한 후 로컬 데이터베이스의 결제 정보를 업데이트합니다.
+     * </p>
+     */
     @Override
-    @RequireBootpayToken
     @Transactional
-    public void cancelPayment(RequestPaymentCancel requestPaymentCancel) throws Exception {
-        Optional<Payment> resultPayment = paymentRepository.findByReceiptId(requestPaymentCancel.getReceiptId());
-        Payment payment = resultPayment.orElseThrow(() -> new NotFoundReceiptException("거래정보가 존재하지 않습니다."));
-        BootpayReceiptDto resultReceipt = bootpayService.getReceipt(payment.getReceiptId());
-        int availableCancelPrice = resultReceipt.getPrice() - resultReceipt.getCancelledPrice();
-        int requestCancelPrice = Integer.parseInt(requestPaymentCancel.getCancelPrice());
-        if (requestCancelPrice > availableCancelPrice) {
-            throw new CancellableAmountExceededException("요청하신 금액이 취소가능 금액보다 많습니다.");
+    public BootpayReceiptDto cancelPayment(String orderId, PaymentCancelRequest paymentCancelRequest) {
+        Payment payment = paymentRepository.findByReceiptId(paymentCancelRequest.getReceiptId())
+                .orElseThrow(NotFoundReceiptException::new);
+
+        if(!orderId.equals(payment.getOrderId())) {
+            throw new OrderIdMismatchException();
         }
-        bootpayService.cancellation(payment.getReceiptId(), requestPaymentCancel.getCancelReason(), requestPaymentCancel.getAdminId(), resultReceipt.getOrderId(), requestPaymentCancel.getCancelPrice(), requestPaymentCancel.getBankDataDto());
+
+        BootpayReceiptDto resultReceipt = bootpayService.getReceiptViaWebClient(payment.getReceiptId());
+        BootpayReceiptDto cancelResult = bootpayService.cancellationViaWebClient(payment.getReceiptId(), paymentCancelRequest.getCancelReason(), paymentCancelRequest.getMemberId(), resultReceipt.getOrderId(), paymentCancelRequest.getCancelPrice(), paymentCancelRequest.getBankDataDto());
+        PaymentMapper.updateFromDto(payment, cancelResult);
+        paymentRepository.save(payment);
+        return cancelResult;
     }
 }

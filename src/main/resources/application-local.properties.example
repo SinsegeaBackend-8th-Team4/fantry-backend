@@ -40,3 +40,5 @@ file.base-url=http://localhost:8080/static/
 #Bootpay
 config.bootpay.appid=<부트페이 앱 아이디>
 config.bootpay.secretKey=<부트페이 시크릿 키>
+config.bootpay.baseUrl=https://api.bootpay.co.kr/v2
+config.bootpay.timeout-response-millis=30000
