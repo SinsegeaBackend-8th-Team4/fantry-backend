@@ -138,9 +138,5 @@ public class AuthJwtTokenFilter extends OncePerRequestFilter {
         }catch (JwtException e){
             throw new AuthException(AuthErrorCode.TOKEN_INVALID);
         }
-        catch (Exception e){
-            //기타 예외
-            throw new AuthException(AuthErrorCode.AUTH_UNEXPECTED_ERROR);
-        }
     }
 }
