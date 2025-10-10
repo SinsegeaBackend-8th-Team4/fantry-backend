@@ -62,9 +62,9 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         join GoodsCategory gc on gc.goodsCategoryId = i.goodsCategoryId
         join Artist a on a.artistId = i.artistId
         left join Album al on al.albumId = i.albumId
-        where i.productInspectionId = :id
+        where i.productInspectionId = :productInspectionId
         """)
-    Optional<OnlineInspectionDetailResponse> findInspectionDetailById(@Param("id") int productInspectionId);
+    Optional<OnlineInspectionDetailResponse> findInspectionDetailById(@Param("productInspectionId") int productInspectionId);
 
     /**
      * 검수 ID로 검수 파일 정보 목록 조회
@@ -79,7 +79,7 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         )
         from InspectionFile f
         join f.fileMeta fm
-        where f.productInspection.productInspectionId = :id
+        where f.productInspection.productInspectionId = :productInspectionId
         """)
-    List<OnlineInspectionDetailResponse.FileInfo> findFilesById(@Param("id") int productInspectionId);
+    List<OnlineInspectionDetailResponse.FileInfo> findFilesById(@Param("productInspectionId") int productInspectionId);
 }
