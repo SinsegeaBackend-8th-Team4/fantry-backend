@@ -6,8 +6,8 @@ import com.eneifour.fantry.checklist.domain.ChecklistTemplate;
 import java.util.List;
 
 public record OnlineChecklistResponse(
-        int checklistTemplateId,
-        int checklistTemplateVersion,
+        int templateId,
+        int templateVersion,
         List<OnlineChecklistItemResponse> items
 ) {
     public static OnlineChecklistResponse from(ChecklistTemplate template, List<ChecklistItem> items) {
