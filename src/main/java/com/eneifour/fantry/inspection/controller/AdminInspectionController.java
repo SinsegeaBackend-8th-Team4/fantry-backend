@@ -1,10 +1,7 @@
 package com.eneifour.fantry.inspection.controller;
 
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
-import com.eneifour.fantry.inspection.dto.InspectionListResponse;
-import com.eneifour.fantry.inspection.dto.InspectionRejectRequest;
-import com.eneifour.fantry.inspection.dto.OfflineInspectionDetailResponse;
-import com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse;
+import com.eneifour.fantry.inspection.dto.*;
 import com.eneifour.fantry.inspection.service.InspectionService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
 import com.eneifour.fantry.inspection.support.api.InspectionPageResponse;
@@ -39,9 +36,7 @@ public class AdminInspectionController {
             @RequestParam List<InspectionStatus> statuses,
             @PageableDefault(size=20, sort="submittedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        log.debug("statuses={}", statuses);
         InspectionPageResponse<InspectionListResponse> data = inspectionService.getInspectionsByStatuses(statuses, pageable);
-        log.debug("data={}", data);
         return InspectionApiResponse.ok(data);
     }
 
@@ -71,8 +66,11 @@ public class AdminInspectionController {
      * 1차 검수 승인
      */
     @PostMapping("/{productInspectionId}/firstApprove")
-    public InspectionApiResponse<Void> approveFirstInspection (@PathVariable int productInspectionId) {
-        inspectionService.approveFirstInspection(productInspectionId);
+    public InspectionApiResponse<Void> approveFirstInspection (@PathVariable int productInspectionId, @RequestParam int firstInspectorId) {
+        //TODO: 로그인한 관리자 ID
+        firstInspectorId = 2;
+        inspectionService.approveFirstInspection(productInspectionId, firstInspectorId);
+
         return InspectionApiResponse.ok(null);
     }
     
@@ -81,9 +79,37 @@ public class AdminInspectionController {
      */
     @PostMapping("/{productInspectionId}/firstReject")
     public InspectionApiResponse<Void> rejectFirstInspection (
-            @PathVariable int productInspectionId, @RequestBody @Valid InspectionRejectRequest request
+            @PathVariable int productInspectionId,  @RequestParam int firstInspectorId, @RequestBody @Valid InspectionRejectRequest request
     ) {
-        inspectionService.rejectFirstInspection(productInspectionId, request);
+        //TODO: 로그인한 관리자 ID
+        firstInspectorId = 2;
+        inspectionService.rejectFirstInspection(productInspectionId, firstInspectorId, request);
+        return InspectionApiResponse.ok(null);
+    }
+
+    /**
+     * 2차 검수 승인
+     */
+    @PostMapping("/{productInspectionId}/secondApprove")
+    public InspectionApiResponse<Void> approveSecondInspection (
+            @PathVariable int productInspectionId, @RequestParam int secondInspectorId, @RequestBody @Valid OfflineInspectionApproveRequest request
+    ) {
+        //TODO: 로그인한 관리자 ID
+        secondInspectorId = 2;
+        inspectionService.approveSecondInspection(productInspectionId, secondInspectorId, request);
+        return InspectionApiResponse.ok(null);
+    }
+
+    /**
+     * 2차 검수 반려
+     */
+    @PostMapping("/{productInspectionId}/secondReject")
+    public InspectionApiResponse<Void> rejectSecondInspection (
+            @PathVariable int productInspectionId, @RequestParam int secondInspectorId, @RequestBody @Valid OfflineInspectionRejectRequest request
+    ) {
+        //TODO: 로그인한 관리자 ID
+        secondInspectorId = 2;
+        inspectionService.rejectSecondInspection(productInspectionId, secondInspectorId, request);
         return InspectionApiResponse.ok(null);
     }
 }
