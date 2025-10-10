@@ -70,6 +70,10 @@ public class ProductInspection {
     @Enumerated(EnumType.STRING)
     private FinalGrade finalGrade;
 
+    // ** 검수 1/2차 반려 사유 **
+    private String firstRejectionReason;
+    private String secondRejectionReason;
+
     // ** 검수 결과 정보 **
     @Lob
     private String inspectionSummary; // 검수 요약

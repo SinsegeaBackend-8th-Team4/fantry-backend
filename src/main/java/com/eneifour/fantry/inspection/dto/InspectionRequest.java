@@ -18,6 +18,8 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 public class InspectionRequest {
+    private Integer templateId;
+    private Integer templateVersion;
     private Integer goodsCategoryId;
     private Integer artistId;
     private Integer albumId;
@@ -41,6 +43,8 @@ public class InspectionRequest {
     public ProductInspection toEntity(int memberId) {
         return ProductInspection.builder()
                 .memberId(memberId)
+                .templateId(this.templateId)
+                .templateVersion(this.templateVersion)
                 .goodsCategoryId(this.goodsCategoryId)
                 .submissionUuid(UUID.randomUUID().toString())
                 .artistId(this.artistId)
