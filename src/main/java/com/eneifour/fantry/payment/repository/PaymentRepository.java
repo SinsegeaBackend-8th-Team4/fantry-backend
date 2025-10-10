@@ -17,8 +17,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     @Query("SELECT p FROM Payment p ORDER BY COALESCE(p.cancelledAt, p.purchasedAt) ASC")
     Page<Payment> findAllAsc(Pageable pageable);
 
-    Optional<Payment> findPaymentByOrderId(String orderId);
-
     Optional<Payment> findByPaymentId(Integer paymentId);
 
     Optional<Payment> findByReceiptId(String receiptId);
