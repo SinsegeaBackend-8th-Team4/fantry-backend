@@ -6,7 +6,7 @@ import com.eneifour.fantry.cs.domain.InquiryStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record InquiryDetailResponse(
+public record InquiryDetailUserResponse(
         int inquiryId,
         String title,
         String content,
@@ -18,8 +18,8 @@ public record InquiryDetailResponse(
         LocalDateTime answeredAt,
         List<String> attachmentUrls
 ) {
-    public static InquiryDetailResponse from(Inquiry inquiry, List<String> urls) {
-        return new InquiryDetailResponse(
+    public static InquiryDetailUserResponse from(Inquiry inquiry, List<String> urls) {
+        return new InquiryDetailUserResponse(
                 inquiry.getInquiryId(),
                 inquiry.getTitle(),
                 inquiry.getContent(),

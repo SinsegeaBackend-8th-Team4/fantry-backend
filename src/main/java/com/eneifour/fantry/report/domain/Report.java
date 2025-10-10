@@ -26,7 +26,7 @@ public class Report {
     @Enumerated(EnumType.STRING)
     private ReportStatus reportStatus;
 
-    @Column(name = "rejected_comment")
+    @Column(name = "rejection_comment")
     private String rejectedComment;
 
     @ManyToOne(fetch = FetchType.EAGER)

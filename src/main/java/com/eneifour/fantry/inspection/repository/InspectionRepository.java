@@ -4,11 +4,11 @@ import com.eneifour.fantry.inspection.domain.InspectionStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import com.eneifour.fantry.inspection.dto.InspectionListResponse;
 import com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse;
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -40,7 +40,6 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         where i.inspectionStatus IN :statuses
         """)
     Page<InspectionListResponse> findAllByInspectionStatusIn(@Param("statuses") List<InspectionStatus> statuses, Pageable pageable);
-
 
     /**
      * 검수 ID로 검수 상세 정보 조회 (파일 제외)
