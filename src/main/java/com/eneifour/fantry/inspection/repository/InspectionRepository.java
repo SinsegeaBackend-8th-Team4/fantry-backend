@@ -52,16 +52,19 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
             i.itemName, i.itemDescription, i.hashtags,
             gc.name, a.nameKo, al.title,
             i.expectedPrice, i.marketAvgPrice, i.sellerHopePrice,
-            new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse$UserInfo(m.name, m.email, m.tel),
+            new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse$UserInfo(m.memberId, m.name, m.email, m.tel),
             i.bankName, i.bankAccount,
             i.shippingAddress, i.shippingAddressDetail,
-            i.templateId, i.templateVersion
+            i.templateId, i.templateVersion,
+            new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse$UserInfo(insp.memberId, insp.name, insp.email, insp.tel),
+            i.firstRejectionReason
         )
         from ProductInspection i
         join Member m on m.memberId = i.memberId
         join GoodsCategory gc on gc.goodsCategoryId = i.goodsCategoryId
         join Artist a on a.artistId = i.artistId
         left join Album al on al.albumId = i.albumId
+        left join Member insp on insp.memberId = i.firstInspectorId
         where i.productInspectionId = :productInspectionId
         """)
     Optional<OnlineInspectionDetailResponse> findInspectionDetailById(@Param("productInspectionId") int productInspectionId);
