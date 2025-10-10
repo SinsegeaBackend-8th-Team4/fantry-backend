@@ -30,6 +30,13 @@ public class ReportController {
         return ResponseEntity.ok().body(Map.of("reportList",  myReportList));
     }
 
+    //구제 신청 상태의 모든 신고 내역 가져오기
+    @GetMapping("/received")
+    public ResponseEntity<?> getReceivedReports() {
+        List<ReportResponse> myReportList = reportService.getReceivedReports();
+        return ResponseEntity.ok().body(Map.of("reportList",  myReportList));
+    }
+
     //하나의 신고 내역 가져오기
     @GetMapping("/{reportId}")
     public ResponseEntity<?> getReport(@PathVariable int reportId) {
