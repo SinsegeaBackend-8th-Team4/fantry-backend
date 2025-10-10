@@ -36,7 +36,9 @@ public class AdminInspectionController {
             @RequestParam List<InspectionStatus> statuses,
             @PageableDefault(size=20, sort="submittedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
+        log.debug("statuses={}", statuses);
         InspectionPageResponse<InspectionListResponse> data = inspectionService.getInspectionsByStatuses(statuses, pageable);
+        log.debug("data={}", data);
         return InspectionApiResponse.ok(data);
     }
 
