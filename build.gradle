@@ -34,6 +34,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-mysql'
+    /* Swagger (OpenAPI 3.0) 적용을 위한 의존성 추가*/
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+    implementation 'com.github.therapi:therapi-runtime-javadoc:0.15.0'
+    annotationProcessor 'com.github.therapi:therapi-runtime-javadoc-scribe:0.15.0'
 
     /* Jackson JSR310 for LocalDateTime support */
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
