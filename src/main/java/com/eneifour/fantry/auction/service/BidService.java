@@ -18,6 +18,7 @@ import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +59,10 @@ public class BidService {
                 .orElseThrow(() -> new AuctionException(ErrorCode.AUCTION_NOT_FOUND));
         if (auction.getSaleStatus() != SaleStatus.ACTIVE) {
             throw new AuctionException(ErrorCode.AUCTION_NOT_ACTIVE);
+        }
+
+        if (LocalDateTime.now().isAfter(auction.getEndTime())) {
+            throw new AuctionException(ErrorCode.AUCTION_NOT_ACTIVE); // 2차 방어
         }
 
         validateBidBasics(bidDTO.getBidAmount());
