@@ -45,10 +45,13 @@ public class OnlineInspectionDetailResponse {
     private String shippingAddress;
     private String shippingAddressDetail;
 
+    // ** 검수자 정보 **
+    private UserInfo firstInspector;
+
     // ** 첨부 파일 정보 **
     @Setter
     private List<FileInfo> files;
-
+    
     // ** 체크리스트 답변 정보 **
     @Setter
     private List<ChecklistAnswerInfo> answers;
@@ -57,9 +60,12 @@ public class OnlineInspectionDetailResponse {
     private Integer templateId;
     private Integer templateVersion;
 
+    // ** 1차 반려 사유 필드 **
+    private String firstRejectionReason;
+    
     // JPQL 프로젝션을 위한 생성자
     @Builder
-    public OnlineInspectionDetailResponse(int productInspectionId, String submissionUuid, InspectionStatus inspectionStatus, LocalDateTime submittedAt, String itemName, String itemDescription, String hashtags, String goodsCategoryName, String artistName, String albumTitle, BigDecimal expectedPrice, BigDecimal marketAvgPrice, BigDecimal sellerHopePrice, UserInfo seller, String bankName, String bankAccount, String shippingAddress, String shippingAddressDetail, Integer templateId, Integer templateVersion) {
+    public OnlineInspectionDetailResponse(int productInspectionId, String submissionUuid, InspectionStatus inspectionStatus, LocalDateTime submittedAt, String itemName, String itemDescription, String hashtags, String goodsCategoryName, String artistName, String albumTitle, BigDecimal expectedPrice, BigDecimal marketAvgPrice, BigDecimal sellerHopePrice, UserInfo seller, String bankName, String bankAccount, String shippingAddress, String shippingAddressDetail, Integer templateId, Integer templateVersion, UserInfo firstInspector, String firstRejectionReason) {
         this.productInspectionId = productInspectionId;
         this.submissionUuid = submissionUuid;
         this.inspectionStatus = inspectionStatus;
@@ -80,6 +86,8 @@ public class OnlineInspectionDetailResponse {
         this.shippingAddressDetail = shippingAddressDetail;
         this.templateId = templateId;
         this.templateVersion = templateVersion;
+        this.firstInspector = firstInspector;
+        this.firstRejectionReason = firstRejectionReason;
     }
 
     // 파일 정보
@@ -117,11 +125,13 @@ public class OnlineInspectionDetailResponse {
     @Getter
     @NoArgsConstructor
     public static class UserInfo {
+        private Integer id;
         private String name;
         private String email;
         private String tel;
 
-        public UserInfo(String name, String email, String tel) {
+        public UserInfo(Integer id, String name, String email, String tel) {
+            this.id = id;
             this.name = name;
             this.email = email;
             this.tel = tel;
