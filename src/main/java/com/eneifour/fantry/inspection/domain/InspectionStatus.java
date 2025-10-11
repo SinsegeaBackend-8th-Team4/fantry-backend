@@ -5,12 +5,19 @@ import lombok.Getter;
 @Getter
 public enum InspectionStatus {
     DRAFT("작성 중"),
-    SUBMITTED("1차 제출"),
-    FIRST_REVIEWED("1차 승인"),
-    FIRST_REJECTED("1차 반려"),
-    OFFLINE_INSPECTING("2차 검수 중"),
-    SECOND_REJECTED("2차 반려"),
-    COMPLETED("검수 완료");
+    SUBMITTED("온라인 검수 제출"),
+
+    // 1차(온라인) 검수 결과
+    ONLINE_APPROVED("온라인 검수 승인"),
+    ONLINE_REJECTED("온라인 검수 반려"),
+
+    // 2차(오프라인) 검수 과정
+    OFFLINE_INSPECTING("오프라인 검수 중"),
+
+    // 2차(오프라인) 검수 결과
+    OFFLINE_REJECTED("오프라인 검수 반려"),
+
+    COMPLETED("검수 완료"); // 최종 완료
 
     private final String label;
 
