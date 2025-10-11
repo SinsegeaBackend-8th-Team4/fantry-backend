@@ -36,39 +36,8 @@ public class AuctionScheduler {
     private final BlockingQueue<Bid> bidLogQueue;
     private final OrdersRepository ordersRepository;
     private final MemberRepository memberRepository;
+    private final BidScheduler bidScheduler;
 
-    //입찰 시도시 Bid -> In-Memory Queue 저장 스케쥴러 로직
-    // fixedDelay: 이전 작업이 끝난 시점으로부터 2000ms(2초) 후에 다시 실행
-    @Scheduled(fixedDelay = 2000)
-    @Transactional
-    public void flushBidLogToDB() {
-        // 1. 큐가 비어있으면 아무 작업도 하지 않고 즉시 종료 (불필요한 DB 접근 방지)
-        if (bidLogQueue.isEmpty()) {
-            return;
-        }
-
-        // 2. 큐에 현재 쌓여있는 모든 데이터를 리스트로 한번에 옮겨 담기.
-        // drainTo는 원자적으로 동작하여 안전함.
-        List<Bid> bidsToSave = new ArrayList<>();
-        bidLogQueue.drainTo(bidsToSave);
-
-        // 3. 옮겨 담은 데이터가 있을 경우에만 DB에 저장
-        if (!bidsToSave.isEmpty()) {
-            try {
-                log.info("Attempting to save {} bid logs to DB in a batch.", bidsToSave.size());
-
-                // 4. JPA의 saveAll을 사용하여 배치 INSERT 실행
-                // application.properties의 batch_size 설정 필수.
-                bidRepository.saveAll(bidsToSave);
-
-                log.info("Successfully saved {} bid logs.", bidsToSave.size());
-            } catch (Exception e) {
-                log.error("Failed to save bid logs to DB. Batch size: {}. Error: {}", bidsToSave.size(), e.getMessage());
-                // [고려사항] 실패 시 이 데이터를 어떻게 처리할지 정책결정
-                // (예: 다시 큐에 넣기, 파일로 로깅하기 등)
-            }
-        }
-    }
 
     /**
      * 1분마다 실행하여 마감 시간이 지난 경매를 찾아 처리합니다.
@@ -76,6 +45,10 @@ public class AuctionScheduler {
     @Scheduled(fixedRate = 60000) // 60000ms = 1분
     public void closeEndedAuctions() {
         log.debug("Checking for ended auctions...");
+
+        // 낙찰자를 결정하기 전에, In-Memory Queue에 남아있는 모든 입찰 기록을
+        // DB에 즉시 동기화하여 데이터 정합성을 보장합니다.
+        bidScheduler.flushBidLogToDB();
 
         // 페이징 처리를 위한 Pageable 객체 생성 (한 번에 100건씩 처리)
         Pageable pageable = PageRequest.of(0, 100);
@@ -92,7 +65,7 @@ public class AuctionScheduler {
 
             if (endedAuctionsPage.isEmpty()) {
                 log.debug("No auctions have ended in this batch.");
-                return;
+                break;
             }
 
             log.info("Found {} auctions to close.", endedAuctionsPage.getNumberOfElements());
@@ -133,7 +106,7 @@ public class AuctionScheduler {
                     .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
 
             // 1-2. 경매 상태를 '완료'로 변경하고 최종 낙찰가 기록
-            auction.closeAsSold(winningBid.getBidAmount());
+            auction.closeAsSold(finalPrice);
 
             // 1-3. 새로운 주문(Orders) 생성
             Orders newOrder = Orders.builder()

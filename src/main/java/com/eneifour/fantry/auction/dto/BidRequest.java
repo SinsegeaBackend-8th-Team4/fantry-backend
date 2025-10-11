@@ -1,13 +1,13 @@
 package com.eneifour.fantry.auction.dto;
 
 import lombok.Data;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@Data
-public class BidDTO {
+@Getter
+public class BidRequest {
     private int memberId;
     private int bidAmount;
     private LocalDateTime bidAt;
-
 }
