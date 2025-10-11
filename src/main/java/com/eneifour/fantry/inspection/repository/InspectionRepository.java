@@ -12,12 +12,60 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface InspectionRepository extends JpaRepository<ProductInspection, Integer> {
-    // 검수상태에 따른 검수 페이지 조회
+    /**
+     * 카테고리, 아티스트, 앨범(선택)을 기준으로 완료된 검수 상품의 평균 매입가 조회
+     * @param goodsCategoryId 카테고리 ID
+     * @param artistId 아티스트 ID
+     * @param albumId 앨범 ID (null 가능)
+     * @param completed 검수상태 COMPLETED
+     * @return 평균가
+     */
+    @Query("""
+        select AVG(i.finalBuyPrice)
+        from ProductInspection i
+        where i.inspectionStatus = :completed
+        and i.goodsCategoryId = :goodsCategoryId
+        and i.artistId = :artistId
+        and (:albumId IS NULL OR i.albumId = :albumId)
+    """)
+    Optional<BigDecimal> getMarketAvgPrice(
+        @Param("goodsCategoryId") int goodsCategoryId, @Param("artistId")int artistId, @Param("albumId") Integer albumId, @Param("completed") InspectionStatus completed
+    );
+
+
+    /**
+     * 시세 조회에 사용된 데이터 건수 조회
+     *
+     * @param goodsCategoryId 카테고리 ID
+     * @param artistId        아티스트 ID
+     * @param albumId         앨범 ID (null 가능)
+     * @param completed       검수상태 COMPLETED
+     * @return 데이터 건수
+     */
+    @Query("""
+    select count(*)
+    from ProductInspection i
+    where i.inspectionStatus = :completed
+    and i.goodsCategoryId = :goodsCategoryId
+    and i.artistId = :artistId
+    and (:albumId IS NULL OR i.albumId = :albumId)
+    """)
+    int countForMarketPrice(
+        @Param("goodsCategoryId") int goodsCategoryId, @Param("artistId")int artistId, @Param("albumId") Integer albumId, @Param("completed") InspectionStatus completed
+    );
+
+    /**
+     * 검수 상태로 검수 리스트 조회
+     * @param statuses 검수 상태 리스트
+     * @param pageable 페이지 정보
+     * @return 검수 리스트
+     */
     @Query(value = """
         select new com.eneifour.fantry.inspection.dto.InspectionListResponse(
             i.productInspectionId,
