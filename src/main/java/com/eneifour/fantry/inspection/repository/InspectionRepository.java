@@ -3,6 +3,7 @@ package com.eneifour.fantry.inspection.repository;
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import com.eneifour.fantry.inspection.dto.InspectionListResponse;
+import com.eneifour.fantry.inspection.dto.MyInspectionResponse;
 import com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
@@ -85,4 +86,23 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         where f.productInspection.productInspectionId = :productInspectionId
         """)
     List<OnlineInspectionDetailResponse.FileInfo> findFilesById(@Param("productInspectionId") int productInspectionId);
+
+    /**
+     * 특정 회원 검수 신청 목록 조회
+     * @param memberId 회원 ID
+     * @return 해당 회원 검수 현황 리스트
+     */
+    @Query("""
+        SELECT new com.eneifour.fantry.inspection.dto.MyInspectionResponse(
+            i.productInspectionId, i.itemName,
+            gc.name, a.nameKo, i.sellerHopePrice,
+            i.inspectionStatus, i.submittedAt
+        )
+        FROM ProductInspection i
+        JOIN GoodsCategory gc ON gc.goodsCategoryId = i.goodsCategoryId
+        JOIN Artist a ON a.artistId = i.artistId
+        WHERE i.memberId = :memberId
+        ORDER BY i.submittedAt DESC
+    """)
+    List<MyInspectionResponse> findMyInspectionsByMemberId(@Param("memberId") int memberId);
 }
