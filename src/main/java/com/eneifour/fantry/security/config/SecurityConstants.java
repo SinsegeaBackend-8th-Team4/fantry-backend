@@ -16,6 +16,11 @@ public class SecurityConstants {
             "/api/file/**",
             "/api/payments/**",
             "/webhook/**",
-            "/static/**"
+            "/static/**",
+            // Swagger 관련 경로
+            "/api-docs/**",         // 사용자가 접속하는 단축 주소 (리다이렉트 시작점)
+            "/swagger-ui/**",       // 리다이렉트된 후 실제 UI 리소스(html, css, js)가 있는 주소
+            "/v3/api-docs/**",      // API 명세(JSON)를 불러오는 주소
+            "/swagger-resources/**"
     };
 }
