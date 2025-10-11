@@ -42,3 +42,16 @@ config.bootpay.appid=<부트페이 앱 아이디>
 config.bootpay.secretKey=<부트페이 시크릿 키>
 config.bootpay.baseUrl=https://api.bootpay.co.kr/v2
 config.bootpay.timeout-response-millis=30000
+
+
+# --- Swagger UI Settings for Local ---
+# 로컬 개발 환경에서는 API 테스트를 위해 Swagger UI를 항상 활성화합니다.
+springdoc.swagger-ui.enabled=true
+springdoc.swagger-ui.path=/api-docs
+springdoc.api-docs.path=/v3/api-docs
+springdoc.paths-to-match=/api/**
+
+# API 문서 정보
+info.title=Fantry API Documentation (LOCAL)
+info.description=내 PC의 로컬 개발 환경 API 명세서입니다.
+info.version=v0.0.1-local
