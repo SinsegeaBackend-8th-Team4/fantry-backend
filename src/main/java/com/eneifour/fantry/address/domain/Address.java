@@ -47,4 +47,9 @@ public class Address {
         this.isDefault = isDefault;
         this.member = member;
     }
+
+    //기본 배송지 선택
+    public void setIsDefault(char isDefault) {
+        this.isDefault = isDefault;
+    }
 }

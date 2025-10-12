@@ -91,4 +91,18 @@ public class AddressService {
         }
         addressRepository.deleteById(addressId);
     }
+
+    //기본 배송지 선택하기
+    @Transactional
+    public void setDetaultAddress(int memberId, int addressId){
+        List<Address> addresses = addressRepository.findByMember_MemberId(memberId);
+        for(Address address : addresses) {
+            if(address.getAddressId() == addressId) {
+                address.setIsDefault('1');
+            } else{
+                address.setIsDefault('0');
+            }
+        }
+        addressRepository.saveAll(addresses);
+    }
 }
