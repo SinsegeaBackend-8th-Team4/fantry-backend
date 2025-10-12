@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ProductChecklistAnswerRepository extends JpaRepository<ProductChecklistAnswer, Integer> {
+public interface ProductChecklistAnswerRepository extends JpaRepository<ProductChecklistAnswer, ProductChecklistAnswer.Id> {
     List<ProductChecklistAnswer> findByProductInspection_ProductInspectionIdAndId_ChecklistRole(
             int productInspectionId,
             ChecklistTemplate.Role role

@@ -21,6 +21,7 @@ public enum InspectionErrorCode implements BaseErrorCode {
     // --- 1차 검수 관련 ---
     NOT_SUBMITTED_STATUS_FOR_FIRST_INSPECTION(HttpStatus.BAD_REQUEST, "INS010", "1차 검수는 '제출(SUBMITTED)' 상태에서만 처리할 수 있습니다."),
     ALREADY_PROCESSED_FIRST_INSPECTION(HttpStatus.BAD_REQUEST, "INS011", "이미 1차 검수가 완료된 신청 건입니다."),
+    CANNOT_START_OFFLINE_INSPECTION(HttpStatus.BAD_REQUEST, "INS012", "상품 발송 확인 '온라인 검수 승인(ONLINE_APPROVED)' 상태에서만 처리할 수 있습니다."),
 
     // --- 2차 검수 관련 ---
     NOT_FIRST_REVIEWED_STATUS_FOR_SECOND_INSPECTION(HttpStatus.BAD_REQUEST, "INS012", "2차 검수는 '검수 중(OFFLINE_INSPECTING)' 상태에서만 처리할 수 있습니다."),

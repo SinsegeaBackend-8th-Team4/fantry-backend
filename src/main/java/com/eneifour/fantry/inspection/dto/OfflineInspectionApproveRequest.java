@@ -22,6 +22,9 @@ public class OfflineInspectionApproveRequest {
     @Positive(message = "최종 매입가는 0보다 커야 합니다.")
     private BigDecimal finalBuyPrice;
 
+    private BigDecimal expectedPrice;
+    private BigDecimal marketAvgPrice;
+
     private String priceDeductionReason;
 
     @Getter
@@ -30,5 +33,6 @@ public class OfflineInspectionApproveRequest {
     public static class InspectorAnswerDto {
         private String itemKey;
         private String answerValue;
+        private String note;
     }
 }

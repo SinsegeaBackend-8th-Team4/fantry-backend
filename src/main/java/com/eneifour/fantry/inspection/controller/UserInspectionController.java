@@ -48,4 +48,18 @@ public class UserInspectionController {
         List<MyInspectionResponse> myInspections = inspectionService.getMyInspections(member.getMemberId());
         return InspectionApiResponse.ok(myInspections);
     }
+
+    /**
+     * 1차 승인된 상품의 발송을 확인하고, 2차 검수 상태 변경
+     * @param productInspectionId 상태를 변경할 검수 ID
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @return 성공 응답
+     */
+    @PostMapping("/{productInspectionId}/start-offline")
+    public InspectionApiResponse<Void> startOffline(@PathVariable int productInspectionId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Member member = userDetails.getMember();
+        inspectionService.startOfflineInspection(productInspectionId, member.getMemberId());
+
+        return InspectionApiResponse.ok(null);
+    }
 }

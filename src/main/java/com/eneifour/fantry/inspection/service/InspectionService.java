@@ -3,6 +3,7 @@ package com.eneifour.fantry.inspection.service;
 import com.eneifour.fantry.checklist.domain.ChecklistItem;
 import com.eneifour.fantry.checklist.domain.ChecklistTemplate;
 import com.eneifour.fantry.checklist.dto.OfflineChecklistItemResponse;
+import com.eneifour.fantry.checklist.dto.OnlineChecklistItemResponse;
 import com.eneifour.fantry.checklist.repository.ChecklistItemRepository;
 import com.eneifour.fantry.checklist.repository.ProductChecklistAnswerRepository;
 import com.eneifour.fantry.common.util.file.FileMeta;
@@ -86,6 +87,7 @@ public class InspectionService {
                         .productInspection(inspection)
                         .itemLabel(label)
                         .answerValue(jsonAnswerValue)
+                        .note(dto.getNote())
                         .build();
                 productChecklistAnswerRepository.save(answer);
             });
@@ -226,15 +228,16 @@ public class InspectionService {
         // 3. 검수자 체크리스트 답변 조회 및 매핑
         List<ProductChecklistAnswer> inspectorAnswers = productChecklistAnswerRepository.findByProductInspection_ProductInspectionIdAndId_ChecklistRole(productInspectionId, ChecklistTemplate.Role.INSPECTOR);
         Map<String, String> inspectorAnswerMap = inspectorAnswers.stream().collect(Collectors.toMap(a -> a.getId().getItemKey(), ProductChecklistAnswer::getAnswerValue));
+        Map<String, String> inspectorNoteMap = inspectorAnswers.stream().filter(a -> a.getNote() != null).collect(Collectors.toMap(a -> a.getId().getItemKey(), ProductChecklistAnswer::getNote));
+
         // 4. 체크리스트 모든 항목 조회
         List<ChecklistItem> items = checklistItemRepository.findByTemplateIdAndCategoryId(inspection.getTemplateId(), inspection.getGoodsCategoryId());
         // 5. 판매자/검수자 답변 병합
         List<OfflineChecklistItemResponse> checklist = items.stream().map(item -> OfflineChecklistItemResponse.builder()
-                        .itemKey(item.getItemKey())
-                        .itemLabel(item.getLabel())
+                        .checklistItem(OnlineChecklistItemResponse.from(item))
                         .sellerAnswer(sellerAnswerMap.get(item.getItemKey()))
                         .inspectorAnswer(inspectorAnswerMap.get(item.getItemKey()))
-                        .note(null)
+                        .note(inspectorNoteMap.get(item.getItemKey()))
                         .build()).toList();
         // 6. 응답 DTO 조립 및 반환
         return OfflineInspectionDetailResponse.builder()
@@ -261,6 +264,8 @@ public class InspectionService {
         inspection.setSecondInspectorId(secondInspectorId);
         inspection.setInspectionStatus(InspectionStatus.COMPLETED);
         inspection.setFinalBuyPrice(request.getFinalBuyPrice());
+        inspection.setExpectedPrice(request.getExpectedPrice());
+        inspection.setMarketAvgPrice(request.getMarketAvgPrice());
         inspection.setPriceDeductionReason(request.getPriceDeductionReason());
         inspection.setInspectionNotes(request.getInspectionNotes());
         inspection.setOfflineInspectedAt(LocalDateTime.now());
@@ -288,5 +293,19 @@ public class InspectionService {
     /** 특정 회원의 모든 검수 현황 리스트 */
     public List<MyInspectionResponse> getMyInspections(int memberId) {
         return inspectionRepository.findMyInspectionsByMemberId(memberId);
+    }
+
+    /** 판매자 상품 발송 확인 후 상태 변경 */
+    @Transactional
+    public void startOfflineInspection(int productInspectionId, int memberId) {
+        ProductInspection inspection = findInspectionById(productInspectionId);
+
+        // 1. 본인 검수 인지 확인
+        if(inspection.getMemberId() != memberId) throw new BusinessException(InspectionErrorCode.ACCESS_DENIED);
+        // 2. 상태 검증 (1차 온라인 검수 승인(ONLINE_APPROVED) 상태가 아니면 예외 발생
+        if (inspection.getInspectionStatus() != InspectionStatus.ONLINE_APPROVED) throw new BusinessException(InspectionErrorCode.CANNOT_START_OFFLINE_INSPECTION);
+        // 3. 상태를 오프라인 검수 중(OFFLINE_INSPECTING) 으로 변경
+        inspection.setInspectionStatus(InspectionStatus.OFFLINE_INSPECTING);
+        updateTimestamps(inspection);
     }
 }
