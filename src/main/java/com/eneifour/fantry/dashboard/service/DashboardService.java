@@ -46,7 +46,7 @@ public class DashboardService {
         LocalDateTime endOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
 
         // Repository의 count 메서드를 호출하여 각 통계치 계산
-        long todayNew = inquiryRepository.countByCreatedAtBetween(startOfDay, endOfDay);
+        long todayNew = inquiryRepository.countByInquiredAtBetween(startOfDay, endOfDay);
         long pending = inquiryRepository.countByStatus(InquiryStatus.PENDING);
         long inProgress = inquiryRepository.countByStatus(InquiryStatus.IN_PROGRESS);
 

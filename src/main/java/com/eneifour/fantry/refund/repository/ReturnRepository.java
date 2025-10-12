@@ -1,7 +1,7 @@
 package com.eneifour.fantry.refund.repository;
 
-import com.eneifour.fantry.auction.domain.Orders;
 import com.eneifour.fantry.member.domain.Member;
+import com.eneifour.fantry.orders.domain.Orders;
 import com.eneifour.fantry.refund.domain.ReturnRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

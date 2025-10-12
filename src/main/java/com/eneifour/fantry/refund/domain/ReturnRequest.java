@@ -1,10 +1,10 @@
 package com.eneifour.fantry.refund.domain;
 
-import com.eneifour.fantry.auction.domain.OrderStatus;
-import com.eneifour.fantry.auction.domain.Orders;
 import com.eneifour.fantry.common.domain.BaseAuditingEntity;
 import com.eneifour.fantry.common.util.file.FileMeta;
 import com.eneifour.fantry.member.domain.Member;
+import com.eneifour.fantry.orders.domain.OrderStatus;
+import com.eneifour.fantry.orders.domain.Orders;
 import com.eneifour.fantry.refund.dto.ReturnAdminCreateRequest;
 import com.eneifour.fantry.refund.dto.ReturnCreateRequest;
 import com.eneifour.fantry.refund.exception.ReturnErrorCode;

@@ -44,5 +44,5 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Integer>, JpaS
      * @param end 조회 종료 시간
      * @return 해당 기간에 생성된 문의 건수 (long)
      */
-    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    long countByInquiredAtBetween(LocalDateTime start, LocalDateTime end);
 }
