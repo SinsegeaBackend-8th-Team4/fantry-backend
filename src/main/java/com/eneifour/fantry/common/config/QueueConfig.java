@@ -1,6 +1,6 @@
 package com.eneifour.fantry.common.config;
 
-import com.eneifour.fantry.auction.domain.Bid;
+import com.eneifour.fantry.bid.domain.Bid;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

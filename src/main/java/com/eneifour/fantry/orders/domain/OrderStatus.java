@@ -1,4 +1,4 @@
-package com.eneifour.fantry.auction.domain;
+package com.eneifour.fantry.orders.domain;
 
 public enum OrderStatus {
     PENDING_PAYMENT, //결제 대기중

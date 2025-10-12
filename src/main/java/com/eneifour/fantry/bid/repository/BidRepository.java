@@ -1,6 +1,6 @@
-package com.eneifour.fantry.auction.repository;
+package com.eneifour.fantry.bid.repository;
 
-import com.eneifour.fantry.auction.domain.Bid;
+import com.eneifour.fantry.bid.domain.Bid;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,7 +14,7 @@ public interface BidRepository extends JpaRepository<Bid,Integer> {
     List<Bid> findByBidderId(int bidderId);
 
     // item_id가 일치하는 내역 전체 조회
-    List<Bid> findByItemId(int itemId);
+    List<Bid> findByItemIdOrderByBidAmountDesc(int itemId);
 
     // bidder_id 와 item_id 가 일치하는 내역 전체 조회
     List<Bid> findByBidderIdAndItemId(int bidderId, int itemId);
