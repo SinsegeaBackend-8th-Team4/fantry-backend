@@ -27,7 +27,8 @@ public class ProductInspection {
     private int memberId;
     private Integer templateId;
     private Integer templateVersion;
-    private Integer inspectorId;
+    private Integer firstInspectorId;  // 1차 검수 처리자 ID
+    private Integer secondInspectorId; // 2차 검수 처리자 ID
 
     // ** 상품 기본 정보 **
     @Column(nullable = false)

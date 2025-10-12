@@ -1,14 +1,16 @@
-package com.eneifour.fantry.auction.service;
+package com.eneifour.fantry.bid.service;
 
+import com.eneifour.fantry.bid.dto.BidSummaryResponse;
 import com.eneifour.fantry.auction.exception.*;
+import com.eneifour.fantry.bid.exception.BidException;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import com.eneifour.fantry.auction.domain.Auction;
-import com.eneifour.fantry.auction.domain.Bid;
+import com.eneifour.fantry.bid.domain.Bid;
 import com.eneifour.fantry.auction.domain.SaleStatus;
-import com.eneifour.fantry.auction.dto.BidDTO;
+import com.eneifour.fantry.bid.dto.BidRequest;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
-import com.eneifour.fantry.auction.repository.BidRepository;
+import com.eneifour.fantry.bid.repository.BidRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,11 +20,13 @@ import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +55,7 @@ public class BidService {
     */
     /*---------------------------------------------------------------------------------------*/
     @Transactional
-    public void placeBid(int auctionId , BidDTO bidDTO){
+    public void placeBid(int auctionId , BidRequest bidRequest){
 
         //1. 공통 사전 검증 로직 (판매 상품 조회 , 상품 상태 조회 , 입찰 형식 검증_100원단위 , 1000원이상 등)
         Auction auction = auctionRepository.findById(auctionId)
@@ -60,7 +64,14 @@ public class BidService {
             throw new AuctionException(ErrorCode.AUCTION_NOT_ACTIVE);
         }
 
-        validateBidBasics(bidDTO.getBidAmount());
+        if (LocalDateTime.now().isAfter(auction.getEndTime())) {
+            throw new AuctionException(ErrorCode.AUCTION_NOT_ACTIVE); // 2차 방어
+        }
+
+        validateBidBasics(bidRequest.getBidAmount());
+
+        Member bidder = memberRepository.findById(bidRequest.getMemberId())
+                .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
 
         try{
             /* 2. 자기 치유 (Redis <-> DB 동기화 )
@@ -74,7 +85,7 @@ public class BidService {
             }
 
             // [정상 경로] 3. Redis Lua 스크립트를 사용한 원자적 연산 입찰
-            int bidAmount = bidDTO.getBidAmount();
+            int bidAmount = bidRequest.getBidAmount();
             String redisKey = "auction:highest_bid:" + auctionId;
 
             String result = (String)redisTemplate.execute(
@@ -90,7 +101,7 @@ public class BidService {
             log.info("Bid placed successfully via Redis for auctionId {}. Result: {}", auctionId, result);
 
             // 5. 성공 후 후처리 (브로드캐스팅 및 큐에 추가)
-            postBidSuccessActions(auction, bidDTO);
+            postBidSuccessActions(auction, bidRequest);
 
         }catch(DataAccessException e){
 
@@ -100,7 +111,7 @@ public class BidService {
 
             // [수정] 예외를 다시 던져서 GlobalExceptionHandler가 최종 처리하도록 구조 변경
             try {
-                bidDbFallbackHandler.placeBidWithDBLock(auction, bidDTO);
+                bidDbFallbackHandler.placeBidWithDBLock(auction, bidRequest);
             } catch (BusinessException be) {
                 throw be; // 비즈니스 예외는 그대로 다시 던짐
             } catch (Exception ex) {
@@ -112,15 +123,15 @@ public class BidService {
 
     }
 
-
-
     /**
      * [정상 경로] 성공 후 후처리: 브로드캐스팅 및 In-Memory Queue에 추가
      */
-    private void postBidSuccessActions(Auction auction, BidDTO bidDTO) {
-        int bidAmount = bidDTO.getBidAmount();
+    private void postBidSuccessActions(Auction auction, BidRequest bidRequest) {
+        int bidAmount = bidRequest.getBidAmount();
 
-        Member bidder = memberRepository.findById(bidDTO.getMemberId())
+        log.debug(bidRequest.toString());
+
+        Member bidder = memberRepository.findById(bidRequest.getMemberId())
                 .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
 
         bidActionHelper.broadcastNewBid(auction.getAuctionId(), bidder, bidAmount);
@@ -200,8 +211,14 @@ public class BidService {
     }
 
     //Item_id 기준으로 Log 조회
-    public List<Bid> findByItemId(int itemId){
-        return bidRepository.findByItemId(itemId);
+    public List<BidSummaryResponse> findByItemId(int itemId){
+        List<Bid> bidList = bidRepository.findByItemIdOrderByBidAmountDesc(itemId);
+        return bidList.stream() // bidList를 스트림으로 변환
+                .map(bid -> BidSummaryResponse.builder() // 각 bid 객체를 BidPublicResponse 객체로 매핑(변환)
+                        .bidAmount(bid.getBidAmount()) // bid 객체에서 입찰 금액을 가져옴
+                        .bidAt(bid.getBidAt())     // bid 객체에서 생성 시간을 가져옴 (엔티티의 필드명에 따라 getBidAt() 등이 될 수 있습니다)
+                        .build())
+                .collect(Collectors.toList());
     }
 
     //Member_id 및 Item_id 기준으로 Log 조회

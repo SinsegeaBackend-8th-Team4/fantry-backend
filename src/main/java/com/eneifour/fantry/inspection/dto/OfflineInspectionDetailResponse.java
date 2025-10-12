@@ -12,6 +12,7 @@ import java.util.List;
 @Builder
 public record OfflineInspectionDetailResponse(
         OnlineInspectionDetailResponse onlineDetail,
+        OnlineInspectionDetailResponse.UserInfo secondInspector,
         List<OfflineChecklistItemResponse> checklist,
         BigDecimal finalBuyPrice,
         String priceDeductionReason,

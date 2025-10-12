@@ -56,7 +56,7 @@ public class ChecklistService {
                 .findLatestByCategoryAndRole(categoryId, ChecklistTemplate.Role.SELLER, ChecklistTemplate.Status.PUBLISHED)
                 .orElseThrow(()->new BusinessException(ChecklistErrorCode.TEMPLATE_NOT_FOUND));
         // 3. 템플릿에 연결된 항목 조회
-        List<ChecklistItem> items = checklistItemRepository.findByCategoryId(categoryId);
+        List<ChecklistItem> items = checklistItemRepository.findByTemplateIdAndCategoryId(template.getChecklistTemplateId(), categoryId);
 
         return OnlineChecklistResponse.from(template, items);
     }

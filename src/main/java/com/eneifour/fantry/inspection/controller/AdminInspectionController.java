@@ -1,19 +1,19 @@
 package com.eneifour.fantry.inspection.controller;
 
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
-import com.eneifour.fantry.inspection.dto.InspectionListResponse;
-import com.eneifour.fantry.inspection.dto.InspectionRejectRequest;
-import com.eneifour.fantry.inspection.dto.OfflineInspectionDetailResponse;
-import com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse;
+import com.eneifour.fantry.inspection.dto.*;
 import com.eneifour.fantry.inspection.service.InspectionService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
 import com.eneifour.fantry.inspection.support.api.InspectionPageResponse;
+import com.eneifour.fantry.member.domain.Member;
+import com.eneifour.fantry.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,9 +39,7 @@ public class AdminInspectionController {
             @RequestParam List<InspectionStatus> statuses,
             @PageableDefault(size=20, sort="submittedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        log.debug("statuses={}", statuses);
         InspectionPageResponse<InspectionListResponse> data = inspectionService.getInspectionsByStatuses(statuses, pageable);
-        log.debug("data={}", data);
         return InspectionApiResponse.ok(data);
     }
 
@@ -71,8 +69,11 @@ public class AdminInspectionController {
      * 1차 검수 승인
      */
     @PostMapping("/{productInspectionId}/firstApprove")
-    public InspectionApiResponse<Void> approveFirstInspection (@PathVariable int productInspectionId) {
-        inspectionService.approveFirstInspection(productInspectionId);
+    public InspectionApiResponse<Void> approveFirstInspection (
+            @PathVariable int productInspectionId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Member admin = userDetails.getMember();
+        inspectionService.approveFirstInspection(productInspectionId, admin.getMemberId());
+
         return InspectionApiResponse.ok(null);
     }
     
@@ -81,9 +82,34 @@ public class AdminInspectionController {
      */
     @PostMapping("/{productInspectionId}/firstReject")
     public InspectionApiResponse<Void> rejectFirstInspection (
-            @PathVariable int productInspectionId, @RequestBody @Valid InspectionRejectRequest request
+            @PathVariable int productInspectionId, @AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody @Valid InspectionRejectRequest request
     ) {
-        inspectionService.rejectFirstInspection(productInspectionId, request);
+        Member admin = userDetails.getMember();
+        inspectionService.rejectFirstInspection(productInspectionId, admin.getMemberId(), request);
+        return InspectionApiResponse.ok(null);
+    }
+
+    /**
+     * 2차 검수 승인
+     */
+    @PostMapping("/{productInspectionId}/secondApprove")
+    public InspectionApiResponse<Void> approveSecondInspection (
+            @PathVariable int productInspectionId, @AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody @Valid OfflineInspectionApproveRequest request
+    ) {
+        Member admin = userDetails.getMember();
+        inspectionService.approveSecondInspection(productInspectionId, admin.getMemberId(), request);
+        return InspectionApiResponse.ok(null);
+    }
+
+    /**
+     * 2차 검수 반려
+     */
+    @PostMapping("/{productInspectionId}/secondReject")
+    public InspectionApiResponse<Void> rejectSecondInspection (
+            @PathVariable int productInspectionId, @AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody @Valid OfflineInspectionRejectRequest request
+    ) {
+        Member admin = userDetails.getMember();
+        inspectionService.rejectSecondInspection(productInspectionId, admin.getMemberId(), request);
         return InspectionApiResponse.ok(null);
     }
 }

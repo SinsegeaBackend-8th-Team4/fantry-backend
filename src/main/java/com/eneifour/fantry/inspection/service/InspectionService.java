@@ -24,6 +24,7 @@ import com.eneifour.fantry.member.repository.MemberRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -63,6 +65,31 @@ public class InspectionService {
     /** 검수 수정 시간 세팅 */
     private void updateTimestamps(ProductInspection inspection) {
         inspection.setUpdatedAt(LocalDateTime.now());
+    }
+
+    /** 검수자 답변 저장 */
+    private void saveInspectorAnswers(ProductInspection inspection, List<OfflineInspectionApproveRequest.InspectorAnswerDto> answers) {
+        if (answers != null && !answers.isEmpty()) {
+            answers.forEach(dto -> {
+                String label = checklistItemRepository.findByItemKey(dto.getItemKey()).map(ChecklistItem::getLabel).orElse("N/A");
+                ProductChecklistAnswer.Id answerId = new ProductChecklistAnswer.Id(inspection.getProductInspectionId(), ChecklistTemplate.Role.INSPECTOR, dto.getItemKey());
+
+                String jsonAnswerValue;
+                try {
+                    jsonAnswerValue = objectMapper.writeValueAsString(dto.getAnswerValue());
+                } catch (JsonProcessingException e) {
+                    jsonAnswerValue = "\"\"";
+                }
+
+                ProductChecklistAnswer answer = ProductChecklistAnswer.builder()
+                        .id(answerId)
+                        .productInspection(inspection)
+                        .itemLabel(label)
+                        .answerValue(jsonAnswerValue)
+                        .build();
+                productChecklistAnswerRepository.save(answer);
+            });
+        }
     }
 
     // ========== [ 검수 공통 ] ==========
@@ -156,10 +183,11 @@ public class InspectionService {
 
     /** 1차 검수 승인 */
     @Transactional
-    public void approveFirstInspection(int productInspectionId){
+    public void approveFirstInspection(int productInspectionId, int firstInspectorId){
         ProductInspection inspection = findInspectionById(productInspectionId);
         validateInspectionStatus(inspection, InspectionStatus.SUBMITTED,InspectionErrorCode.NOT_SUBMITTED_STATUS_FOR_FIRST_INSPECTION); // 검수 상태가 SUBMITTED 아닐 경우 예외 처리
 
+        inspection.setFirstInspectorId(firstInspectorId);
         inspection.setInspectionStatus(InspectionStatus.ONLINE_APPROVED);
         inspection.setOnlineInspectedAt(LocalDateTime.now());
         updateTimestamps(inspection);
@@ -167,10 +195,11 @@ public class InspectionService {
 
     /** 1차 검수 반려 */
     @Transactional
-    public void rejectFirstInspection(int productInspectionId, InspectionRejectRequest request) {
+    public void rejectFirstInspection(int productInspectionId, int firstInspectorId, InspectionRejectRequest request){
         ProductInspection inspection = findInspectionById(productInspectionId);
         validateInspectionStatus(inspection, InspectionStatus.SUBMITTED,InspectionErrorCode.NOT_SUBMITTED_STATUS_FOR_FIRST_INSPECTION);
 
+        inspection.setFirstInspectorId(firstInspectorId);
         inspection.setInspectionStatus(InspectionStatus.ONLINE_REJECTED);
         inspection.setFirstRejectionReason(request.getRejectionReason());
         inspection.setOnlineInspectedAt(LocalDateTime.now());
@@ -182,6 +211,15 @@ public class InspectionService {
     public OfflineInspectionDetailResponse getOfflineInspectionDetail(int productInspectionId){
         // 1. 기본 검수 엔티티 조회
         ProductInspection inspection = findInspectionById(productInspectionId);
+        // 1-1. 2차 검수자 정보 조회
+        OnlineInspectionDetailResponse.UserInfo secondInspectorInfo = null;
+        if(inspection.getSecondInspectorId() != null){
+            secondInspectorInfo = memberRepository.findById(inspection.getSecondInspectorId()).map(
+                inspector -> new OnlineInspectionDetailResponse.UserInfo(
+                        inspector.getMemberId(), inspector.getName(), inspector.getEmail(), inspector.getTel())
+            ).orElse(null);
+        }
+
         // 2. 판매자 체크리스트 답변 조회 및 매핑
         List<ProductChecklistAnswer> sellerAnswers = productChecklistAnswerRepository.findByProductInspection_ProductInspectionIdAndId_ChecklistRole(productInspectionId, ChecklistTemplate.Role.SELLER);
         Map<String, String> sellerAnswerMap = sellerAnswers.stream().collect(Collectors.toMap(a -> a.getId().getItemKey(), ProductChecklistAnswer::getAnswerValue));
@@ -189,7 +227,7 @@ public class InspectionService {
         List<ProductChecklistAnswer> inspectorAnswers = productChecklistAnswerRepository.findByProductInspection_ProductInspectionIdAndId_ChecklistRole(productInspectionId, ChecklistTemplate.Role.INSPECTOR);
         Map<String, String> inspectorAnswerMap = inspectorAnswers.stream().collect(Collectors.toMap(a -> a.getId().getItemKey(), ProductChecklistAnswer::getAnswerValue));
         // 4. 체크리스트 모든 항목 조회
-        List<ChecklistItem> items = checklistItemRepository.findAllByChecklistTemplate_ChecklistTemplateId(inspection.getTemplateId());
+        List<ChecklistItem> items = checklistItemRepository.findByTemplateIdAndCategoryId(inspection.getTemplateId(), inspection.getGoodsCategoryId());
         // 5. 판매자/검수자 답변 병합
         List<OfflineChecklistItemResponse> checklist = items.stream().map(item -> OfflineChecklistItemResponse.builder()
                         .itemKey(item.getItemKey())
@@ -201,11 +239,54 @@ public class InspectionService {
         // 6. 응답 DTO 조립 및 반환
         return OfflineInspectionDetailResponse.builder()
                 .onlineDetail(getOnlineInspectionDetail(inspection.getProductInspectionId()))
+                .secondInspector(secondInspectorInfo)
                 .checklist(checklist)
                 .finalBuyPrice(inspection.getFinalBuyPrice())
                 .priceDeductionReason(inspection.getPriceDeductionReason())
                 .inspectionNotes(inspection.getInspectionNotes())
                 .secondRejectionReason(inspection.getSecondRejectionReason())
                 .build();
+    }
+
+    /** 2차 검수 승인 */
+    @Transactional
+    public void approveSecondInspection(int productInspectionId, int secondInspectorId, OfflineInspectionApproveRequest request) {
+        ProductInspection inspection = findInspectionById(productInspectionId);
+        validateInspectionStatus(inspection, InspectionStatus.OFFLINE_INSPECTING, InspectionErrorCode.NOT_FIRST_REVIEWED_STATUS_FOR_SECOND_INSPECTION); // 검수 상태가 SUBMITTED 아닐 경우 예외 처리
+
+        // 검수자 답변 저장
+        saveInspectorAnswers(inspection, request.getInspectorAnswers());
+
+        // 검수 정보 업데이트
+        inspection.setSecondInspectorId(secondInspectorId);
+        inspection.setInspectionStatus(InspectionStatus.COMPLETED);
+        inspection.setFinalBuyPrice(request.getFinalBuyPrice());
+        inspection.setPriceDeductionReason(request.getPriceDeductionReason());
+        inspection.setInspectionNotes(request.getInspectionNotes());
+        inspection.setOfflineInspectedAt(LocalDateTime.now());
+        inspection.setCompletedAt(LocalDateTime.now());
+        updateTimestamps(inspection);
+    }
+
+    /** 2차 검수 반려 */
+    @Transactional
+    public void rejectSecondInspection(int productInspectionId, int secondInspectorId, OfflineInspectionRejectRequest request) {
+        ProductInspection inspection = findInspectionById(productInspectionId);
+        validateInspectionStatus(inspection, InspectionStatus.OFFLINE_INSPECTING, InspectionErrorCode.NOT_FIRST_REVIEWED_STATUS_FOR_SECOND_INSPECTION);
+
+        // 검수자 답변 저장
+        saveInspectorAnswers(inspection, request.getInspectorAnswers());
+
+        // 검수 정보 업데이트
+        inspection.setSecondInspectorId(secondInspectorId);
+        inspection.setInspectionStatus(InspectionStatus.OFFLINE_REJECTED);
+        inspection.setSecondRejectionReason(request.getRejectionReason());
+        inspection.setOfflineInspectedAt(LocalDateTime.now());
+        updateTimestamps(inspection);
+    }
+
+    /** 특정 회원의 모든 검수 현황 리스트 */
+    public List<MyInspectionResponse> getMyInspections(int memberId) {
+        return inspectionRepository.findMyInspectionsByMemberId(memberId);
     }
 }
