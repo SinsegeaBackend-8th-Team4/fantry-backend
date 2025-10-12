@@ -20,8 +20,13 @@ public enum ErrorCode {
     // Member Exceptions
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "존재하지 않는 회원입니다."),
 
+    // Redis Exceptions
+    REDIS_SERVER_EXCEPTION(HttpStatus.NOT_FOUND, "R001", "레디스 서버 응답이 없습니다."),
+
     // Unhandled Exceptions
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S001", "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+
+
 
     private final HttpStatus status;
     private final String code;
