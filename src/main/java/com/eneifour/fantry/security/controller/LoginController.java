@@ -30,7 +30,7 @@ public class LoginController {
     private final LoginService loginService;
     private final JwtUtil jwtUtil;
     private final ReissueService reissueService;
-    @Value("${spring.jwt.refresh-days}") long refreshTtl;
+    @Value("${spring.jwt.refresh-hour}") long refreshTtl;
     private final LogoutService logoutService;
 
     //로그인 요청 처리
@@ -48,7 +48,7 @@ public class LoginController {
 
         //헤더+쿠키 설정
         response.setHeader("accessToken", tokenResponse.getAccessToken());
-        int refreshTtlSec = (int)(refreshTtl * 24 * 60 * 60);
+        int refreshTtlSec = (int)(refreshTtl * 60 * 60);
         CookieUtil.setRefreshCookie(response, tokenResponse.getRefreshToken(), refreshTtlSec);
 
         return ResponseEntity.ok().body(tokenResponse.getAccessToken());

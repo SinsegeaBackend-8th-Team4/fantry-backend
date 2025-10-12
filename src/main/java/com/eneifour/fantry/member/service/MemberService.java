@@ -9,6 +9,10 @@ import com.eneifour.fantry.member.exception.MemberErrorCode;
 import com.eneifour.fantry.member.exception.MemberException;
 import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import com.eneifour.fantry.member.repository.RoleRepository;
+import com.eneifour.fantry.address.repository.AddressRepository;
+import com.eneifour.fantry.account.repository.accountRepository;
+import com.eneifour.fantry.address.domain.Address;
+import com.eneifour.fantry.account.domain.Account;
 import com.eneifour.fantry.security.dto.TokenMemberResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +27,45 @@ import java.util.List;
 public class MemberService {
     private final JpaMemberRepository jpaMemberRepository;
     private final RoleRepository roleRepository;
+    private final AddressRepository addressRepository;
+    private final accountRepository accountRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final PasswordEncoder passwordEncoder;
 
     //토큰으로 회원 찾기
     public TokenMemberResponse findMemberResponseBy(String username) {
         Member member = jpaMemberRepository.findById(username);
-        return TokenMemberResponse.from(member);
+        if(member == null) return null;
+
+        // 기본 배송지 조회(isDefault == '1')
+        String roadAddress = null;
+        String detailAddress = null;
+        try {
+            Address addr = addressRepository.findByMember_MemberIdAndIsDefault(member.getMemberId(), '1');
+            if (addr != null) {
+                String dest = addr.getDestinationAddress();
+                if (dest != null && dest.contains("##")) {
+                    String[] parts = dest.split("##", 2);
+                    roadAddress = parts[0];
+                    detailAddress = parts[1];
+                } else {
+                    roadAddress = dest;
+                }
+            }
+        } catch(Exception ignored) {}
+
+        // 활성 계좌 조회(isActive == '1')
+        String accountNumber = null;
+        String bankName = null;
+        try {
+            Account acct = accountRepository.findByMember_MemberIdAndIsActive(member.getMemberId(), '1');
+            if (acct != null) {
+                accountNumber = acct.getAccountNumber();
+                bankName = acct.getBankName();
+            }
+        } catch(Exception ignored) {}
+
+        return TokenMemberResponse.from(member, roadAddress, detailAddress, accountNumber, bankName);
     }
 
     //모든 회원 가져오기
