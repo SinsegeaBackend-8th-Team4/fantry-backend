@@ -64,4 +64,11 @@ public class ReportController {
         reportService.deleteReport(reportId);
         return ResponseEntity.ok().body(Map.of("result", "신고 내역이 성공적으로 삭제됨"));
     }
+
+    //구제 신청하기
+    @PatchMapping("/member/received")
+    public ResponseEntity<?> setReceivedReport(@RequestParam int reportId) {
+        reportService.setReceivedReport(reportId);
+        return ResponseEntity.ok().body(Map.of("result", "구제 신청이 완료되었음"));
+    }
 }
