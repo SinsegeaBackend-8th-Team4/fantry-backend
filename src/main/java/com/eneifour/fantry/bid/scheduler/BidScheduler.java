@@ -1,7 +1,7 @@
-package com.eneifour.fantry.auction.scheduler;
+package com.eneifour.fantry.bid.scheduler;
 
-import com.eneifour.fantry.auction.domain.Bid;
-import com.eneifour.fantry.auction.repository.BidRepository;
+import com.eneifour.fantry.bid.domain.Bid;
+import com.eneifour.fantry.bid.repository.BidRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

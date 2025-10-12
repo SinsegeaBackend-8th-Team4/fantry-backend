@@ -42,13 +42,13 @@ public interface AuctionRepository extends JpaRepository<Auction,Integer> {
 
 
     //판매 상품 중 , 특정 sale_type 으로 전체 조회
-    List<Auction> findBySaleType(SaleType saleType);
+    Page<Auction> findBySaleType(SaleType saleType , Pageable pageable);
 
     //판매 상품 중 , 특정 sale_status로 전체 조회
-    List<Auction> findBySaleStatus(SaleStatus saleStatus);
+    Page<Auction> findBySaleStatus(SaleStatus saleStatus , Pageable pageable);
 
     //판매 상품 중 , 특정 sale_type 이면서 특정 sale_status 인 모든 리스트 조회
-    List<Auction> findBySaleTypeAndSaleStatus(SaleType saleType, SaleStatus saleStatus);
+    Page<Auction> findBySaleTypeAndSaleStatus(SaleType saleType, SaleStatus saleStatus , Pageable pageable);
 
     //판매 상품 중 , member_id 를 기준으로 sale_status 가 특정 상품인 것 조회
     List<Auction> findByProductInspection_MemberIdAndSaleStatus(int memberId, SaleStatus saleStatus);

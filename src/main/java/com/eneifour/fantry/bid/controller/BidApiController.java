@@ -1,7 +1,7 @@
-package com.eneifour.fantry.auction.controller;
+package com.eneifour.fantry.bid.controller;
 
-import com.eneifour.fantry.auction.domain.Bid;
-import com.eneifour.fantry.auction.service.BidService;
+import com.eneifour.fantry.bid.domain.Bid;
+import com.eneifour.fantry.bid.service.BidService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

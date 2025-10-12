@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorCode> handleAuctionException(BusinessException ex) {
         ErrorCode errorCode = ex.getErrorCode();
-        log.error("Auction exception occurred [ Message: {}]", errorCode.getMessage());
+        log.error("Auction / Bid / Order 예외 발생 [ Message: {}]", errorCode.getMessage());
         return new ResponseEntity<>(errorCode, ex.getErrorCode().getStatus());
     }
 

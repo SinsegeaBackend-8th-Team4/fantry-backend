@@ -1,7 +1,7 @@
-package com.eneifour.fantry.auction.controller;
+package com.eneifour.fantry.bid.controller;
 
-import com.eneifour.fantry.auction.dto.BidRequest;
-import com.eneifour.fantry.auction.service.BidService;
+import com.eneifour.fantry.bid.dto.BidRequest;
+import com.eneifour.fantry.bid.service.BidService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;

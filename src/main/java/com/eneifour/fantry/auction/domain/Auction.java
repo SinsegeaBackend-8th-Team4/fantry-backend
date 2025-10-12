@@ -56,8 +56,7 @@ public class Auction {
     private ProductInspection productInspection;
 
     /**
-     * 경매를 '낙찰 완료' 상태로 변경합니다.
-     * 이 메서드는 객체 스스로 상태 변경의 유효성을 검사.
+     * 경매 및 판매를 '낙찰 완료 / 판매 완료' 상태로 변경.
      * //@param finalPrice 최종 낙찰가
      */
     public void closeAsSold(int finalPrice) {
@@ -69,7 +68,7 @@ public class Auction {
     }
 
     /**
-     * 경매를 '유찰' 상태로 변경.
+     * 상품을 '유찰 / 미판매' 상태로 변경.
      */
     public void closeAsNotSold() {
         if (this.saleStatus != SaleStatus.ACTIVE) {
@@ -78,5 +77,26 @@ public class Auction {
         this.saleStatus = SaleStatus.NOT_SOLD;
     }
 
+    /*
+    * 상품 status cancelld 로 변경
+    *
+    * */
+    public void closeAsCancelled(){
+        this.saleStatus = SaleStatus.CANCELLED;
+    }
+
+    /*
+    * 상품 status를 'ACTIVE'로 변경
+    * */
+    public void activate(){
+        this.saleStatus = SaleStatus.ACTIVE;
+    }
+
+    /*
+     * 상품 판매 유형 변경
+     * */
+    public void changeSaleType(String saleType){
+        this.saleType = SaleType.valueOf(saleType);
+    }
 
 }

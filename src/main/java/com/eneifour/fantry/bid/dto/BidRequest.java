@@ -1,6 +1,5 @@
-package com.eneifour.fantry.auction.dto;
+package com.eneifour.fantry.bid.dto;
 
-import lombok.Data;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
