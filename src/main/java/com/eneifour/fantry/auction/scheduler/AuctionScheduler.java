@@ -1,14 +1,15 @@
 package com.eneifour.fantry.auction.scheduler;
 
 import com.eneifour.fantry.auction.domain.Auction;
-import com.eneifour.fantry.auction.domain.Bid;
-import com.eneifour.fantry.auction.domain.Orders;
+import com.eneifour.fantry.bid.domain.Bid;
+import com.eneifour.fantry.bid.scheduler.BidScheduler;
+import com.eneifour.fantry.orders.domain.Orders;
 import com.eneifour.fantry.auction.domain.SaleStatus;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.auction.exception.MemberException;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
-import com.eneifour.fantry.auction.repository.BidRepository;
-import com.eneifour.fantry.auction.repository.OrdersRepository;
+import com.eneifour.fantry.bid.repository.BidRepository;
+import com.eneifour.fantry.orders.repository.OrdersRepository;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 

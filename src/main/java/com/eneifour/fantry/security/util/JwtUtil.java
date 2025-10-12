@@ -21,17 +21,17 @@ public class JwtUtil {
     private SecretKey secretKey;    //JWT 서명에 사용될 비밀키(HMAC-SHA)
     private String issure;          //발급자(토큰 생성자)
     private long accessMinutes;     //AccessToken 만료기간(분)
-    private long refreshDays;       //RefreshToken 만료기간(일)
+    private long refreshHour;       //RefreshToken 만료기간(시간)
 
     //생성자 주입
     public JwtUtil(@Value("${spring.jwt.secret}")String secret,
                    @Value("${spring.jwt.issure}")String issure,
                    @Value("${spring.jwt.access-minutes}")long accessMinutes,
-                   @Value("${spring.jwt.refresh-days}")long refreshDays) {
+                   @Value("${spring.jwt.refresh-hour}")long refreshHour) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.issure = issure;
         this.accessMinutes = accessMinutes;
-        this.refreshDays = refreshDays;
+        this.refreshHour = refreshHour;
     }
 
     /* --------------------------------------------------------------------
@@ -59,7 +59,7 @@ public class JwtUtil {
     //RefreshToken 생성
     public String createRefreshToken(String username, String category, RoleType roleType) {
         Instant now = Instant.now();
-        Instant exp = now.plusSeconds(refreshDays*24*60*60);
+        Instant exp = now.plusSeconds(refreshHour*60*60);
 
         String token = Jwts.builder()
                 .issuer(issure)
@@ -122,7 +122,7 @@ public class JwtUtil {
     //accessToken 헤더에서 가져오기
     public String extractAccessToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
-        if(authHeader != null || authHeader.startsWith("Bearer ")){
+        if(authHeader != null && authHeader.startsWith("Bearer ")){
             return authHeader.substring(7);
         }
         return null;

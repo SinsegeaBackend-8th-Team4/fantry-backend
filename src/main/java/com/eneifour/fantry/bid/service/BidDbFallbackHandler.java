@@ -1,15 +1,15 @@
-package com.eneifour.fantry.auction.service;
+package com.eneifour.fantry.bid.service;
 
 import com.eneifour.fantry.auction.domain.Auction;
-import com.eneifour.fantry.auction.domain.Bid;
+import com.eneifour.fantry.bid.domain.Bid;
 import com.eneifour.fantry.auction.domain.SaleStatus;
-import com.eneifour.fantry.auction.dto.BidRequest;
+import com.eneifour.fantry.bid.dto.BidRequest;
 import com.eneifour.fantry.auction.exception.AuctionException;
-import com.eneifour.fantry.auction.exception.BidException;
+import com.eneifour.fantry.bid.exception.BidException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.auction.exception.MemberException;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
-import com.eneifour.fantry.auction.repository.BidRepository;
+import com.eneifour.fantry.bid.repository.BidRepository;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import lombok.RequiredArgsConstructor;

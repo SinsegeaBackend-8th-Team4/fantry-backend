@@ -1,7 +1,7 @@
-package com.eneifour.fantry.auction.service;
+package com.eneifour.fantry.bid.service;
 
 import com.eneifour.fantry.auction.domain.Auction;
-import com.eneifour.fantry.auction.domain.Bid;
+import com.eneifour.fantry.bid.domain.Bid;
 import com.eneifour.fantry.member.domain.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;

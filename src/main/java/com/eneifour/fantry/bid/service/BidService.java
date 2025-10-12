@@ -1,15 +1,16 @@
-package com.eneifour.fantry.auction.service;
+package com.eneifour.fantry.bid.service;
 
-import com.eneifour.fantry.auction.dto.BidPublicResponse;
+import com.eneifour.fantry.bid.dto.BidSummaryResponse;
 import com.eneifour.fantry.auction.exception.*;
+import com.eneifour.fantry.bid.exception.BidException;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import com.eneifour.fantry.auction.domain.Auction;
-import com.eneifour.fantry.auction.domain.Bid;
+import com.eneifour.fantry.bid.domain.Bid;
 import com.eneifour.fantry.auction.domain.SaleStatus;
-import com.eneifour.fantry.auction.dto.BidRequest;
+import com.eneifour.fantry.bid.dto.BidRequest;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
-import com.eneifour.fantry.auction.repository.BidRepository;
+import com.eneifour.fantry.bid.repository.BidRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -210,10 +211,10 @@ public class BidService {
     }
 
     //Item_id 기준으로 Log 조회
-    public List<BidPublicResponse> findByItemId(int itemId){
+    public List<BidSummaryResponse> findByItemId(int itemId){
         List<Bid> bidList = bidRepository.findByItemIdOrderByBidAmountDesc(itemId);
         return bidList.stream() // bidList를 스트림으로 변환
-                .map(bid -> BidPublicResponse.builder() // 각 bid 객체를 BidPublicResponse 객체로 매핑(변환)
+                .map(bid -> BidSummaryResponse.builder() // 각 bid 객체를 BidPublicResponse 객체로 매핑(변환)
                         .bidAmount(bid.getBidAmount()) // bid 객체에서 입찰 금액을 가져옴
                         .bidAt(bid.getBidAt())     // bid 객체에서 생성 시간을 가져옴 (엔티티의 필드명에 따라 getBidAt() 등이 될 수 있습니다)
                         .build())
