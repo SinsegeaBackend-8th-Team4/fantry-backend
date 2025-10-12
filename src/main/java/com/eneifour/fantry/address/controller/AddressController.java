@@ -58,4 +58,12 @@ public class AddressController {
         addressService.deleteAddress(addressId);
         return ResponseEntity.ok().body(Map.of("result", "주소가 성공적으로 삭제됨"));
     }
+
+    //기본 배송지 선택하기
+    @PatchMapping("/default")
+    public ResponseEntity<?> setDefaultAddress(@RequestParam int memberId, @RequestParam int addressId){
+        addressService.setDetaultAddress(memberId, addressId);
+        return ResponseEntity.ok().body(Map.of("result", "기본 배송지가 성공적으로 변경됨"));
+    }
+
 }
