@@ -284,4 +284,9 @@ public class InspectionService {
         inspection.setOfflineInspectedAt(LocalDateTime.now());
         updateTimestamps(inspection);
     }
+
+    /** 특정 회원의 모든 검수 현황 리스트 */
+    public List<MyInspectionResponse> getMyInspections(int memberId) {
+        return inspectionRepository.findMyInspectionsByMemberId(memberId);
+    }
 }
