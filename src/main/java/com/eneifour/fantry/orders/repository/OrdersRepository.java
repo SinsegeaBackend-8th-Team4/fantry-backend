@@ -1,6 +1,6 @@
-package com.eneifour.fantry.auction.repository;
+package com.eneifour.fantry.orders.repository;
 
-import com.eneifour.fantry.auction.domain.Orders;
+import com.eneifour.fantry.orders.domain.Orders;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

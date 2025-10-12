@@ -1,4 +1,4 @@
-package com.eneifour.fantry.auction.domain;
+package com.eneifour.fantry.bid.domain;
 
 
 import jakarta.persistence.*;

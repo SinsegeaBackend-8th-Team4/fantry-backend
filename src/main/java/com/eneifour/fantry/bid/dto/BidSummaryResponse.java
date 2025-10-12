@@ -1,4 +1,4 @@
-package com.eneifour.fantry.auction.dto;
+package com.eneifour.fantry.bid.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BidPublicResponse {
+public class BidSummaryResponse {
     private int bidAmount;
     private LocalDateTime bidAt;
 }
