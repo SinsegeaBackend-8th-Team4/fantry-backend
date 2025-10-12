@@ -42,7 +42,7 @@ public class Orders {
     private Auction auction;
 
     @ManyToOne
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "buyer_id", referencedColumnName = "member_id")
     private Member member;
 
     @OneToOne(fetch = FetchType.LAZY)

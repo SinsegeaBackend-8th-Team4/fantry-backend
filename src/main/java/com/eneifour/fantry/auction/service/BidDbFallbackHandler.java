@@ -3,7 +3,7 @@ package com.eneifour.fantry.auction.service;
 import com.eneifour.fantry.auction.domain.Auction;
 import com.eneifour.fantry.auction.domain.Bid;
 import com.eneifour.fantry.auction.domain.SaleStatus;
-import com.eneifour.fantry.auction.dto.BidDTO;
+import com.eneifour.fantry.auction.dto.BidRequest;
 import com.eneifour.fantry.auction.exception.AuctionException;
 import com.eneifour.fantry.auction.exception.BidException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
@@ -38,8 +38,8 @@ public class BidDbFallbackHandler {
      * // @param bidDTO 입찰 정보 DTO
      */
     @Transactional
-    public void placeBidWithDBLock(Auction auction, BidDTO bidDTO) {
-        int bidAmount = bidDTO.getBidAmount();
+    public void placeBidWithDBLock(Auction auction, BidRequest bidRequest) {
+        int bidAmount = bidRequest.getBidAmount();
         int auctionId = auction.getAuctionId();
         log.debug("Executing DB fallback logic with pessimistic lock for auctionId: {}", auctionId);
 
@@ -59,7 +59,7 @@ public class BidDbFallbackHandler {
         validateBidAmountWithDB(bidAmount, topBidOptional, lockedAuction.getStartPrice());
 
         // 5. 비상 상황에서는 큐를 사용하지 않고, 즉시 동기적으로 DB에 저장.
-        Member bidder = memberRepository.findById(bidDTO.getMemberId())
+        Member bidder = memberRepository.findById(bidRequest.getMemberId())
                 .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
 
         Bid bidToLog = bidActionHelper.createBidLog(lockedAuction, bidder, bidAmount);
