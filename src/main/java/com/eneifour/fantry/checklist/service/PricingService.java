@@ -1,17 +1,22 @@
 package com.eneifour.fantry.checklist.service;
 
 import com.eneifour.fantry.catalog.exception.CatalogErrorCode;
+import com.eneifour.fantry.catalog.repository.ArtistRepository;
 import com.eneifour.fantry.catalog.repository.GoodsCategoryRepository;
 import com.eneifour.fantry.checklist.domain.PricingRule;
+import com.eneifour.fantry.checklist.dto.MarketAvgPriceResponse;
 import com.eneifour.fantry.checklist.exception.ChecklistErrorCode;
 import com.eneifour.fantry.checklist.repository.PriceBaselineRepository;
 import com.eneifour.fantry.checklist.repository.PricingRuleRepository;
+import com.eneifour.fantry.inspection.domain.InspectionStatus;
+import com.eneifour.fantry.inspection.repository.InspectionRepository;
 import com.eneifour.fantry.inspection.support.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +32,8 @@ public class PricingService {
     private final PriceBaselineRepository priceBaselineRepository;
     private final PricingRuleRepository pricingRuleRepository;
     private final GoodsCategoryRepository goodsCategoryRepository;
+    private final ArtistRepository artistRepository;
+    private final InspectionRepository inspectionRepository;
 
     /**
      * 특정 카테고리의 가장 최신 기준가 조회
@@ -43,14 +50,14 @@ public class PricingService {
     }
 
     /**
-     * 사용자 체크리스트 선택지 바탕으로 상품의 예상가 계싼
+     * 사용자 체크리스트 선택지 바탕으로 상품의 예상가 계산
      * @param goodsCategoryId 예상가를 계산할 굿즈 카테고리 ID
      * @param selections 사용자가 선택한 체크리스트 항목들
      * @return 계산된 예상가
      */
     public double estimate(int goodsCategoryId, Map<String, String> selections) {
         // 카테고리 별 최신 기준가 조회
-        Double baseline = priceBaselineRepository.findTopAmount(goodsCategoryId, LocalDateTime.now()).orElse(0.0); // 기준가 없으면 0 반환
+        double baseline = priceBaselineRepository.findTopAmount(goodsCategoryId, LocalDateTime.now()).orElse(0.0); // 기준가 없으면 0 반환
         log.debug("카테고리 '{}'의 기준가: {}", goodsCategoryId, baseline);
         // 기준가 없으면 0 반환
         if(baseline == 0.0) return 0.0;
@@ -96,5 +103,23 @@ public class PricingService {
 
         log.debug("최종 계산된 예상가: {}", estimatedPrice);
         return estimatedPrice;
+    }
+
+    /**
+     * 조건에 맞는 상품의 평균 시세 조회
+     * @param goodsCategoryId 카테고리 ID
+     * @param artistId 아티스트 ID
+     * @param albumId 앨범 ID (null 가능)
+     * @return MarketAvgPriceResponse
+     */
+    public MarketAvgPriceResponse getMarketAvgPrice(int goodsCategoryId, int artistId, Integer albumId) {
+        // 카테고리, 아티스트 존재 여부 검증
+        goodsCategoryRepository.findById(goodsCategoryId).orElseThrow(()->new BusinessException(CatalogErrorCode.CATEGORY_NOT_FOUND));
+        artistRepository.findById(artistId).orElseThrow(()->new BusinessException(CatalogErrorCode.ARTIST_NOT_FOUND));
+
+        BigDecimal marketAvgPrice = inspectionRepository.getMarketAvgPrice(goodsCategoryId, artistId, albumId, InspectionStatus.COMPLETED).orElse(null);
+        int count = inspectionRepository.countForMarketPrice(goodsCategoryId, artistId, albumId, InspectionStatus.COMPLETED);
+
+        return new MarketAvgPriceResponse(marketAvgPrice, count);
     }
 }

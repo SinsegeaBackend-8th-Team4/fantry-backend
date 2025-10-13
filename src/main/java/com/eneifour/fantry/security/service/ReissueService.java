@@ -24,7 +24,7 @@ public class ReissueService {
 
     private final JwtUtil jwtUtil;
     private final RedisTokenService redisTokenService;
-    @Value("${spring.jwt.refresh-days}") long refreshDays;
+    @Value("${spring.jwt.refresh-hour}") long refreshHour;
 
     public TokenResponse reissueAccessToken(HttpServletRequest request) throws AuthException {
         //Refresh Token 꺼내기
@@ -92,7 +92,7 @@ public class ReissueService {
         //Refresh Token 저장, 기존의 Refresh 토큰 삭제 후 새 토큰 저장
         redisTokenService.deleteRefreshToken(username);
 //        String newTokenId = jwtUtil.getJwtId(jwtUtil.parseToken(newRefreshToken).getBody());
-        long tokenTtl = refreshDays * 24 * 60 * 60;
+        long tokenTtl = refreshHour * 60 * 60;
         redisTokenService.saveRefreshToken(username, newRefreshToken, tokenTtl);
 
         //새로 발급한 AccessToken과 RefreshToken 응답

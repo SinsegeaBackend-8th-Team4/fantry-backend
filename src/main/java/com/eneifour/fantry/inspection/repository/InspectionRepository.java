@@ -3,6 +3,8 @@ package com.eneifour.fantry.inspection.repository;
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import com.eneifour.fantry.inspection.dto.InspectionListResponse;
+import com.eneifour.fantry.inspection.dto.MyInspectionResponse;
+import com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,11 +12,60 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface InspectionRepository extends JpaRepository<ProductInspection, Integer> {
-    // 검수상태에 따른 검수 페이지 조회
+    /**
+     * 카테고리, 아티스트, 앨범(선택)을 기준으로 완료된 검수 상품의 평균 매입가 조회
+     * @param goodsCategoryId 카테고리 ID
+     * @param artistId 아티스트 ID
+     * @param albumId 앨범 ID (null 가능)
+     * @param completed 검수상태 COMPLETED
+     * @return 평균가
+     */
+    @Query("""
+        select AVG(i.finalBuyPrice)
+        from ProductInspection i
+        where i.inspectionStatus = :completed
+        and i.goodsCategoryId = :goodsCategoryId
+        and i.artistId = :artistId
+        and (:albumId IS NULL OR i.albumId = :albumId)
+    """)
+    Optional<BigDecimal> getMarketAvgPrice(
+        @Param("goodsCategoryId") int goodsCategoryId, @Param("artistId")int artistId, @Param("albumId") Integer albumId, @Param("completed") InspectionStatus completed
+    );
+
+
+    /**
+     * 시세 조회에 사용된 데이터 건수 조회
+     *
+     * @param goodsCategoryId 카테고리 ID
+     * @param artistId        아티스트 ID
+     * @param albumId         앨범 ID (null 가능)
+     * @param completed       검수상태 COMPLETED
+     * @return 데이터 건수
+     */
+    @Query("""
+    select count(*)
+    from ProductInspection i
+    where i.inspectionStatus = :completed
+    and i.goodsCategoryId = :goodsCategoryId
+    and i.artistId = :artistId
+    and (:albumId IS NULL OR i.albumId = :albumId)
+    """)
+    int countForMarketPrice(
+        @Param("goodsCategoryId") int goodsCategoryId, @Param("artistId")int artistId, @Param("albumId") Integer albumId, @Param("completed") InspectionStatus completed
+    );
+
+    /**
+     * 검수 상태로 검수 리스트 조회
+     * @param statuses 검수 상태 리스트
+     * @param pageable 페이지 정보
+     * @return 검수 리스트
+     */
     @Query(value = """
         select new com.eneifour.fantry.inspection.dto.InspectionListResponse(
             i.productInspectionId,
@@ -38,4 +89,68 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         where i.inspectionStatus IN :statuses
         """)
     Page<InspectionListResponse> findAllByInspectionStatusIn(@Param("statuses") List<InspectionStatus> statuses, Pageable pageable);
+
+    /**
+     * 검수 ID로 검수 상세 정보 조회 (파일 제외)
+     * @param productInspectionId 검수 ID
+     * @return 조회된 검수 상세 정보
+     */
+    @Query("""
+        select new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse(
+            i.productInspectionId, i.submissionUuid, i.inspectionStatus, i.submittedAt,
+            i.itemName, i.itemDescription, i.hashtags,
+            gc.name, a.nameKo, al.title,
+            i.expectedPrice, i.marketAvgPrice, i.sellerHopePrice,
+            new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse$UserInfo(m.memberId, m.name, m.email, m.tel),
+            i.bankName, i.bankAccount,
+            i.shippingAddress, i.shippingAddressDetail,
+            i.templateId, i.templateVersion,
+            new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse$UserInfo(insp.memberId, insp.name, insp.email, insp.tel),
+            i.firstRejectionReason
+        )
+        from ProductInspection i
+        join Member m on m.memberId = i.memberId
+        join GoodsCategory gc on gc.goodsCategoryId = i.goodsCategoryId
+        join Artist a on a.artistId = i.artistId
+        left join Album al on al.albumId = i.albumId
+        left join Member insp on insp.memberId = i.firstInspectorId
+        where i.productInspectionId = :productInspectionId
+        """)
+    Optional<OnlineInspectionDetailResponse> findInspectionDetailById(@Param("productInspectionId") int productInspectionId);
+
+    /**
+     * 검수 ID로 검수 파일 정보 목록 조회
+     * @param productInspectionId 검수 ID
+     * @return 조회된 파일 정보 DTO 리스트
+     */
+    @Query("""
+        select new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse$FileInfo(
+            f.inspectionFileId,
+            fm.storedFilePath,
+            fm.fileType
+        )
+        from InspectionFile f
+        join f.fileMeta fm
+        where f.productInspection.productInspectionId = :productInspectionId
+        """)
+    List<OnlineInspectionDetailResponse.FileInfo> findFilesById(@Param("productInspectionId") int productInspectionId);
+
+    /**
+     * 특정 회원 검수 신청 목록 조회
+     * @param memberId 회원 ID
+     * @return 해당 회원 검수 현황 리스트
+     */
+    @Query("""
+        SELECT new com.eneifour.fantry.inspection.dto.MyInspectionResponse(
+            i.productInspectionId, i.itemName,
+            gc.name, a.nameKo, i.sellerHopePrice,
+            i.inspectionStatus, i.submittedAt
+        )
+        FROM ProductInspection i
+        JOIN GoodsCategory gc ON gc.goodsCategoryId = i.goodsCategoryId
+        JOIN Artist a ON a.artistId = i.artistId
+        WHERE i.memberId = :memberId
+        ORDER BY i.submittedAt DESC
+    """)
+    List<MyInspectionResponse> findMyInspectionsByMemberId(@Param("memberId") int memberId);
 }

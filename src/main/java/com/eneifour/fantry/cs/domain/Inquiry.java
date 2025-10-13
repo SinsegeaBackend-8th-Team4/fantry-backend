@@ -2,7 +2,7 @@ package com.eneifour.fantry.cs.domain;
 
 import com.eneifour.fantry.common.util.file.FileMeta;
 import com.eneifour.fantry.cs.exception.InquiryErrorCode;
-import com.eneifour.fantry.cs.exception.CsException;
+import com.eneifour.fantry.cs.exception.InquiryException;
 import com.eneifour.fantry.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -62,7 +62,7 @@ public class Inquiry {
 
     public void answer(String answerContent, String comment, Member admin) {
         if (answerContent == null || answerContent.isBlank()) {
-            throw new CsException(InquiryErrorCode.ANSWER_CONTENT_IS_REQUIRED);
+            throw new InquiryException(InquiryErrorCode.ANSWER_CONTENT_IS_REQUIRED);
         }
         this.status = InquiryStatus.ANSWERED;
         this.answerContent = answerContent;

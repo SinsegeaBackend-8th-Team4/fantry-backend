@@ -94,4 +94,22 @@ public class ReportService {
         }
         reportRepository.deleteById(reportId);
     }
+
+    //구제 신청하기 - reportStatus를 RECEIVED로 변경
+    @Transactional
+    public void setReceivedReport(int reportId) {
+        Report report = reportRepository.findByReportId(reportId);
+        if (report == null) {
+            throw new ReportException(ReportErrorCode.REPORT_NOT_FOUND);
+        }
+
+        // 엔티티의 update 메서드를 사용해 상태만 변경
+        report.update(
+                report.getReportReason(),
+                ReportStatus.RECEIVED,
+                report.getRejectedComment(),
+                report.getMember()
+        );
+        ReportResponse.from(report);
+    }
 }

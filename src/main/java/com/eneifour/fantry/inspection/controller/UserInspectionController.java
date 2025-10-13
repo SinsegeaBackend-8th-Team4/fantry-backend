@@ -1,14 +1,15 @@
 package com.eneifour.fantry.inspection.controller;
 
 import com.eneifour.fantry.inspection.dto.InspectionRequest;
+import com.eneifour.fantry.inspection.dto.MyInspectionResponse;
 import com.eneifour.fantry.inspection.service.InspectionService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
+import com.eneifour.fantry.member.domain.Member;
+import com.eneifour.fantry.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -29,11 +30,22 @@ public class UserInspectionController {
     @PostMapping
     public InspectionApiResponse<Integer> createInspection(
             @RequestPart("request") InspectionRequest request,
-            @RequestPart("files") List<MultipartFile> files) {
+            @RequestPart("files") List<MultipartFile> files,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        int memberId = 1; // TODO : 인증
-        int inspectionID = inspectionService.createInspection(memberId, request, files);
+        Member member = userDetails.getMember();
+        int inspectionID = inspectionService.createInspection(member.getMemberId(), request, files);
 
         return InspectionApiResponse.ok(inspectionID);
+    }
+
+    /**
+     * 나의 검수 현황 목록 조회
+     */
+    @GetMapping("/my")
+    public InspectionApiResponse<List<MyInspectionResponse>> getMyInspections(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Member member = userDetails.getMember();
+        List<MyInspectionResponse> myInspections = inspectionService.getMyInspections(member.getMemberId());
+        return InspectionApiResponse.ok(myInspections);
     }
 }

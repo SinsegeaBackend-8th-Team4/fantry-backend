@@ -5,7 +5,7 @@ import com.eneifour.fantry.address.exception.AddressException;
 import com.eneifour.fantry.auction.exception.BusinessException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.common.util.file.FileException;
-import com.eneifour.fantry.cs.exception.CsException;
+import com.eneifour.fantry.cs.exception.InquiryException;
 import com.eneifour.fantry.member.exception.MemberException;
 import com.eneifour.fantry.payment.exception.BootpayException;
 import com.eneifour.fantry.payment.exception.PaymentException;
@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorCode> handleAuctionException(BusinessException ex) {
         ErrorCode errorCode = ex.getErrorCode();
-        log.error("Auction exception occurred [ Message: {}]", errorCode.getMessage());
+        log.error("Auction / Bid / Order 예외 발생 [ Message: {}]", errorCode.getMessage());
         return new ResponseEntity<>(errorCode, ex.getErrorCode().getStatus());
     }
 
@@ -97,8 +97,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, ex.getAccountErrorCode().getStatus());
     }
 
-    @ExceptionHandler(CsException.class)
-    public ResponseEntity<ErrorResponse> handleCsException(CsException ex) {
+    @ExceptionHandler(InquiryException.class)
+    public ResponseEntity<ErrorResponse> handleCsException(InquiryException ex) {
         log.error("CsException 발생: {}", ex.getErrorCode().getMessage());
         ErrorResponse response = ErrorResponse.of(
                 ex.getErrorCode().getStatus(),

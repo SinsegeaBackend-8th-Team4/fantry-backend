@@ -13,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface FaqRepository extends JpaRepository<Faq, Integer>, JpaSpecificationExecutor<Faq> {
 
-    @EntityGraph(attributePaths = {"createdBy", "modifiedBy", "csType", "attachments", "attachments.filemeta"})
+    @EntityGraph(attributePaths = {"createdBy", "updatedBy", "csType", "attachments", "attachments.filemeta"})
     @Query("select f from Faq f where f.faqId = :id")
     Optional<Faq> findWithAttachmentsById(@Param("id") int id);
 }

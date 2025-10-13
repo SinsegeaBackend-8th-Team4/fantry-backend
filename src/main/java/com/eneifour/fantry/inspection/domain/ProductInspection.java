@@ -27,7 +27,8 @@ public class ProductInspection {
     private int memberId;
     private Integer templateId;
     private Integer templateVersion;
-    private Integer inspectorId;
+    private Integer firstInspectorId;  // 1차 검수 처리자 ID
+    private Integer secondInspectorId; // 2차 검수 처리자 ID
 
     // ** 상품 기본 정보 **
     @Column(nullable = false)
@@ -69,6 +70,10 @@ public class ProductInspection {
 
     @Enumerated(EnumType.STRING)
     private FinalGrade finalGrade;
+
+    // ** 검수 1/2차 반려 사유 **
+    private String firstRejectionReason;
+    private String secondRejectionReason;
 
     // ** 검수 결과 정보 **
     @Lob

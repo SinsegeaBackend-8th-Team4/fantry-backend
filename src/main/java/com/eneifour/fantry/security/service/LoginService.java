@@ -27,7 +27,7 @@ public class LoginService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final RedisTokenService redisTokenService;
-    @Value("${spring.jwt.refresh-days}") long refreshDays;
+    @Value("${spring.jwt.refresh-hour}") long refreshHour;
     @Value("${spring.jwt.access-minutes}") long accessMinutes;
 
     private final JpaMemberRepository jpaMemberRepository;
@@ -50,7 +50,7 @@ public class LoginService {
             long accessTokenTtl = accessMinutes * 60;
 
             // 4. Redis에 리프레시 토큰 저장 & 쿠키에 토큰 저장
-            long ttlSec = refreshDays * 24 * 60 * 60;
+            long ttlSec = refreshHour * 60 * 60;
             redisTokenService.saveRefreshToken(userDetails.getUsername(), refreshToken, ttlSec);
             CookieUtil.setRefreshCookie(response, refreshToken, (int) ttlSec);
 
