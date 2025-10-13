@@ -5,7 +5,7 @@ import com.eneifour.fantry.address.exception.AddressException;
 import com.eneifour.fantry.auction.exception.BusinessException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.common.util.file.FileException;
-import com.eneifour.fantry.cs.exception.InquiryException;
+import com.eneifour.fantry.inquiry.exception.InquiryException;
 import com.eneifour.fantry.member.exception.MemberException;
 import com.eneifour.fantry.payment.exception.BootpayException;
 import com.eneifour.fantry.payment.exception.PaymentException;
