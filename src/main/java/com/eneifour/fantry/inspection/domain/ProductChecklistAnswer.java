@@ -27,6 +27,8 @@ public class ProductChecklistAnswer {
     @Column(columnDefinition = "json")
     private String answerValue;
 
+    private String note;
+
     @Column(insertable = false, updatable = false)
     private LocalDateTime createdAt;
 

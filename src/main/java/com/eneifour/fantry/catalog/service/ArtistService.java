@@ -1,5 +1,8 @@
 package com.eneifour.fantry.catalog.service;
 
+import com.eneifour.fantry.catalog.domain.Artist;
+import com.eneifour.fantry.catalog.domain.ArtistStatus;
+import com.eneifour.fantry.catalog.dto.ArtistCreateRequest;
 import com.eneifour.fantry.catalog.dto.ArtistResponse;
 import com.eneifour.fantry.catalog.repository.ArtistRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,5 +29,17 @@ public class ArtistService {
                 .stream()
                 .map(ArtistResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    public Artist createPendingArtist(ArtistCreateRequest request){
+        Artist artist = Artist.builder()
+                .nameKo(request.getNameKo())
+                .nameEn(request.getNameEn())
+                .groupType(request.getGroupType())
+                .status(ArtistStatus.PENDING)
+                .build();
+
+        return artistRepository.save(artist);
     }
 }

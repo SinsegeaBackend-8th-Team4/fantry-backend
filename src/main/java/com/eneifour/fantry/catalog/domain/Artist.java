@@ -23,12 +23,11 @@ public class Artist {
     @Enumerated(EnumType.STRING)
     private GroupType groupType;
 
+    @Enumerated(EnumType.STRING)
+    private ArtistStatus status = ArtistStatus.PENDING;
+
     @Column(insertable = false, updatable = false)
     private LocalDateTime createdAt;
     @Column(insertable = false, updatable = false)
     private LocalDateTime updatedAt;
-
-    public enum GroupType {
-        MALE_GROUP, FEMALE_GROUP, MALE_SOLO, FEMALE_SOLO, MIXED, OTHER
-    }
 }

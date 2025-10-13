@@ -29,8 +29,11 @@ public class OnlineInspectionDetailResponse {
     private String itemName;
     private String itemDescription;
     private String hashtags;
+    private int goodsCategoryId;
     private String goodsCategoryName;
+    private int artistId;
     private String artistName;
+    private Integer albumId;
     private String albumTitle;
 
     // ** 가격 정보 **
@@ -65,7 +68,7 @@ public class OnlineInspectionDetailResponse {
     
     // JPQL 프로젝션을 위한 생성자
     @Builder
-    public OnlineInspectionDetailResponse(int productInspectionId, String submissionUuid, InspectionStatus inspectionStatus, LocalDateTime submittedAt, String itemName, String itemDescription, String hashtags, String goodsCategoryName, String artistName, String albumTitle, BigDecimal expectedPrice, BigDecimal marketAvgPrice, BigDecimal sellerHopePrice, UserInfo seller, String bankName, String bankAccount, String shippingAddress, String shippingAddressDetail, Integer templateId, Integer templateVersion, UserInfo firstInspector, String firstRejectionReason) {
+    public OnlineInspectionDetailResponse(int productInspectionId, String submissionUuid, InspectionStatus inspectionStatus, LocalDateTime submittedAt, String itemName, String itemDescription, String hashtags, int goodsCategoryId, String goodsCategoryName, int artistId, String artistName, Integer albumId, String albumTitle, BigDecimal expectedPrice, BigDecimal marketAvgPrice, BigDecimal sellerHopePrice, UserInfo seller, String bankName, String bankAccount, String shippingAddress, String shippingAddressDetail, Integer templateId, Integer templateVersion, UserInfo firstInspector, String firstRejectionReason) {
         this.productInspectionId = productInspectionId;
         this.submissionUuid = submissionUuid;
         this.inspectionStatus = inspectionStatus;
@@ -73,8 +76,11 @@ public class OnlineInspectionDetailResponse {
         this.itemName = itemName;
         this.itemDescription = itemDescription;
         this.hashtags = hashtags;
+        this.goodsCategoryId = goodsCategoryId;
         this.goodsCategoryName = goodsCategoryName;
+        this.artistId = artistId;
         this.artistName = artistName;
+        this.albumId = albumId;
         this.albumTitle = albumTitle;
         this.expectedPrice = expectedPrice;
         this.marketAvgPrice = marketAvgPrice;
@@ -113,12 +119,14 @@ public class OnlineInspectionDetailResponse {
         private String itemKey;
         private String itemLabel;
         private String answerValue;
+        private String note;
 
         @Builder
-        public ChecklistAnswerInfo(String itemKey, String itemLabel, String answerValue) {
+        public ChecklistAnswerInfo(String itemKey, String itemLabel, String answerValue, String note) {
             this.itemKey = itemKey;
             this.itemLabel = itemLabel;
             this.answerValue = answerValue;
+            this.note = note;
         }
     }
 
