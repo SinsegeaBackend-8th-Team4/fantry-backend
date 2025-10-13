@@ -17,7 +17,7 @@ public enum InspectionStatus {
     // 2차(오프라인) 검수 결과
     OFFLINE_REJECTED("오프라인 검수 반려"),
 
-    COMPLETED("검수 완료"); // 최종 완료
+    COMPLETED("최종 검수 완료"); // 최종 완료
 
     private final String label;
 
