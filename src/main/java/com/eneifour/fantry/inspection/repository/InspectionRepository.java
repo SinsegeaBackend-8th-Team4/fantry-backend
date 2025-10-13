@@ -100,7 +100,7 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         select new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse(
             i.productInspectionId, i.submissionUuid, i.inspectionStatus, i.submittedAt,
             i.itemName, i.itemDescription, i.hashtags,
-            gc.name, a.nameKo, al.title,
+            i.goodsCategoryId, gc.name,i.artistId, a.nameKo, i.albumId, al.title,
             i.expectedPrice, i.marketAvgPrice, i.sellerHopePrice,
             new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse$UserInfo(m.memberId, m.name, m.email, m.tel),
             i.bankName, i.bankAccount,

@@ -1,12 +1,13 @@
 package com.eneifour.fantry.catalog.controller;
 
+import com.eneifour.fantry.catalog.domain.Artist;
+import com.eneifour.fantry.catalog.dto.ArtistCreateRequest;
 import com.eneifour.fantry.catalog.dto.ArtistResponse;
 import com.eneifour.fantry.catalog.service.ArtistService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,5 +22,12 @@ public class ArtistController {
     public InspectionApiResponse<List<ArtistResponse>> getArtists() {
         List<ArtistResponse> artists = artistService.getAllArtists();
         return InspectionApiResponse.ok(artists);
+    }
+
+    @PostMapping
+    public InspectionApiResponse<ArtistResponse> createArtist(@Valid @RequestBody ArtistCreateRequest request) {
+        Artist artist = artistService.createPendingArtist(request);
+
+        return InspectionApiResponse.ok(ArtistResponse.from(artist));
     }
 }
