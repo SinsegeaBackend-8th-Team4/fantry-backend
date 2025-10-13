@@ -60,9 +60,9 @@ public class AuctionController {
      * 특정 회원의 모든 판매 상품 조회
      */
     @GetMapping("/member/{memberId}")
-    public ResponseEntity<List<Auction>> getAuctionsByMember(@PathVariable int memberId) {
+    public ResponseEntity<List<AuctionSummaryResponse>> getAuctionsByMember(@PathVariable int memberId) {
         log.info("Request to get auctions for memberId: {}", memberId);
-        List<Auction> auctions = auctionService.findBymemberId(memberId);
+        List<AuctionSummaryResponse> auctions = auctionService.findBymemberId(memberId);
         return ResponseEntity.ok(auctions);
     }
 
@@ -70,11 +70,11 @@ public class AuctionController {
      *  특정 회원의 판매 상태별 상품 조회
      */
     @GetMapping("/member/{memberId}/status")
-    public ResponseEntity<List<Auction>> getAuctionsByMemberAndStatus(
+    public ResponseEntity<List<AuctionSummaryResponse>> getAuctionsByMemberAndStatus(
             @PathVariable int memberId,
             @RequestParam SaleStatus saleStatus) {
         log.info("Request to get auctions for memberId: {} with status: {}", memberId, saleStatus);
-        List<Auction> auctions = auctionService.findBymemberIdAndSaleStatus(memberId, saleStatus);
+        List<AuctionSummaryResponse> auctions = auctionService.findBymemberIdAndSaleStatus(memberId, saleStatus);
         return ResponseEntity.ok(auctions);
     }
 

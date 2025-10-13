@@ -40,6 +40,10 @@ public class Orders {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    private LocalDateTime deliveredAt;
+
+    private LocalDateTime cancelledAt;
+
     @ManyToOne
     @JoinColumn(name = "auction_id")
     private Auction auction;
@@ -51,11 +55,6 @@ public class Orders {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id")
     private Payment payment;
-
-    // --------------------------------------------------------------
-    // ✅ DDD Rich Domain Methods - Change Status
-    // --------------------------------------------------------------
-
 
     // --------------------------------------------------------------
     // ✅ DDD Rich Domain Methods - Change Status
@@ -105,6 +104,7 @@ public class Orders {
             throw new OrdersException(ErrorCode.ORDER_DELIVERY_NOT_ALLOWED);
         }
         this.orderStatus = OrderStatus.DELIVERED;
+        this.deliveredAt = LocalDateTime.now();
     }
 
     /**
@@ -138,6 +138,7 @@ public class Orders {
             throw new OrdersException(ErrorCode.ORDER_CANCELLATION_NOT_ALLOWED);
         }
         this.orderStatus = OrderStatus.CANCELLED;
+        this.cancelledAt = LocalDateTime.now();
     }
 
     /**
