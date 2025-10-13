@@ -5,12 +5,16 @@ import com.eneifour.fantry.address.exception.AddressException;
 import com.eneifour.fantry.auction.exception.BusinessException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.common.util.file.FileException;
+<<<<<<< Updated upstream
 import com.eneifour.fantry.inquiry.exception.InquiryException;
 import com.eneifour.fantry.member.exception.MemberException;
 import com.eneifour.fantry.payment.exception.BootpayException;
 import com.eneifour.fantry.payment.exception.PaymentException;
 import com.eneifour.fantry.report.exception.ReportException;
 import com.eneifour.fantry.security.exception.AuthException;
+=======
+import com.eneifour.fantry.cs.exception.CsException;
+>>>>>>> Stashed changes
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,6 +39,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
     }
 
+<<<<<<< Updated upstream
     @ExceptionHandler(MemberException.class)
     public ResponseEntity<ErrorResponse> handleFileException(MemberException e) {
         log.error("회원에서 예외 발생: {}", e.getMemberCode().getMessage());
@@ -99,6 +104,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InquiryException.class)
     public ResponseEntity<ErrorResponse> handleCsException(InquiryException ex) {
+=======
+    @ExceptionHandler(CsException.class)
+    public ResponseEntity<ErrorResponse> handleCsException(CsException ex) {
+>>>>>>> Stashed changes
         log.error("CsException 발생: {}", ex.getErrorCode().getMessage());
         ErrorResponse response = ErrorResponse.of(
                 ex.getErrorCode().getStatus(),
@@ -107,6 +116,7 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
     }
+<<<<<<< Updated upstream
 
     @ExceptionHandler(BootpayException.class)
     public ResponseEntity<ErrorResponse> handleBootpayException(BootpayException ex) {
@@ -129,4 +139,6 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
     }
+=======
+>>>>>>> Stashed changes
 }

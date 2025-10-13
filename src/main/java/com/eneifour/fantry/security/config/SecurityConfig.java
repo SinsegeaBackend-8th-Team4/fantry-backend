@@ -71,7 +71,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // 🔽 여기에 로그인 없이 접근을 허용할 URL 경로 목록을 작성합니다.
                         .requestMatchers(
+<<<<<<< Updated upstream
                                 SecurityConstants.PUBLIC_URIS
+=======
+                                "/actuator/**",
+                                "/api/user/**",
+                                "/api/send/**",
+                                "/api/file/**",
+                                "/api/payment/**",
+                                "/api/cs/**",
+                                "/webhook/**"
+>>>>>>> Stashed changes
                         ).permitAll() // 위에 명시된 경로들은 모두 허용
 
                         // 여기에 관리자만 접근을 허용할 URL 경로 목록 작성
