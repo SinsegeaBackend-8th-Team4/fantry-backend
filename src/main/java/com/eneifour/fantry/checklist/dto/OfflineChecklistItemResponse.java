@@ -5,10 +5,13 @@ import lombok.*;
 @Getter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class OfflineChecklistItemResponse {
-    private String itemKey;
-    private String itemLabel;
-    private String sellerAnswer; // 판매자 답변
-    private String inspectorAnswer; // 검수자 답변
-    private String note; // 불일치 사유
+    // 체크리스트 항목 정의 정보
+    private OnlineChecklistItemResponse checklistItem;
+
+    // 답변 정보
+    private String sellerAnswer;
+    private String inspectorAnswer;
+    private String note;
 }
