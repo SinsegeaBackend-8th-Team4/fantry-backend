@@ -4,8 +4,9 @@ import com.eneifour.fantry.common.util.file.FileService;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import com.eneifour.fantry.orders.domain.Orders;
-import com.eneifour.fantry.orders.repository.OrdersRepository;
+import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.dto.PaymentCancelRequest;
+import com.eneifour.fantry.payment.repository.PaymentRepository;
 import com.eneifour.fantry.payment.service.PaymentService;
 import com.eneifour.fantry.refund.domain.ReturnRequest;
 import com.eneifour.fantry.refund.domain.ReturnStatus;
@@ -15,6 +16,7 @@ import com.eneifour.fantry.refund.exception.ReturnErrorCode;
 import com.eneifour.fantry.refund.exception.ReturnException;
 import com.eneifour.fantry.refund.repository.ReturnRepository;
 import com.eneifour.fantry.refund.repository.ReturnStatusHistoryRepository;
+import com.eneifour.fantry.orders.repository.OrdersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +37,7 @@ public class ReturnAdminService {
     private final ReturnRepository returnRepository;
     private final ReturnSpecification returnSpecification;
     private final JpaMemberRepository memberRepository;
+    private final PaymentRepository paymentRepository;
     private final OrdersRepository ordersRepository;
     private final ReturnStatusHistoryRepository historyRepository;
     private final PaymentService paymentService;
@@ -43,7 +46,11 @@ public class ReturnAdminService {
     public ReturnAdminResponse createReturnRequestByAdmin(ReturnAdminCreateRequest request, Member admin) {
         Member buyer = memberRepository.findById(request.memberId())
                 .orElseThrow(() -> new ReturnException(ReturnErrorCode.BUYER_NOT_FOUND));
-        Orders order = ordersRepository.findById(request.orderId())
+
+        Payment payment = paymentRepository.findByOrderId(request.orderId())
+                .orElseThrow(() -> new ReturnException(ReturnErrorCode.ORDER_NOT_FOUND));
+
+        Orders order = ordersRepository.findByPayment(payment)
                 .orElseThrow(() -> new ReturnException(ReturnErrorCode.ORDER_NOT_FOUND));
 
         if (returnRepository.existsByOrders(order)) {

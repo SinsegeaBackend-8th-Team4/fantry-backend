@@ -15,7 +15,9 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 환불/반품 요청 정보를 나타내는 핵심 도메인 엔티티입니다.
@@ -42,13 +44,13 @@ public class ReturnRequest extends BaseAuditingEntity {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    // 환불/반품 사유 (Enum)
+    // 환불/반품 사유 종류 (Enum)
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "reason", nullable = false)
     private ReturnReason reason;
 
     // 상세 사유
-    @Column(name = "return_reason", columnDefinition = "TEXT")
+    @Column(name = "detail_reason", columnDefinition = "TEXT")
     private String detailReason;
 
     // 현재 처리 상태 (Enum)
@@ -64,6 +66,7 @@ public class ReturnRequest extends BaseAuditingEntity {
     private BigDecimal deductedShippingFee;
 
     // 최종 환불될 금액
+    @Column(nullable = false)
     private BigDecimal finalRefundAmount;
 
     // 관리자가 환불/반품을 거절한 사유
@@ -92,10 +95,11 @@ public class ReturnRequest extends BaseAuditingEntity {
     @OneToMany(mappedBy = "returnRequest", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReturnAttachment> attachments = new ArrayList<>();
 
-    // 환불/반품 상태 변경 이력
+    // [수정] 환불/반품 상태 변경 이력 (List -> Set으로 변경)
     @Builder.Default
     @OneToMany(mappedBy = "returnRequest", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReturnStatusHistory> statusHistories = new ArrayList<>();
+    private Set<ReturnStatusHistory> statusHistories = new HashSet<>();
+
 
     // --- 비즈니스 메서드 ---
 
@@ -161,13 +165,15 @@ public class ReturnRequest extends BaseAuditingEntity {
         if (order.getOrderStatus() != OrderStatus.DELIVERED) {
             throw new ReturnException(ReturnErrorCode.NOT_REFUNDABLE_STATUS);
         }
+        BigDecimal originalAmount = BigDecimal.valueOf(order.getPrice());
         return ReturnRequest.builder()
                 .orders(order)
                 .member(member)
                 .reason(request.reason())
                 .detailReason(request.detailReason())
                 .status(ReturnStatus.REQUESTED)
-                .originalPaymentAmount(BigDecimal.valueOf(order.getPrice()))
+                .originalPaymentAmount(originalAmount)
+                .finalRefundAmount(originalAmount) // [수정] 생성 시점에는 원본 금액과 동일하게 초기화
                 .createdBy(member) // 사용자가 생성 주체
                 .build();
     }
@@ -177,13 +183,15 @@ public class ReturnRequest extends BaseAuditingEntity {
      * 생성 주체(createdBy)는 관리자로 기록됩니다.
      */
     public static ReturnRequest of(Orders order, Member buyer, ReturnAdminCreateRequest request, Member admin) {
+        BigDecimal originalAmount = BigDecimal.valueOf(order.getPrice());
         return ReturnRequest.builder()
                 .orders(order)
                 .member(buyer) // 환불 요청의 주체는 구매자(buyer)
                 .reason(request.reason())
                 .detailReason(request.detailReason())
                 .status(ReturnStatus.REQUESTED)
-                .originalPaymentAmount(BigDecimal.valueOf(order.getPrice()))
+                .originalPaymentAmount(originalAmount)
+                .finalRefundAmount(originalAmount) // [수정] 생성 시점에는 원본 금액과 동일하게 초기화
                 .createdBy(admin) // 관리자가 생성 주체
                 .build();
     }

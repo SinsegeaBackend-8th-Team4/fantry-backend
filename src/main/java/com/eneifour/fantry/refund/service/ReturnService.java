@@ -6,6 +6,8 @@ import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.orders.domain.OrderStatus;
 import com.eneifour.fantry.orders.domain.Orders;
 import com.eneifour.fantry.orders.repository.OrdersRepository;
+import com.eneifour.fantry.payment.domain.Payment;
+import com.eneifour.fantry.payment.repository.PaymentRepository;
 import com.eneifour.fantry.refund.domain.ReturnRequest;
 import com.eneifour.fantry.refund.domain.ReturnStatus;
 import com.eneifour.fantry.refund.domain.ReturnStatusHistory;
@@ -36,12 +38,16 @@ import java.util.Map;
 public class ReturnService {
 
     private final ReturnRepository returnRepository;
+    private final PaymentRepository paymentRepository;
     private final OrdersRepository ordersRepository;
     private final FileService fileService;
     private final ReturnStatusHistoryRepository historyRepository;
 
     public ReturnDetailResponse createReturnRequest(ReturnCreateRequest request, Member member) {
-        Orders order = ordersRepository.findById(request.orderId())
+        Payment payment = paymentRepository.findByOrderId(request.orderId())
+                .orElseThrow(() -> new ReturnException(ReturnErrorCode.ORDER_NOT_FOUND));
+
+        Orders order = ordersRepository.findByPayment(payment)
                 .orElseThrow(() -> new ReturnException(ReturnErrorCode.ORDER_NOT_FOUND));
 
         if (!order.getMember().getId().equals(member.getId())) {
@@ -51,6 +57,7 @@ public class ReturnService {
         if (returnRepository.existsByOrders(order)) {
             throw new ReturnException(ReturnErrorCode.DUPLICATE_REQUEST);
         }
+
 
         if (order.getOrderStatus() != OrderStatus.DELIVERED) {
             throw new ReturnException(ReturnErrorCode.NOT_REFUNDABLE_STATUS);
