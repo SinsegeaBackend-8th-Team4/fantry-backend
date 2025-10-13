@@ -50,6 +50,8 @@ public class InspectionService {
     private final MemberRepository memberRepository;
     private final FileService fileService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final NotificationService notificationService;
+
     //  == 공통 헬퍼 ==
     /** 검수 ID로 검수 조회 */
     private ProductInspection findInspectionById(int productInspectionId){
@@ -193,6 +195,9 @@ public class InspectionService {
         inspection.setInspectionStatus(InspectionStatus.ONLINE_APPROVED);
         inspection.setOnlineInspectedAt(LocalDateTime.now());
         updateTimestamps(inspection);
+
+        // 결과 이메일 발송
+        notificationService.sendInspectionResultMail(inspection);
     }
 
     /** 1차 검수 반려 */
@@ -206,6 +211,9 @@ public class InspectionService {
         inspection.setFirstRejectionReason(request.getRejectionReason());
         inspection.setOnlineInspectedAt(LocalDateTime.now());
         updateTimestamps(inspection);
+
+        // 결과 이메일 발송
+        notificationService.sendInspectionResultMail(inspection);
     }
 
     // ========== [ 2차 검수 (Offline) ] ==========
@@ -271,6 +279,9 @@ public class InspectionService {
         inspection.setOfflineInspectedAt(LocalDateTime.now());
         inspection.setCompletedAt(LocalDateTime.now());
         updateTimestamps(inspection);
+
+        // 결과 이메일 발송
+        notificationService.sendInspectionResultMail(inspection);
     }
 
     /** 2차 검수 반려 */
@@ -288,6 +299,9 @@ public class InspectionService {
         inspection.setSecondRejectionReason(request.getRejectionReason());
         inspection.setOfflineInspectedAt(LocalDateTime.now());
         updateTimestamps(inspection);
+
+        // 결과 이메일 발송
+        notificationService.sendInspectionResultMail(inspection);
     }
 
     /** 특정 회원의 모든 검수 현황 리스트 */
