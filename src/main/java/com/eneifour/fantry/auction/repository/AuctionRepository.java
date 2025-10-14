@@ -28,8 +28,8 @@ public interface AuctionRepository extends JpaRepository<Auction,Integer> {
      */
     @Query("""
         SELECT NEW com.eneifour.fantry.auction.dto.AuctionDetailResponse(
-            a.auctionId, pi.memberId, a.startPrice, CAST(a.saleStatus AS string), CAST(a.saleType AS string),
-            a.startTime, a.endTime, pi.itemName, pi.itemDescription, gc.name, ar.nameKo, al.title
+            a.auctionId, pi.productInspectionId, pi.memberId, a.startPrice, CAST(a.saleStatus AS string), CAST(a.saleType AS string),
+            a.startTime, a.endTime, pi.itemName, pi.itemDescription, pi.hashtags, gc.name, ar.nameKo, al.title
         )
         FROM Auction a
         JOIN a.productInspection pi
