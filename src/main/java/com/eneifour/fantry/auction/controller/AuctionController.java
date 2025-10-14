@@ -1,6 +1,5 @@
 package com.eneifour.fantry.auction.controller;
 
-import com.eneifour.fantry.auction.domain.Auction;
 import com.eneifour.fantry.auction.domain.SaleStatus;
 import com.eneifour.fantry.auction.domain.SaleType;
 import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
@@ -13,12 +12,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 상품(경매) 관련 API를 제공하는 컨트롤러입니다.
+ */
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -26,26 +27,29 @@ import java.util.List;
 public class AuctionController {
     private final AuctionService auctionService;
 
-    // =============================================
-    // 1. 상품 조회 (Read)
-    // =============================================
-
     /**
-     * 상품 단건 조회
+     * 특정 상품의 상세 정보를 조회합니다.
+     *
+     * @param auctionId 조회할 상품의 ID
+     * @return 상품 상세 정보.
      */
     @GetMapping("/{auctionId}")
     public ResponseEntity<?> getAuctionById(@PathVariable("auctionId") int auctionId){
-        log.warn("/api/auctions/"+auctionId);
         AuctionDetailResponse auctionDetail = auctionService.findOne(auctionId);
 
         return ResponseEntity.ok(auctionDetail);
     }
 
-    /*
-    ** 상품 List 조회 (Status 및 saleType 을 명시할 경우 , 조건에 맞는 상품 출력 -> 서비스 분기 처리)
-    *  status 및 saleType 이 null 일 경우 전체 목록 반환
-    *  Page 는 기본적으로 명시하지 않으면 default 10건씩 반환
-    * */
+    /**
+     * 상품 목록을 조건에 따라 페이징하여 조회합니다.
+     * <p>판매 유형(saleType)이나 판매 상태(saleStatus)를 지정하여 필터링할 수 있습니다.
+     * <p>아무 조건도 지정하지 않으면 전체 상품 목록이 반환됩니다.
+     *
+     * @param saleType   판매 유형 (AUCTION, INSTANT_BUY).
+     * @param saleStatus 판매 상태 (ACTIVE, SOLD, NOT_SOLD, CANCELLED).
+     * @param pageable   페이징 정보 (페이지 번호, 페이지 크기 등).
+     * @return 페이징 처리된 상품 요약 목록.
+     */
     @GetMapping
     public ResponseEntity<Page<AuctionSummaryResponse>> getAuctions(
             @RequestParam(required = false) SaleType saleType,
@@ -57,7 +61,10 @@ public class AuctionController {
     }
 
     /**
-     * 특정 회원의 모든 판매 상품 조회
+     * 특정 회원이 등록한 모든 판매 상품 목록을 조회합니다.
+     *
+     * @param memberId 조회할 회원의 ID
+     * @return 해당 회원의 상품 요약 목록.
      */
     @GetMapping("/member/{memberId}")
     public ResponseEntity<List<AuctionSummaryResponse>> getAuctionsByMember(@PathVariable int memberId) {
@@ -67,7 +74,11 @@ public class AuctionController {
     }
 
     /**
-     *  특정 회원의 판매 상태별 상품 조회
+     * 특정 회원의 판매 상태별 상품 목록을 조회합니다.
+     *
+     * @param memberId   조회할 회원의 ID
+     * @param saleStatus 조회할 판매 상태  (ACTIVE, SOLD, NOT_SOLD, CANCELLED).
+     * @return 해당 조건에 맞는 상품 요약 목록.
      */
     @GetMapping("/member/{memberId}/status")
     public ResponseEntity<List<AuctionSummaryResponse>> getAuctionsByMemberAndStatus(
@@ -78,22 +89,33 @@ public class AuctionController {
         return ResponseEntity.ok(auctions);
     }
 
-    // =============================================
-    // 2. 상품 등록/삭제 (Write)
-    // =============================================
-
     /**
-     * 새로운 판매 상품 등록
+     * 새로운 판매 상품을 등록합니다.
+     * <p>요청 본문(Request Body)에 상품 정보를 담아 전송해야 합니다.
+     *
+     * @param request 상품 등록에 필요한 데이터.
+     *                <p><b>[요청 필드]</b></p>
+     *                <ul>
+     *                  <li><b>product_inspection_id</b>: 상품 검수 ID (필수)</li>
+     *                  <li><b>sale_type</b>: 판매 유형 (AUCTION, INSTANT_BUY) (필수)</li>
+     *                  <li><b>start_price</b>: 시작 가격 (필수, 100원 이상)</li>
+     *                  <li><b>start_time</b>: 판매 시작 시간 (필수)</li>
+     *                  <li><b>end_time</b>: 판매 종료 시간 (필수, 현재보다 미래)</li>
+     *                </ul>
+     * @return 작업 성공 메시지.
      */
     @PostMapping
     public ResponseEntity<?> createAuction(@Valid @RequestBody AuctionRequest request) {
         log.info("Request to create auction for inspectionId: {}", request.getProductInspectionId());
-        AuctionDetailResponse createdAuction = auctionService.createAuction(request);
+        auctionService.createAuction(request);
         return ResponseEntity.ok("상품 등록 완료");
     }
 
     /**
-     * 판매 상품 삭제
+     * 등록된 판매 상품을 삭제합니다.
+     *
+     * @param auctionId 삭제할 상품의 ID
+     * @return 작업 성공 메시지.
      */
     @DeleteMapping("/{auctionId}")
     public ResponseEntity<String> deleteAuction(@PathVariable int auctionId) {
@@ -102,12 +124,12 @@ public class AuctionController {
         return ResponseEntity.ok("Auction ID " + auctionId + " has been successfully deleted.");
     }
 
-
-    // =============================================
-    // 2. 상품 수정 (Update)
-    // =============================================
     /**
-     * 상품 판매 완료 처리
+     * 상품을 판매 완료 상태로 변경합니다.
+     *
+     * @param auctionId  처리할 상품의 ID
+     * @param finalPrice 최종 판매 가격
+     * @return 작업 성공 메시지.
      */
     @PatchMapping("/{auctionId}/status/sold")
     public ResponseEntity<String> markAsSold(
@@ -119,7 +141,10 @@ public class AuctionController {
     }
 
     /**
-     * 상품을 판매 실패(NOT_SOLD) 상태로 변경
+     * 상품을 판매 실패(유찰) 상태로 변경합니다.
+     *
+     * @param auctionId 처리할 상품의 ID
+     * @return 작업 성공 메시지.
      */
     @PatchMapping("/{auctionId}/status/not-sold")
     public ResponseEntity<String> markAsNotSold(@PathVariable int auctionId) {
@@ -129,7 +154,10 @@ public class AuctionController {
     }
 
     /**
-     * 상품을 취소(CANCELLED) 상태로 변경
+     * 상품을 판매 취소 상태로 변경합니다.
+     *
+     * @param auctionId 처리할 상품의 ID
+     * @return 작업 성공 메시지.
      */
     @PatchMapping("/{auctionId}/status/cancelled")
     public ResponseEntity<String> cancelAuction(@PathVariable int auctionId) {
@@ -139,7 +167,10 @@ public class AuctionController {
     }
 
     /**
-     * 상품을 활성(ACTIVE) 상태로 변경
+     * 상품을 다시 판매 중(활성) 상태로 변경합니다.
+     *
+     * @param auctionId 처리할 상품의 ID
+     * @return 작업 성공 메시지.
      */
     @PatchMapping("/{auctionId}/status/active")
     public ResponseEntity<String> activateAuction(@PathVariable int auctionId) {
@@ -149,7 +180,11 @@ public class AuctionController {
     }
 
     /**
-     * 상품 판매 유형 변경
+     * 상품의 판매 유형을 변경합니다. (예: 경매 -> 즉시 구매)
+     *
+     * @param auctionId   처리할 상품의 ID
+     * @param newSaleType 새로운 판매 유형 (AUCTION, INSTANT_BUY).
+     * @return 작업 성공 메시지.
      */
     @PatchMapping("/{auctionId}/sale-type")
     public ResponseEntity<String> changeSaleType(
