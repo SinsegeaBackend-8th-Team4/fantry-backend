@@ -1,5 +1,6 @@
 package com.eneifour.fantry.inquiry.dto;
 
+import com.eneifour.fantry.inquiry.domain.CsType;
 import com.eneifour.fantry.inquiry.domain.Inquiry;
 import com.eneifour.fantry.inquiry.domain.InquiryStatus;
 
@@ -13,7 +14,8 @@ public record InquirySummaryResponse(
         InquiryStatus status,
         LocalDateTime inquiredAt,
         String answerContent,
-        String answeredByName
+        String answeredByName,
+        String csType
 ) {
     public static InquirySummaryResponse from(Inquiry inquiry) {
         return new InquirySummaryResponse(
@@ -24,7 +26,8 @@ public record InquirySummaryResponse(
                 inquiry.getStatus(),
                 inquiry.getInquiredAt(),
                 inquiry.getAnswerContent(),
-                (inquiry.getAnsweredBy() != null) ? inquiry.getAnsweredBy().getName() : null
+                (inquiry.getAnsweredBy() != null) ? inquiry.getAnsweredBy().getName() : null,
+                inquiry.getCsType().getName()
         );
     }
 }

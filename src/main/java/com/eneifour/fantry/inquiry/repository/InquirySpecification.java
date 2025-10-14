@@ -26,12 +26,21 @@ public class InquirySpecification extends AbstractSpecification<Inquiry, Inquiry
                 .and(fetchJoins())
                 // 조건 DTO의 status 필드가 null이 아니면, status 검색 조건을 추가
                 .and(equal("status", condition.getStatus()))
-                // 조건 DTO의 csType 필드가 null이 아니면, csType 검색 조건을 추가
-                .and(equal("csType", condition.getCsType()))
+                // 조건 DTO의 csTypeId 필드가 null이 아니면, csTypeId 검색 조건을 추가
+                .and(equalCsTypeId(condition.getCsTypeId()))
                 // 조건 DTO의 memberName 필드가 null이 아니면, member.name like 검색 조건을 추가
                 .and(like("inquiredBy.name", condition.getMemberName()));
 
         return spec;
+    }
+
+    private Specification<Inquiry> equalCsTypeId(Integer csTypeId) {
+        return (root, query, criteriaBuilder) -> {
+            if (csTypeId == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("csType").get("csTypeId"), csTypeId);
+        };
     }
 
     /**
@@ -49,6 +58,7 @@ public class InquirySpecification extends AbstractSpecification<Inquiry, Inquiry
                 // ToOne 관계인 inquiredBy와 answeredBy를 LEFT JOIN FETCH 함
                 root.fetch("inquiredBy", JoinType.LEFT);
                 root.fetch("answeredBy", JoinType.LEFT);
+                root.fetch("csType", JoinType.LEFT);
                 // Fetch Join으로 인해 발생할 수 있는 데이터 중복을 제거
                 query.distinct(true);
             }

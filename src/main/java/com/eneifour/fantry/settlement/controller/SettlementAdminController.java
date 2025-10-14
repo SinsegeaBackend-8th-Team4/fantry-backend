@@ -5,10 +5,16 @@ import com.eneifour.fantry.security.dto.CustomUserDetails;
 import com.eneifour.fantry.settlement.dto.SettlementSettingRequest;
 import com.eneifour.fantry.settlement.dto.SettlementSettingResponse;
 import com.eneifour.fantry.settlement.service.SettlementAdminService;
+import com.eneifour.fantry.settlement.dto.SettlementDashboardResponse;
+import com.eneifour.fantry.settlement.dto.SettlementDetailResponse;
+import com.eneifour.fantry.settlement.dto.SettlementSearchCondition;
+import com.eneifour.fantry.settlement.dto.SettlementSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +29,47 @@ import org.springframework.web.bind.annotation.*;
 public class SettlementAdminController {
 
     private final SettlementAdminService settlementAdminService;
+
+    /**
+     * 대시보드에 표시될 정산 KPI 요약 정보를 조회합니다.
+     * @return 정산 KPI 데이터
+     */
+    @GetMapping("/dashboard")
+    @Operation(summary = "Get Settlement Dashboard Summary", description = "대시보드용 정산 KPI 데이터를 조회합니다.")
+    public ResponseEntity<SettlementDashboardResponse> getDashboardSummary() {
+        SettlementDashboardResponse response = settlementAdminService.getDashboardSummary();
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 정산 내역 목록을 검색 조건과 함께 페이징하여 조회합니다.
+     * @param condition 검색 조건 (판매자명, 상태, 기간 등)
+     * @param pageable 페이징 정보
+     * @return 페이징된 정산 내역 목록
+     */
+    @GetMapping
+    @Operation(summary = "Get Settlement List", description = "정산 내역 목록을 검색하고 페이징하여 조회합니다.")
+    public ResponseEntity<Page<SettlementSummaryResponse>> getSettlements(
+            @ModelAttribute SettlementSearchCondition condition,
+            Pageable pageable
+    ) {
+        Page<SettlementSummaryResponse> response = settlementAdminService.getSettlements(condition, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 특정 정산 건의 상세 내역을 조회합니다.
+     * @param settlementId 정산 ID
+     * @return 정산 상세 정보
+     */
+    @GetMapping("/{settlementId}")
+    @Operation(summary = "Get Settlement Detail", description = "특정 정산 건의 상세 내역을 조회합니다.")
+    public ResponseEntity<SettlementDetailResponse> getSettlementDetail(
+            @PathVariable int settlementId
+    ) {
+        SettlementDetailResponse response = settlementAdminService.getSettlementDetail(settlementId);
+        return ResponseEntity.ok(response);
+    }
 
     /**
      * 현재 적용 중인 정산 설정을 조회합니다.

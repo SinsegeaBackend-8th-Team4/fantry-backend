@@ -19,7 +19,7 @@ import java.util.Optional;
 @Repository
 public interface InquiryRepository extends JpaRepository<Inquiry, Integer>, JpaSpecificationExecutor<Inquiry> {
 
-    @EntityGraph(attributePaths = {"inquiredBy"})
+    @EntityGraph(attributePaths = {"inquiredBy", "csType"})
     Page<Inquiry> findByInquiredByOrderByInquiredAtDesc(Member inquiredBy, Pageable pageable);
 
     /**
