@@ -305,8 +305,9 @@ public class InspectionService {
     }
 
     /** 특정 회원의 모든 검수 현황 리스트 */
-    public List<MyInspectionResponse> getMyInspections(int memberId) {
-        return inspectionRepository.findMyInspectionsByMemberId(memberId);
+    public InspectionPageResponse<MyInspectionResponse> getMyInspections(int memberId, Pageable pageable) {
+        Page<MyInspectionResponse> page = inspectionRepository.findMyInspectionsByMemberId(memberId, pageable);
+        return InspectionPageResponse.fromPage(page);
     }
 
     /** 판매자 상품 발송 확인 후 상태 변경 */

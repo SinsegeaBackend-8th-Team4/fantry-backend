@@ -137,14 +137,17 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
 
     /**
      * 특정 회원 검수 신청 목록 조회
+     *
      * @param memberId 회원 ID
+     * @param pageable 페이지 정보
      * @return 해당 회원 검수 현황 리스트
      */
     @Query("""
         SELECT new com.eneifour.fantry.inspection.dto.MyInspectionResponse(
-            i.productInspectionId, i.itemName,
-            gc.name, a.nameKo, i.sellerHopePrice,
-            i.inspectionStatus, i.submittedAt
+            i.productInspectionId, i.itemName, i.itemDescription,
+            gc.name, a.nameKo, i.sellerHopePrice, i.finalBuyPrice,
+            i.inspectionStatus, i.submittedAt, i.firstRejectionReason,
+            i.secondRejectionReason, i.priceDeductionReason
         )
         FROM ProductInspection i
         JOIN GoodsCategory gc ON gc.goodsCategoryId = i.goodsCategoryId
@@ -152,5 +155,6 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         WHERE i.memberId = :memberId
         ORDER BY i.submittedAt DESC
     """)
-    List<MyInspectionResponse> findMyInspectionsByMemberId(@Param("memberId") int memberId);
+    Page<MyInspectionResponse> findMyInspectionsByMemberId(@Param("memberId") int memberId, Pageable pageable);
+
 }
