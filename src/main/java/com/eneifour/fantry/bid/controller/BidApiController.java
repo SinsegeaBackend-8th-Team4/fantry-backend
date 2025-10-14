@@ -47,29 +47,29 @@ public class BidApiController {
     /**
      * 특정 회원의 모든 입찰 내역을 조회합니다.
      *
-     * @param memberId 조회할 회원의 ID.
+     * @param bidderId 조회할 회원의 ID.
      * @return 해당 회원의 입찰 내역 목록.
      */
-    @GetMapping("/member/{memberId}")
-    public ResponseEntity<List<Bid>> getBidsByMemberId(@PathVariable int memberId) {
-        log.info("Request to get bids for memberId: {}", memberId);
-        List<Bid> bids = bidService.findByBidderId(memberId);
+    @GetMapping("/member/{bidderId}")
+    public ResponseEntity<List<Bid>> getBidsByBidderId(@PathVariable int bidderId) {
+        log.info("Request to get bids for bidderId: {}", bidderId);
+        List<Bid> bids = bidService.findByBidderId(bidderId);
         return ResponseEntity.ok(bids);
     }
 
     /**
      * 특정 회원이 특정 상품에 입찰한 내역을 조회합니다.
      *
-     * @param memberId 조회할 회원의 ID.
+     * @param bidderId 조회할 회원의 ID.
      * @param itemId   조회할 상품의 ID.
      * @return 해당 조건에 맞는 입찰 내역 목록.
      */
     @GetMapping("/search")
-    public ResponseEntity<List<Bid>> getBidsByMemberAndItem(
-            @RequestParam int memberId,
+    public ResponseEntity<List<Bid>> getBidsByBidderAndItem(
+            @RequestParam int bidderId,
             @RequestParam int itemId) {
-        log.info("Request to get bids for memberId: {} and itemId: {}", memberId, itemId);
-        List<Bid> bids = bidService.findByBidderIdAndItemId(memberId, itemId);
+        log.info("Request to get bids for bidderId: {} and itemId: {}", bidderId, itemId);
+        List<Bid> bids = bidService.findByBidderIdAndItemId(bidderId, itemId);
         return ResponseEntity.ok(bids);
     }
 
