@@ -7,14 +7,20 @@ import com.eneifour.fantry.inquiry.domain.CsType;
 import com.eneifour.fantry.notice.domain.Notice;
 import com.eneifour.fantry.notice.dto.NoticeCreateRequest;
 import com.eneifour.fantry.notice.dto.NoticeDetailResponse;
+import com.eneifour.fantry.notice.dto.NoticeSearchRequest;
+import com.eneifour.fantry.notice.dto.NoticeSummaryResponse;
 import com.eneifour.fantry.notice.dto.NoticeUpdateRequest;
 import com.eneifour.fantry.notice.exception.NoticeErrorCode;
 import com.eneifour.fantry.notice.exception.NoticeException;
 import com.eneifour.fantry.inquiry.repository.CsTypeRepository;
 import com.eneifour.fantry.notice.repository.NoticeRepository;
+import com.eneifour.fantry.notice.repository.NoticeSpecification;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.domain.RoleType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,6 +36,7 @@ import java.util.List;
 public class NoticeAdminService {
 
     private final NoticeRepository noticeRepository;
+    private final NoticeSpecification noticeSpecification;
     private final CsTypeRepository csTypeRepository;
     private final FileService fileService;
     private final HtmlSanitizer htmlSanitizer;
@@ -111,5 +118,11 @@ public class NoticeAdminService {
 
         List<FileMeta> savedFileMetas = fileService.uploadFiles(files, SUB_DIRECTORY, admin);
         savedFileMetas.forEach(notice::addAttachment);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<NoticeSummaryResponse> searchNoticesForAdmin(NoticeSearchRequest request, Pageable pageable) {
+        Specification<Notice> spec = noticeSpecification.toSpecification(request);
+        return noticeRepository.findAll(spec, pageable).map(NoticeSummaryResponse::from);
     }
 }

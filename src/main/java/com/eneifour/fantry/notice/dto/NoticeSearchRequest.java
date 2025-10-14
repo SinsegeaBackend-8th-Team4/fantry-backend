@@ -2,9 +2,6 @@ package com.eneifour.fantry.notice.dto;
 
 import com.eneifour.fantry.inquiry.domain.CsStatus;
 
-/**
- * 공지사항 동적 검색을 위한 조건을 담는 DTO입니다.
- */
 public record NoticeSearchRequest(
         Integer csTypeId,
         String keyword,

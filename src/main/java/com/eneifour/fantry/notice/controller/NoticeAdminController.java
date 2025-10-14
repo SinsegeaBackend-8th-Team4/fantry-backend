@@ -1,29 +1,23 @@
 package com.eneifour.fantry.notice.controller;
 
-import com.eneifour.fantry.notice.dto.NoticeCreateRequest;
-import com.eneifour.fantry.notice.dto.NoticeDetailResponse;
-import com.eneifour.fantry.notice.dto.NoticeUpdateRequest;
+import com.eneifour.fantry.member.domain.Member;
+import com.eneifour.fantry.notice.dto.*;
 import com.eneifour.fantry.notice.service.NoticeAdminService;
 import com.eneifour.fantry.notice.service.NoticeService;
-import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
-/**
- * 관리자용 공지사항 관련 API를 제공하는 컨트롤러입니다.
- * <p>모든 API는 관리자 권한을 가진 사용자만 접근할 수 있습니다.
- *
- * @author 정재환
- * @since 2025.10.11
- */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/cs/notices")
@@ -31,6 +25,15 @@ public class NoticeAdminController {
 
     private final NoticeAdminService noticeAdminService;
     private final NoticeService noticeService; // 상세 조회는 사용자용 서비스 재사용
+
+    @GetMapping
+    public ResponseEntity<Page<NoticeSummaryResponse>> searchNotices(
+            @ModelAttribute NoticeSearchRequest request,
+            Pageable pageable
+    ) {
+        Page<NoticeSummaryResponse> results = noticeAdminService.searchNoticesForAdmin(request, pageable);
+        return ResponseEntity.ok(results);
+    }
 
     /**
      * 새로운 공지사항을 등록합니다.
