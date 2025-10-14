@@ -8,10 +8,18 @@ import com.eneifour.fantry.auction.dto.AuctionRequest;
 import com.eneifour.fantry.auction.dto.AuctionSummaryResponse;
 import com.eneifour.fantry.auction.exception.AuctionException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
+import com.eneifour.fantry.auction.exception.MemberException;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
+import com.eneifour.fantry.bid.domain.Bid;
+import com.eneifour.fantry.bid.repository.BidRepository;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse;
 import com.eneifour.fantry.inspection.repository.InspectionRepository;
+import com.eneifour.fantry.member.domain.Member;
+import com.eneifour.fantry.member.repository.MemberRepository;
+import com.eneifour.fantry.orders.domain.OrderStatus;
+import com.eneifour.fantry.orders.domain.Orders;
+import com.eneifour.fantry.orders.repository.OrdersRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -21,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,12 +39,23 @@ public class AuctionService {
     private final AuctionRepository auctionRepository;
     private final RedisService redisService;
     private final InspectionRepository inspectionRepository;
+    private final MemberRepository memberRepository;
+    private final OrdersRepository ordersRepository;
+    private final BidRepository bidRepository;
 
     // =============================================
     // 1. 상품 조회 (Read)
     // =============================================
 
+    //상품 존재 여부 파악
+    @Transactional
+    public void isExistAuction(int auctionId){
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new AuctionException(ErrorCode.AUCTION_NOT_FOUND));
+    }
+
     // 상품 전체 내역 조회 (pageable 사용)
+    @Transactional
     public Page<AuctionSummaryResponse> searchAuctions(SaleType saleType , SaleStatus saleStatus, Pageable pageable) {
 
         Page<Auction> auctions;
@@ -54,19 +74,66 @@ public class AuctionService {
             AuctionSummaryResponse summary = AuctionSummaryResponse.from(auction);
             // Redis에서 현재가를 조회하여 DTO에 설정
             int currentPrice = redisService.getCurrentPrice(auction.getAuctionId(), auction.getStartPrice());
+            //File info를 조회하여 DTO에 설정
+            int inspectionId = auction.getProductInspection().getProductInspectionId();
+            List<AuctionDetailResponse.FileInfo> fileInfos = inspectionRepository.findFilesByProductInspectionId(inspectionId);
+
             summary.setCurrentPrice(currentPrice);
+            summary.setFileInfos(fileInfos);
             return summary;
         });
     }
 
     // 판매 상품 중 , member_id 를 기준으로 sale_status가 특정한 것 조회
-    public List<Auction> findBymemberIdAndSaleStatus(int memberId, SaleStatus saleStatus){
-        return auctionRepository.findByProductInspection_MemberIdAndSaleStatus(memberId, saleStatus);
+    @Transactional
+    public List<AuctionSummaryResponse> findBymemberIdAndSaleStatus(int memberId, SaleStatus saleStatus){
+        List<Auction> auctionList = auctionRepository.findByProductInspection_MemberIdAndSaleStatus(memberId, saleStatus);
+
+        return auctionList.stream()
+                .map(auction -> {
+                    //1. 기본 DTO로 변환
+                    AuctionSummaryResponse summary = AuctionSummaryResponse.from(auction);
+
+                    //2. Redis에서 현재가 조회후 DTO 설정
+                    int  currentPrice = redisService.getCurrentPrice(auction.getAuctionId(), auction.getStartPrice());
+                    summary.setCurrentPrice(currentPrice);
+
+                    //3. File info 조회 후 DTO 설정
+                    int inspectionId = auction.getProductInspection().getProductInspectionId();
+                    List<AuctionDetailResponse.FileInfo> fileInfos = inspectionRepository.findFilesByProductInspectionId(inspectionId);
+                    summary.setFileInfos(fileInfos);
+
+                    //4. 완성된 DTO 반환
+                    return summary;
+
+                })
+                .collect(Collectors.toList());
     }
 
     // 판매 상품 중 , member_id 를 기준으로 모든 상품 조회
-    public List<Auction> findBymemberId(int memberId){
-        return auctionRepository.findByProductInspection_MemberId(memberId);
+    @Transactional
+    public List<AuctionSummaryResponse> findBymemberId(int memberId){
+        List<Auction> auctionList = auctionRepository.findByProductInspection_MemberId(memberId);
+
+        return auctionList.stream()
+                .map(auction -> {
+                    //1. 기본 DTO로 변환
+                    AuctionSummaryResponse summary = AuctionSummaryResponse.from(auction);
+
+                    //2. Redis에서 현재가 조회후 DTO 설정
+                    int  currentPrice = redisService.getCurrentPrice(auction.getAuctionId(), auction.getStartPrice());
+                    summary.setCurrentPrice(currentPrice);
+
+                    //3. File info 조회 후 DTO 설정
+                    int inspectionId = auction.getProductInspection().getProductInspectionId();
+                    List<AuctionDetailResponse.FileInfo> fileInfos = inspectionRepository.findFilesByProductInspectionId(inspectionId);
+                    summary.setFileInfos(fileInfos);
+
+                    //4. 완성된 DTO 반환
+                    return summary;
+
+                })
+                .collect(Collectors.toList());
     }
 
     //Auction_id 를 이용한 1건 조회
@@ -80,7 +147,10 @@ public class AuctionService {
         int startPrice = baseDetail.getStartPrice();
         int currentPrice = redisService.getCurrentPrice(startPrice,auctionId);
 
-        // ---3단계 : Builder 로 DTO 반환
+        // ---3단계 : 파일 정보 목록 조회 ---
+        List<AuctionDetailResponse.FileInfo> fileInfos = inspectionRepository.findFilesByProductInspectionId(baseDetail.getProductInspectionId());
+
+        // ---4단계 : Builder 로 DTO 반환
         return AuctionDetailResponse.builder()
                 // --- 기본 정보 복사 ---
                 .auctionId(baseDetail.getAuctionId())
@@ -96,6 +166,7 @@ public class AuctionService {
                 .albumTitle(baseDetail.getAlbumTitle())
                 .startPrice(baseDetail.getStartPrice())
                 .currentPrice(currentPrice)
+                .fileInfos(fileInfos)
                 .build();
     }
 
@@ -139,6 +210,57 @@ public class AuctionService {
 
         // 2. 통과하면 삭제
         auctionRepository.deleteById(auctionId);
+    }
+
+    /**
+     * 단일 경매에 대한 마감 처리를 수행합니다.
+     * 이 메서드는 하나의 원자적 단위로 동작해야 하므로 @Transactional을 적용.
+     * //@param auction 마감 처리할 경매 객체
+     */
+    @Transactional
+    public void processAuctionClosure(Auction auction) {
+        log.info("Processing closure for auctionId: {}", auction.getAuctionId());
+
+        // 1. 해당 경매의 최고 입찰(낙찰자)을 DB에서 조회
+        Optional<Bid> winningBidOptional = bidRepository.findTopByItemIdOrderByBidAmountDesc(auction.getAuctionId());
+
+        if (winningBidOptional.isPresent()) {
+            // --- Case 1: 낙찰자가 있는 경우 ---
+            Bid winningBid = winningBidOptional.get();
+            int finalPrice = winningBid.getBidAmount();
+            int winnerId = winningBid.getBidderId();
+
+            // 1-1. 낙찰자 정보를 조회
+            Member winner = memberRepository.findById(winnerId)
+                    .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
+
+            // 1-2. 경매 상태를 '완료'로 변경하고 최종 낙찰가 기록
+            auction.closeAsSold(finalPrice);
+
+            // 1-3. 새로운 주문(Orders) 생성
+            Orders newOrder = Orders.builder()
+                    .auction(auction)
+                    .member(winner)
+                    .orderStatus(OrderStatus.PENDING_PAYMENT)
+                    .price(finalPrice)
+                    .build();
+
+            // shippingAddress 등은 이후 사용자가 입력하도록 비워둠
+
+            ordersRepository.save(newOrder);
+
+            log.info("AuctionId {} has been successfully closed. Winner: {}, Final Price: {}",
+                    auction.getAuctionId(), winner.getName(), finalPrice);
+
+            // TODO: 낙찰자에게 알림을 보내는 로직을 추가할 수 있음 (e.g., WebSocket, SMS, Email)
+
+        } else {
+            // --- Case 2: 입찰자가 아무도 없어 유찰된 경우 ---
+            log.info("AuctionId {} has ended with no bids. Status changed to CANCELLED.", auction.getAuctionId());
+            auction.closeAsNotSold();
+            // TODO: 판매자에게 유찰 알림을 보내는 로직을 추가할 수 있음
+        }
+        auctionRepository.save(auction);
     }
 
     // =============================================
