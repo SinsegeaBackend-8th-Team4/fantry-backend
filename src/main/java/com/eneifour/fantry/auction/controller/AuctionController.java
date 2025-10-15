@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 상품(경매) 관련 API를 제공하는 컨트롤러입니다.
@@ -38,6 +39,31 @@ public class AuctionController {
         AuctionDetailResponse auctionDetail = auctionService.findOne(auctionId);
 
         return ResponseEntity.ok(auctionDetail);
+    }
+
+
+    /**
+     * 특정 상품에 대한 회원의 낙찰 여부 및 결제 상태를 조회합니다.
+     * <p>해당 상품의 낙찰자가 맞으면 주문의 현재 상태(예: "PAID", "SHIPPED")를 반환합니다.
+     * <p>낙찰자가 아니거나, 아직 낙찰자가 정해지지 않은 경우 "USER"를 반환합니다.
+     *
+     * @param auctionId 조회할 상품의 ID
+     * @param memberId  조회할 회원의 ID
+     * @return 주문 상태 문자열 또는 "USER".
+     */
+    @GetMapping("/{auctionId}/winner-status")
+    public ResponseEntity<String> getAuctionWinnerStatus(
+            @PathVariable int auctionId,
+            @RequestParam int memberId) {
+        log.info("Request to check winner status for auctionId: {} and memberId: {}", auctionId, memberId);
+
+        Optional<String> statusOptional = auctionService.getAuctionWinnerStatus(auctionId, memberId);
+
+        // Service에서 반환된 Optional 객체가 값을 가지고 있으면(isPresent), 그 값을 body로 사용합니다.
+        // 값이 없으면(empty), orElse("USER")를 통해 "USER"를 기본값으로 사용합니다.
+        String responseBody = statusOptional.orElse("USER");
+
+        return ResponseEntity.ok(responseBody);
     }
 
     /**

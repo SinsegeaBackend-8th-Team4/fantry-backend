@@ -110,6 +110,35 @@ public class AuctionService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 특정 경매 상품에 대해 주어진 회원이 낙찰자인지 확인하고, 낙찰자일 경우 주문 상태를 반환합니다.
+     * @param auctionId 확인할 경매 ID
+     * @param memberId 확인할 회원 ID
+     * @return 낙찰자이고 주문이 존재하면 Optional<주문상태>, 아니면 Optional.empty()
+     */
+    @Transactional(readOnly = true)
+    public Optional<String> getAuctionWinnerStatus(int auctionId, int memberId) {
+        // auctionId로 주문(낙찰 정보)을 조회합니다.
+        Optional<Orders> orderOpt = ordersRepository.findByAuction_AuctionId(auctionId);
+
+        // 주문이 존재하지 않으면, 아직 낙찰자가 없는 상태이므로 빈 Optional을 반환합니다.
+        if (orderOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Orders order = orderOpt.get();
+        // 주문의 구매자 ID와 요청한 회원의 ID가 일치하는지 확인합니다.
+        // Orders 엔티티에 getBuyer().getMemberId() 와 같은 getter가 있다고 가정합니다.
+        if (order.getMember().getMemberId() == memberId) {
+            // 일치하면, 해당 주문의 상태(Enum)를 문자열로 변환하여 Optional에 담아 반환합니다.
+            return Optional.of(order.getOrderStatus().name());
+        } else {
+            // 주문은 있지만 요청한 회원이 구매자가 아닌 경우, 빈 Optional을 반환합니다.
+            return Optional.empty();
+        }
+    }
+
+
     // 판매 상품 중 , member_id 를 기준으로 모든 상품 조회
     @Transactional
     public List<AuctionSummaryResponse> findBymemberId(int memberId){
