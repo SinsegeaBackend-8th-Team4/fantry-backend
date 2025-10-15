@@ -6,10 +6,11 @@ import com.eneifour.fantry.orders.domain.Orders;
 import com.eneifour.fantry.orders.domain.OrderStatus;
 import com.eneifour.fantry.orders.repository.OrdersRepository;
 import com.eneifour.fantry.settlement.domain.*;
+import com.eneifour.fantry.settlement.domain.SettlementSetting;
 import com.eneifour.fantry.settlement.dto.SettlementSettingRequest;
 import com.eneifour.fantry.settlement.dto.SettlementSettingResponse;
-import com.eneifour.fantry.settlement.exception.SettlementErrorCode;
-import com.eneifour.fantry.settlement.exception.SettlementException;
+import com.eneifour.fantry.settlement.excpetion.SettlementErrorCode;
+import com.eneifour.fantry.settlement.excpetion.SettlementException;
 import com.eneifour.fantry.settlement.repository.CommissionRuleRepository;
 import com.eneifour.fantry.settlement.repository.RevenueLedgerRepository;
 import com.eneifour.fantry.settlement.repository.SettlementRepository;
@@ -188,6 +189,7 @@ public class SettlementAdminService {
 
     /**
      * 현재 적용 중인 정산 설정을 조회합니다。
+     * 현재 적용 중인 정산 설정을 조회합니다.
      * @return SettlementSettingResponse
      */
     @Transactional(readOnly = true)
@@ -205,8 +207,12 @@ public class SettlementAdminService {
      * @return SettlementSettingResponse
      */
     public SettlementSettingResponse createOrUpdateSettlementSetting(SettlementSettingRequest request, Member admin) {
+        // 수수료율 유효성 검사는 DTO의 @DecimalMin/Max Annotation으로 처리되므로 서비스 로직에서 제거.
+
+        // 기존 설정이 있는지 확인
         return settlementSettingRepository.findFirstByOrderByCreatedAtDesc()
                 .map(existingSetting -> {
+                    // 기존 설정이 있으면 업데이트
                     existingSetting.update(
                             request.commissionRate(),
                             request.settlementCycleType(),
@@ -216,6 +222,7 @@ public class SettlementAdminService {
                     return SettlementSettingResponse.from(existingSetting);
                 })
                 .orElseGet(() -> {
+                    // 기존 설정이 없으면 새로 생성
                     SettlementSetting newSetting = request.toEntity(admin);
                     SettlementSetting savedSetting = settlementSettingRepository.save(newSetting);
                     return SettlementSettingResponse.from(savedSetting);

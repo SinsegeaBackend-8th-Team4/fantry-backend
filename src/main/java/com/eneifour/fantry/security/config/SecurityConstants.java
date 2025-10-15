@@ -8,6 +8,7 @@ public class SecurityConstants {
             "/api/login",
             "/api/reissue",
             "/api/user/**",
+            "/api/admin/signup",
             "/api/send/**",
             "/app/**",
             "/api/auctions/**",

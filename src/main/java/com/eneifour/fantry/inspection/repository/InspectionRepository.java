@@ -1,5 +1,6 @@
 package com.eneifour.fantry.inspection.repository;
 
+import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import com.eneifour.fantry.inspection.dto.InspectionListResponse;
@@ -136,15 +137,36 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
     List<OnlineInspectionDetailResponse.FileInfo> findFilesById(@Param("productInspectionId") int productInspectionId);
 
     /**
+     * 검수 ID로 검수 파일 정보 목록 조회 (Auction DTO 용)
+     * @param productInspectionId 검수 ID
+     * @return 조회된 파일 정보 DTO 리스트
+     */
+    @Query("""
+        select new com.eneifour.fantry.auction.dto.AuctionDetailResponse$FileInfo(
+            f.inspectionFileId,
+            fm.storedFilePath,
+            fm.fileType
+        )
+        from InspectionFile f
+        join f.fileMeta fm
+        where f.productInspection.productInspectionId = :productInspectionId
+        """)
+    List<AuctionDetailResponse.FileInfo> findFilesByProductInspectionId(@Param("productInspectionId") int productInspectionId);
+
+    /**
      * 특정 회원 검수 신청 목록 조회
+     *
      * @param memberId 회원 ID
+     * @param pageable 페이지 정보
      * @return 해당 회원 검수 현황 리스트
      */
     @Query("""
         SELECT new com.eneifour.fantry.inspection.dto.MyInspectionResponse(
-            i.productInspectionId, i.itemName,
-            gc.name, a.nameKo, i.sellerHopePrice,
-            i.inspectionStatus, i.submittedAt
+            i.productInspectionId, i.itemName, i.itemDescription,
+            gc.name, a.nameKo, i.sellerHopePrice, i.finalBuyPrice,
+            i.inspectionStatus, i.submittedAt, i.firstRejectionReason,
+            i.secondRejectionReason, i.priceDeductionReason, i.onlineInspectedAt,
+            i.offlineInspectedAt, i.completedAt
         )
         FROM ProductInspection i
         JOIN GoodsCategory gc ON gc.goodsCategoryId = i.goodsCategoryId
@@ -152,5 +174,6 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         WHERE i.memberId = :memberId
         ORDER BY i.submittedAt DESC
     """)
-    List<MyInspectionResponse> findMyInspectionsByMemberId(@Param("memberId") int memberId);
+    Page<MyInspectionResponse> findMyInspectionsByMemberId(@Param("memberId") int memberId, Pageable pageable);
+
 }

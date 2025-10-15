@@ -1,4 +1,4 @@
-package com.eneifour.fantry.settlement.exception;
+package com.eneifour.fantry.settlement.excpetion;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

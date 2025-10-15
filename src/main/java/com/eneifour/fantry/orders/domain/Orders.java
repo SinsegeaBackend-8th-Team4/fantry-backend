@@ -6,6 +6,7 @@ import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.orders.exception.OrdersException;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.payment.domain.Payment;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,45 +14,67 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * 주문 정보를 담는 도메인 클래스입니다.
+ */
 @Entity
 @Table(name = "orders")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@Schema(description = "주문 정보")
 public class Orders {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "orders_id")
+    @Schema(description = "주문 ID (기본 키)")
     private int ordersId;
 
+    @Schema(description = "주문 가격")
     private int price;
 
+    @Schema(description = "배송 주소")
     private String shippingAddress;
 
     @Enumerated(EnumType.STRING)
+    @Schema(description = "주문 상태")
     private OrderStatus orderStatus;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
+    @Schema(description = "주문 생성 일시")
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
+    @Schema(description = "주문 수정 일시")
     private LocalDateTime updatedAt;
+
+    @Schema(description = "배송 완료 일시")
+    private LocalDateTime deliveredAt;
+
+    @Schema(description = "주문 취소 일시")
+    private LocalDateTime cancelledAt;
 
     @ManyToOne
     @JoinColumn(name = "auction_id")
+    @Schema(description = "연관된 상품(경매)")
     private Auction auction;
 
     @ManyToOne
     @JoinColumn(name = "buyer_id", referencedColumnName = "member_id")
+    @Schema(description = "구매자 정보")
     private Member member;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id")
+    @Schema(description = "연관된 결제 정보")
     private Payment payment;
 
+    // --------------------------------------------------------------
+    // ✅ DDD Rich Domain Methods - Change Status
+    // --------------------------------------------------------------
 
     /**
      * 결제 완료 처리
@@ -97,6 +120,7 @@ public class Orders {
             throw new OrdersException(ErrorCode.ORDER_DELIVERY_NOT_ALLOWED);
         }
         this.orderStatus = OrderStatus.DELIVERED;
+        this.deliveredAt = LocalDateTime.now();
     }
 
     /**
@@ -130,6 +154,7 @@ public class Orders {
             throw new OrdersException(ErrorCode.ORDER_CANCELLATION_NOT_ALLOWED);
         }
         this.orderStatus = OrderStatus.CANCELLED;
+        this.cancelledAt = LocalDateTime.now();
     }
 
     /**
