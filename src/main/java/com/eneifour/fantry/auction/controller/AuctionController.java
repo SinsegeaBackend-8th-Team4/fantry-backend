@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -113,6 +114,25 @@ public class AuctionController {
         log.info("Request to get auctions for memberId: {} with status: {}", memberId, saleStatus);
         List<AuctionSummaryResponse> auctions = auctionService.findBymemberIdAndSaleStatus(memberId, saleStatus);
         return ResponseEntity.ok(auctions);
+    }
+
+    /**
+     * 특정 회원이 입찰에 참여한 현재 진행중인 경매 목록을 조회합니다.
+     *
+     * @param memberId 조회할 회원의 ID
+     * @return 해당 회원이 입찰한 활성 경매 목록.
+     */
+    @GetMapping("/member/{memberId}/bids")
+    public ResponseEntity<?> getActiveAuctionsBidByMember(@PathVariable int memberId) {
+        log.info("Request to get active auctions bid by memberId: {}", memberId);
+        List<Integer> activeAuctions = auctionService.getActiveAuctionsBidByMember(memberId);
+
+        if (activeAuctions == null || activeAuctions.isEmpty()) {
+            String message = "참여한 입찰 중, 유효한 경매가 없거나 참여한 입찰 기록이 없습니다.";
+            return ResponseEntity.ok(Map.of("message", message));
+        }
+        
+        return ResponseEntity.ok(activeAuctions);
     }
 
     /**
