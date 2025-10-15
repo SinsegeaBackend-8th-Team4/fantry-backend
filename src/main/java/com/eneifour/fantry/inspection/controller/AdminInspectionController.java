@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 관리자용 컨트롤러
@@ -33,7 +34,7 @@ public class AdminInspectionController {
      * 상태별 신청 목록 (페이지)
      * @param statuses 조회할 검수 상태 목록 (e.g. ?statuses=SUBMITTED,FIRST_REVIEWED)
      * @param pageable 페이지네이션, 정렬 정보 (e.g. ?page=0&size=20&sort=submittedAt,desc)
-     * @return 페이징 처리된 검수 목록ㄷ
+     * @return 페이징 처리된 검수 목록
      */
     @GetMapping
     public InspectionApiResponse<InspectionPageResponse<InspectionListResponse>> listByStatus (
@@ -48,7 +49,7 @@ public class AdminInspectionController {
      * 재고 상태별 신청 목록 (페이지)
      * @param statuses 조회할 재고 상태 목록 (e.g. ?statuses=PENDING)
      * @param pageable 페이지네이션, 정렬 정보 (e.g. ?page=0&size=20&sort=submittedAt,desc)
-     * @return 페이징 처리된 검수 목록ㄷ
+     * @return 페이징 처리된 검수 목록
      */
     @GetMapping("/inventories")
     public InspectionApiResponse<InspectionPageResponse<InventoryListResponse>> listByInventoryStatus(
@@ -58,6 +59,28 @@ public class AdminInspectionController {
         InspectionPageResponse<InventoryListResponse> data = inspectionService.getInspectionsByInventoryStatuses(statuses, pageable);
         return InspectionApiResponse.ok(data);
     }
+
+    /**
+     * 특정 검수의 재고 상태를 변경합니다.
+     * @param productInspectionId 변경할 검수 ID (e.g. /api/admin/inspections/{productInspectionId}/inventory)
+     * @param status 새로운 재고 상태 (e.g. ?status=ACTIVE)
+     * @return 성공 메시지
+     */
+    @PutMapping("/{productInspectionId}/inventory/status")
+    public InspectionApiResponse<Map<String, Object>> updateInventoryStatus(
+            @PathVariable int productInspectionId,
+            @RequestParam InventoryStatus status
+    ) {
+        inspectionService.updateInventoryStatus(productInspectionId, status);
+        log.info("검수 ID {}의 재고 상태 변경 요청 수신: {}", productInspectionId, status);
+
+        return InspectionApiResponse.ok(Map.of(
+                "productInspectionId", productInspectionId,
+                "newStatus", status,
+                "message", "재고 상태가 성공적으로 변경되었습니다."
+        ));
+    }
+
 
     /**
      * 관리자 1차 온라인 검수 상세 조회
