@@ -8,10 +8,7 @@ import com.eneifour.fantry.checklist.repository.ChecklistItemRepository;
 import com.eneifour.fantry.checklist.repository.ProductChecklistAnswerRepository;
 import com.eneifour.fantry.common.util.file.FileMeta;
 import com.eneifour.fantry.common.util.file.FileService;
-import com.eneifour.fantry.inspection.domain.InspectionFile;
-import com.eneifour.fantry.inspection.domain.InspectionStatus;
-import com.eneifour.fantry.inspection.domain.ProductChecklistAnswer;
-import com.eneifour.fantry.inspection.domain.ProductInspection;
+import com.eneifour.fantry.inspection.domain.*;
 import com.eneifour.fantry.inspection.dto.*;
 import com.eneifour.fantry.inspection.repository.InspectionFileRepository;
 import com.eneifour.fantry.inspection.repository.InspectionRepository;
@@ -105,6 +102,17 @@ public class InspectionService {
      */
     public InspectionPageResponse<InspectionListResponse> getInspectionsByStatuses(List<InspectionStatus> statuses, Pageable pageable){
         Page<InspectionListResponse> page = inspectionRepository.findAllByInspectionStatusIn(statuses, pageable);
+        return InspectionPageResponse.fromPage(page);
+    }
+
+    /**
+     *  재고 상태 별 페이지 조회
+     * @param statuses 조회할 재고 상태 목록 (e.g. ?statuses=PENDING , SOLD)
+     * @param pageable 페이지네이션, 정렬 정보 (e.g. ?page=0&size=20&sort=submittedAt,desc)
+     * @return 페이징 처리된 검수 목록
+     */
+    public InspectionPageResponse<InventoryListResponse> getInspectionsByInventoryStatuses(List<InventoryStatus> statuses, Pageable pageable){
+        Page<InventoryListResponse> page = inspectionRepository.findAllByInventoryStatusIn(statuses, pageable);
         return InspectionPageResponse.fromPage(page);
     }
 
@@ -305,8 +313,9 @@ public class InspectionService {
     }
 
     /** 특정 회원의 모든 검수 현황 리스트 */
-    public List<MyInspectionResponse> getMyInspections(int memberId) {
-        return inspectionRepository.findMyInspectionsByMemberId(memberId);
+    public InspectionPageResponse<MyInspectionResponse> getMyInspections(int memberId, Pageable pageable) {
+        Page<MyInspectionResponse> page = inspectionRepository.findMyInspectionsByMemberId(memberId, pageable);
+        return InspectionPageResponse.fromPage(page);
     }
 
     /** 판매자 상품 발송 확인 후 상태 변경 */
@@ -321,5 +330,22 @@ public class InspectionService {
         // 3. 상태를 오프라인 검수 중(OFFLINE_INSPECTING) 으로 변경
         inspection.setInspectionStatus(InspectionStatus.OFFLINE_INSPECTING);
         updateTimestamps(inspection);
+    }
+
+    /**
+     * 검수 ID로 재고 상태 변경
+     * @param productInspectionId 변경할 검수 ID
+     * @param status 새로운 재고 상태
+     */
+    @Transactional
+    public void updateInventoryStatus(int productInspectionId, InventoryStatus status) {
+        // 1. 검수 엔티티 조회
+        ProductInspection inspection = findInspectionById(productInspectionId);
+        // 2. 파라미터로 받은 status로 재고상태 변경
+        inspection.setInventoryStatus(status);
+        // 3. 수정 시간 업데이트
+        updateTimestamps(inspection);
+
+        log.info("검수 ID {}의 재고 상태가 {}로 업데이트되었습니다.", productInspectionId, status);
     }
 }

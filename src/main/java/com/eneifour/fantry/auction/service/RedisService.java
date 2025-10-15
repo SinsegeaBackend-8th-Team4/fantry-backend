@@ -55,4 +55,34 @@ public class RedisService {
         }
         return  currentPrice;
     }
+
+    @Transactional(readOnly = true)
+    public int getHighestBidderId(int auctionId) {
+        int bidderId = 0;
+        String redisKey = "auction:highest_bidder_id:" + auctionId;
+
+        try {
+            Object redisValue = redisTemplate.opsForValue().get(redisKey);
+            String bidderIdStr = (redisValue != null) ? redisValue.toString() : null;
+
+            if (bidderIdStr != null) {
+                bidderId = Integer.parseInt(bidderIdStr);
+            } else {
+                // --- Redis에 값이 없는 경우 (Cache Miss) ---
+                Optional<Bid> topBidOptional = bidRepository.findTopByItemIdOrderByBidAmountDesc(auctionId);
+
+                if (topBidOptional.isPresent()) {
+                    bidderId = topBidOptional.get().getBidderId();
+                }else{
+                    bidderId = 0;
+                }
+                // 입찰 내역이 DB에도 없으면 bidderId는 그대로 null 입니다.
+            }
+        } catch (DataAccessException e) {
+            // --- [Redis 서버 장애 경로] Redis 연결 실패 시 DB로 Fallback ---
+            Optional<Bid> topBidOptional = bidRepository.findTopByItemIdOrderByBidAmountDesc(auctionId);
+            bidderId = topBidOptional.map(Bid::getBidderId).orElse(0);
+        }
+        return bidderId;
+    }
 }

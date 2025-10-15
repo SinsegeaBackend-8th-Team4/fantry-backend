@@ -28,8 +28,8 @@ public interface AuctionRepository extends JpaRepository<Auction,Integer> {
      */
     @Query("""
         SELECT NEW com.eneifour.fantry.auction.dto.AuctionDetailResponse(
-            a.auctionId, pi.memberId, a.startPrice, CAST(a.saleStatus AS string), CAST(a.saleType AS string),
-            a.startTime, a.endTime, pi.itemName, pi.itemDescription, gc.name, ar.nameKo, al.title
+            a.auctionId, pi.productInspectionId, pi.memberId, a.startPrice, CAST(a.saleStatus AS string), CAST(a.saleType AS string),
+            a.startTime, a.endTime, pi.itemName, pi.itemDescription, pi.hashtags, gc.name, ar.nameKo, al.title
         )
         FROM Auction a
         JOIN a.productInspection pi
@@ -55,6 +55,21 @@ public interface AuctionRepository extends JpaRepository<Auction,Integer> {
 
     //판매 상품 중 , member_id 기준으로 모든 상품 조회
     List<Auction> findByProductInspection_MemberId(int memberId);
+
+    /**
+     * Param 으로 넣은 Member Id 를 기준
+     *  1. 해당 member 가 입찰한 경매
+     *  2. 경매의 상태가 Active
+     *  3. 중복 제거
+     */
+    @Query("""
+    SELECT DISTINCT a.auctionId
+    FROM Auction a
+    JOIN Bid b ON a.auctionId = b.itemId
+    WHERE b.bidderId = :memberId
+      AND a.saleStatus = 'ACTIVE'
+""")
+    List<Integer> findActiveAuctionsBidByMember(@Param("memberId") int memberId);
 
     /**
      * 특정 상태와 마감 시간 이전의 경매 목록을 페이징하여 조회합니다.

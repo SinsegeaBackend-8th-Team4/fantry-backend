@@ -16,7 +16,7 @@ import java.util.List;
 public class GoodsCategoryController {
     private final GoodsCategoryService goodsCategoryService;
 
-    // 굿즈 카테고리 전체 조회
+    // 카테고리 전체 조회
     @GetMapping
     public InspectionApiResponse<List<GoodsCategoryResponse>> getGoodsCategories() {
         List<GoodsCategoryResponse> categories = goodsCategoryService.getAllCategories();

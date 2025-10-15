@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/cs/inquiry")
-public class InquiryAdminController {
+public class                              InquiryAdminController {
 
     private final InquiryService inquiryService;
 
