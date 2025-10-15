@@ -53,6 +53,9 @@ public class AuctionDetailResponse {
     private int startPrice;
     private int currentPrice;
 
+    //최고 입찰자 정보
+    private int highestBidderId;
+
     // current Price 는 bid 에서 조회해야 하므로 , 생성자엔 해당 인자 없이 생성
     public AuctionDetailResponse(
             int auctionId,
