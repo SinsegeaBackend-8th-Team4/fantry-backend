@@ -12,8 +12,10 @@ import com.eneifour.fantry.auction.exception.MemberException;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
 import com.eneifour.fantry.bid.domain.Bid;
 import com.eneifour.fantry.bid.repository.BidRepository;
+import com.eneifour.fantry.inspection.domain.InventoryStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import com.eneifour.fantry.inspection.repository.InspectionRepository;
+import com.eneifour.fantry.inspection.service.InspectionService;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.repository.MemberRepository;
 import com.eneifour.fantry.orders.domain.OrderStatus;
@@ -44,6 +46,7 @@ public class AuctionService {
     private final MemberRepository memberRepository;
     private final OrdersRepository ordersRepository;
     private final BidRepository bidRepository;
+    private final InspectionService inspectionService; // InspectionService 의존성 추가
 
     // =============================================
     // 1. 상품 조회 (Read)
@@ -344,6 +347,11 @@ public class AuctionService {
         ProductInspection productInspection = inspectionRepository.findById(request.getProductInspectionId())
                 .orElseThrow(() -> new AuctionException(ErrorCode.AUCTION_NOT_MATCH_INSPECTION));
 
+
+        SaleStatus saleStatus = Boolean.TRUE.equals(request.getIsReRegistration())
+                ? SaleStatus.REPREPARING
+                : SaleStatus.PREPARING;
+
         // 2. DTO와 조회된 엔티티를 바탕으로 Auction 엔티티를 생성합니다.
         Auction auction = Auction.builder()
                 .productInspection(productInspection)
@@ -351,11 +359,14 @@ public class AuctionService {
                 .startPrice(request.getStartPrice())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
-                .saleStatus(SaleStatus.PREPARING) // 초기 상태는 '준비중'
+                .saleStatus(saleStatus)
                 .build();
 
         // 3. DB에 저장합니다.
         Auction savedAuction = auctionRepository.save(auction);
+
+        // [상태 연동] 재고 상태를 PENDING_ACTIVE(판매 대기)로 변경합니다.
+        inspectionService.updateInventoryStatus(productInspection.getProductInspectionId(), InventoryStatus.PENDING_ACTIVE);
 
         // 4. 저장된 엔티티의 ID를 사용하여 상세 DTO를 조회하여 반환합니다.
         return findByAuctionId(savedAuction.getAuctionId());
@@ -413,8 +424,10 @@ public class AuctionService {
                     .price(finalPrice)
                     .build();
 
-            // shippingAddress 등은 이후 사용자가 결제 시 입력하도록 비워둡니다.
             ordersRepository.save(newOrder);
+
+            // [상태 연동] 재고 상태를 SOLD(판매 완료)로 변경합니다.
+            inspectionService.updateInventoryStatus(auction.getProductInspection().getProductInspectionId(), InventoryStatus.SOLD);
 
             log.info("AuctionId {} has been successfully closed. Winner: {}, Final Price: {}",
                     auction.getAuctionId(), winner.getName(), finalPrice);
@@ -426,6 +439,10 @@ public class AuctionService {
             log.info("AuctionId {} has ended with no bids. Status changed to NOT_SOLD.", auction.getAuctionId());
             // 경매 상태를 '판매 실패(NOT_SOLD)'로 변경합니다.
             auction.closeAsNotSold();
+
+            // [상태 연동] 재고 상태를 NOT_SOLD(판매 안됨)로 변경합니다.
+            inspectionService.updateInventoryStatus(auction.getProductInspection().getProductInspectionId(), InventoryStatus.NOT_SOLD);
+
             // TODO: 판매자에게 유찰 알림을 보내는 로직을 추가할 수 있습니다.
         }
         // 변경된 경매 상태를 DB에 최종 저장합니다.
@@ -467,7 +484,16 @@ public class AuctionService {
     public void cancelAuction(int auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new AuctionException(ErrorCode.AUCTION_NOT_FOUND));
+
+        // 무한 루프 방지를 위한 가드 코드: 이미 취소된 상태이면 더 이상 진행하지 않습니다.
+        if (auction.getSaleStatus() == SaleStatus.CANCELED) {
+            return;
+        }
+
         auction.closeAsCancelled();
+
+        // [상태 연동] 재고 상태를 CANCELLED(판매 취소)로 변경합니다.
+        inspectionService.updateInventoryStatus(auction.getProductInspection().getProductInspectionId(), InventoryStatus.CANCELED);
     }
 
     /**
@@ -478,7 +504,15 @@ public class AuctionService {
     public void activateAuction(int auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new AuctionException(ErrorCode.AUCTION_NOT_FOUND));
-        auction.activate();
+
+        if(auction.getSaleStatus() == SaleStatus.PREPARING){
+            auction.activate();
+        }else if(auction.getSaleStatus() == SaleStatus.REPREPARING){
+            auction.reactivate();
+        }
+
+        // [상태 연동] 재고 상태를 ACTIVE(판매중)로 변경합니다.
+        inspectionService.updateInventoryStatus(auction.getProductInspection().getProductInspectionId(), InventoryStatus.ACTIVE);
     }
 
     /**

@@ -78,16 +78,16 @@ public interface AuctionRepository extends JpaRepository<Auction,Integer> {
 """)
     List<Integer> findActiveAuctionsBidByMember(@Param("memberId") int memberId);
 
-    Page<Auction> findBySaleStatusAndEndTimeBefore(SaleStatus saleStatus, LocalDateTime endTime, Pageable pageable);
+    Page<Auction> findBySaleStatusInAndEndTimeBefore(List<SaleStatus> saleStatuses, LocalDateTime endTime, Pageable pageable);
 
     /**
      * 특정 상태와 시작 시간 이전의 경매 목록을 페이징하여 조회합니다.
-     * @param saleStatus 경매 상태
+     * @param saleStatuses 경매 상태
      * @param startTime 시작 시간 기준
      * @param pageable 페이징 정보
      * @return 페이징된 경매 목록 (Page<Auction>)
      */
-    Page<Auction> findBySaleStatusAndStartTimeBefore(SaleStatus saleStatus, LocalDateTime startTime, Pageable pageable);
+    Page<Auction> findBySaleStatusInAndStartTimeBefore(List<SaleStatus> saleStatuses, LocalDateTime startTime, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from Auction a where a.auctionId = :auctionId")

@@ -37,4 +37,6 @@ public class AuctionRequest {
 
     @NotNull(message = "경매 종료 시간은 필수입니다.")
     private LocalDateTime endTime;
+
+    private Boolean isReRegistration;
 }

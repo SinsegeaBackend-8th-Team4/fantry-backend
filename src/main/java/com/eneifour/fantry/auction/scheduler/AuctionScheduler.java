@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -34,10 +35,12 @@ public class AuctionScheduler {
         Pageable pageable = PageRequest.of(0, 100); // 한 번에 100개씩 처리
         Page<Auction> scheduledAuctionsPage;
 
+        List<SaleStatus> preparingStatuses = List.of(SaleStatus.PREPARING, SaleStatus.REPREPARING);
+
         // 1. '준비중(PREPARING)' 상태이면서, 시작 시간(startTime)이 지금보다 이전인 모든 경매를 조회
         do {
-            scheduledAuctionsPage = auctionRepository.findBySaleStatusAndStartTimeBefore(
-                    SaleStatus.PREPARING,
+            scheduledAuctionsPage = auctionRepository.findBySaleStatusInAndStartTimeBefore(
+                    preparingStatuses,
                     LocalDateTime.now(),
                     pageable
             );
@@ -80,10 +83,12 @@ public class AuctionScheduler {
         Pageable pageable = PageRequest.of(0, 100); // 한 번에 100건씩 처리
         Page<Auction> endedAuctionsPage;
 
+        List<SaleStatus> activeStatuses = List.of(SaleStatus.ACTIVE, SaleStatus.REACTIVE);
+
         // 1. 현재 진행 중(ACTIVE)이면서, 마감 시간(endTime)이 지금보다 이전인 모든 경매를 조회
         do {
-            endedAuctionsPage = auctionRepository.findBySaleStatusAndEndTimeBefore(
-                    SaleStatus.ACTIVE,
+            endedAuctionsPage = auctionRepository.findBySaleStatusInAndEndTimeBefore(
+                    activeStatuses,
                     LocalDateTime.now(),
                     pageable
             );
