@@ -32,7 +32,7 @@ public class AdminInspectionController {
      * 상태별 신청 목록 (페이지)
      * @param statuses 조회할 검수 상태 목록 (e.g. ?statuses=SUBMITTED,FIRST_REVIEWED)
      * @param pageable 페이지네이션, 정렬 정보 (e.g. ?page=0&size=20&sort=submittedAt,desc)
-     * @return 페이징 처리된 검수 목록
+     * @return 페이징 처리된 검수 목록ㄷ
      */
     @GetMapping
     public InspectionApiResponse<InspectionPageResponse<InspectionListResponse>> listByStatus (
