@@ -8,10 +8,7 @@ import com.eneifour.fantry.checklist.repository.ChecklistItemRepository;
 import com.eneifour.fantry.checklist.repository.ProductChecklistAnswerRepository;
 import com.eneifour.fantry.common.util.file.FileMeta;
 import com.eneifour.fantry.common.util.file.FileService;
-import com.eneifour.fantry.inspection.domain.InspectionFile;
-import com.eneifour.fantry.inspection.domain.InspectionStatus;
-import com.eneifour.fantry.inspection.domain.ProductChecklistAnswer;
-import com.eneifour.fantry.inspection.domain.ProductInspection;
+import com.eneifour.fantry.inspection.domain.*;
 import com.eneifour.fantry.inspection.dto.*;
 import com.eneifour.fantry.inspection.repository.InspectionFileRepository;
 import com.eneifour.fantry.inspection.repository.InspectionRepository;
@@ -322,5 +319,22 @@ public class InspectionService {
         // 3. 상태를 오프라인 검수 중(OFFLINE_INSPECTING) 으로 변경
         inspection.setInspectionStatus(InspectionStatus.OFFLINE_INSPECTING);
         updateTimestamps(inspection);
+    }
+
+    /**
+     * 검수 ID로 재고 상태 변경
+     * @param productInspectionId 변경할 검수 ID
+     * @param status 새로운 재고 상태
+     */
+    @Transactional
+    public void updateInventoryStatus(int productInspectionId, InventoryStatus status) {
+        // 1. 검수 엔티티 조회
+        ProductInspection inspection = findInspectionById(productInspectionId);
+        // 2. 파라미터로 받은 status로 재고상태 변경
+        inspection.setInventoryStatus(status);
+        // 3. 수정 시간 업데이트
+        updateTimestamps(inspection);
+
+        log.info("검수 ID {}의 재고 상태가 {}로 업데이트되었습니다.", productInspectionId, status);
     }
 }
