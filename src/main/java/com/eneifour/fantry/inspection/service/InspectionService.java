@@ -105,6 +105,17 @@ public class InspectionService {
         return InspectionPageResponse.fromPage(page);
     }
 
+    /**
+     *  재고 상태 별 페이지 조회
+     * @param statuses 조회할 재고 상태 목록 (e.g. ?statuses=PENDING , SOLD)
+     * @param pageable 페이지네이션, 정렬 정보 (e.g. ?page=0&size=20&sort=submittedAt,desc)
+     * @return 페이징 처리된 검수 목록
+     */
+    public InspectionPageResponse<InventoryListResponse> getInspectionsByInventoryStatuses(List<InventoryStatus> statuses, Pageable pageable){
+        Page<InventoryListResponse> page = inspectionRepository.findAllByInventoryStatusIn(statuses, pageable);
+        return InspectionPageResponse.fromPage(page);
+    }
+
     // ========== [ 1차 검수 (Online) ] ==========
     /** 1차 온라인 검수 신청 */
     @Transactional

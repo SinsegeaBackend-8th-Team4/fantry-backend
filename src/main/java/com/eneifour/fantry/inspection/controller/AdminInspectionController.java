@@ -1,6 +1,7 @@
 package com.eneifour.fantry.inspection.controller;
 
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
+import com.eneifour.fantry.inspection.domain.InventoryStatus;
 import com.eneifour.fantry.inspection.dto.*;
 import com.eneifour.fantry.inspection.service.InspectionService;
 import com.eneifour.fantry.inspection.support.api.InspectionApiResponse;
@@ -40,6 +41,21 @@ public class AdminInspectionController {
             @PageableDefault(size=20, sort="submittedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         InspectionPageResponse<InspectionListResponse> data = inspectionService.getInspectionsByStatuses(statuses, pageable);
+        return InspectionApiResponse.ok(data);
+    }
+
+    /**
+     * 재고 상태별 신청 목록 (페이지)
+     * @param statuses 조회할 재고 상태 목록 (e.g. ?statuses=PENDING)
+     * @param pageable 페이지네이션, 정렬 정보 (e.g. ?page=0&size=20&sort=submittedAt,desc)
+     * @return 페이징 처리된 검수 목록ㄷ
+     */
+    @GetMapping("/inventories")
+    public InspectionApiResponse<InspectionPageResponse<InventoryListResponse>> listByInventoryStatus(
+            @RequestParam List<InventoryStatus> statuses,
+            @PageableDefault(size=20, sort="submittedAt", direction = Sort.Direction.DESC) Pageable pageable
+    ){
+        InspectionPageResponse<InventoryListResponse> data = inspectionService.getInspectionsByInventoryStatuses(statuses, pageable);
         return InspectionApiResponse.ok(data);
     }
 
