@@ -24,5 +24,11 @@ public class MyInspectionResponse {
     private String firstRejectionReason;
     private String secondRejectionReason;
     private String priceDeductionReason;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime onlineInspectedAt;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime offlineInspectedAt;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime completedAt;
 }
 
