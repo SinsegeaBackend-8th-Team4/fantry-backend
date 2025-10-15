@@ -165,7 +165,8 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
             i.productInspectionId, i.itemName, i.itemDescription,
             gc.name, a.nameKo, i.sellerHopePrice, i.finalBuyPrice,
             i.inspectionStatus, i.submittedAt, i.firstRejectionReason,
-            i.secondRejectionReason, i.priceDeductionReason
+            i.secondRejectionReason, i.priceDeductionReason, i.onlineInspectedAt,
+            i.offlineInspectedAt, i.completedAt
         )
         FROM ProductInspection i
         JOIN GoodsCategory gc ON gc.goodsCategoryId = i.goodsCategoryId
