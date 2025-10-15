@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -165,6 +166,12 @@ public class AuctionService {
                 .collect(Collectors.toList());
     }
 
+    //Member_id 기준으로 입찰했던 Auction 의 Status가 Active 인 List 조회
+    public List getActiveAuctionsBidByMember(int memberId) {
+        List<Integer> auctionIds = auctionRepository.findActiveAuctionsBidByMember(memberId);
+        return auctionIds != null ? auctionIds : Collections.emptyList();
+    }
+
     //Auction_id 를 이용한 1건 조회
     @Transactional
     public AuctionDetailResponse findOne(int auctionId){
@@ -175,6 +182,7 @@ public class AuctionService {
         // --- 2단계: 현재 최고 입찰가 결정 (Redis 우선 조회 및 DB 교차 검증) ---
         int startPrice = baseDetail.getStartPrice();
         int currentPrice = redisService.getCurrentPrice(startPrice,auctionId);
+        int highestBidderId = redisService.getHighestBidderId(auctionId);
 
         // ---3단계 : 파일 정보 목록 조회 ---
         List<AuctionDetailResponse.FileInfo> fileInfos = inspectionRepository.findFilesByProductInspectionId(baseDetail.getProductInspectionId());
@@ -195,6 +203,7 @@ public class AuctionService {
                 .albumTitle(baseDetail.getAlbumTitle())
                 .startPrice(baseDetail.getStartPrice())
                 .currentPrice(currentPrice)
+                .highestBidderId(highestBidderId)
                 .fileInfos(fileInfos)
                 .build();
     }

@@ -57,6 +57,21 @@ public interface AuctionRepository extends JpaRepository<Auction,Integer> {
     List<Auction> findByProductInspection_MemberId(int memberId);
 
     /**
+     * Param 으로 넣은 Member Id 를 기준
+     *  1. 해당 member 가 입찰한 경매
+     *  2. 경매의 상태가 Active
+     *  3. 중복 제거
+     */
+    @Query("""
+    SELECT DISTINCT a.auctionId
+    FROM Auction a
+    JOIN Bid b ON a.auctionId = b.itemId
+    WHERE b.bidderId = :memberId
+      AND a.saleStatus = 'ACTIVE'
+""")
+    List<Integer> findActiveAuctionsBidByMember(@Param("memberId") int memberId);
+
+    /**
      * 특정 상태와 마감 시간 이전의 경매 목록을 페이징하여 조회합니다.
      * @param saleStatus 경매 상태
      * @param endTime 마감 시간 기준
