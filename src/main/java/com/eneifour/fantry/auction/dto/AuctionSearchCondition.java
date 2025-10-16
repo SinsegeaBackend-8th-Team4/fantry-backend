@@ -26,5 +26,5 @@ public class AuctionSearchCondition {
     /**
      * 검색할 그룹 유형 (MALE_SOLO, GIRL_GROUP)
      */
-    private GroupType groupType;
+    private GroupType artistGroupType;
 }

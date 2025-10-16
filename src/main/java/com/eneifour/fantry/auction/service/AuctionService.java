@@ -14,6 +14,7 @@ import com.eneifour.fantry.auction.repository.AuctionRepository;
 import com.eneifour.fantry.auction.repository.AuctionSpecification; // AuctionSpecification 임포트 추가
 import com.eneifour.fantry.bid.domain.Bid;
 import com.eneifour.fantry.bid.repository.BidRepository;
+import com.eneifour.fantry.catalog.domain.GroupType;
 import com.eneifour.fantry.inspection.domain.InventoryStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import com.eneifour.fantry.inspection.repository.InspectionRepository;
@@ -104,12 +105,15 @@ public class AuctionService {
         // 4. 각 Auction 엔티티를 AuctionSummaryResponse DTO로 변환합니다.
         List<AuctionSummaryResponse> summaryResponses = auctionList.stream().map(auction -> {
             AuctionSummaryResponse summary = AuctionSummaryResponse.from(auction);
+            Optional<GroupType> grouptype = inspectionRepository.findGroupTypeById(auction.getProductInspection().getProductInspectionId());
             // Redis에서 현재가를 조회하여 DTO에 설정
             summary.setCurrentPrice(redisService.getCurrentPrice(auction.getStartPrice(), auction.getAuctionId()));
             // Redis 에서 최고 입찰자를 조회하여 DTO에 설정
             summary.setHighestBidderId(redisService.getHighestBidderId(auction.getAuctionId()));
             // File info를 조회하여 DTO에 설정
             summary.setFileInfos(inspectionRepository.findFilesByProductInspectionId(auction.getProductInspection().getProductInspectionId()));
+            // group type 조회하여 DTO 설정
+            summary.setArtistGroupType( grouptype.map(Enum::name).orElse(null));
             // 조회해둔 카테고리 이름 맵에서 카테고리명을 찾아 설정
             summary.setCategoryName(categoryNameMap.get(auction.getAuctionId()));
             return summary;
@@ -150,13 +154,16 @@ public class AuctionService {
                 .map(auction -> {
                     // 4-1. 기본 DTO로 변환
                     AuctionSummaryResponse summary = AuctionSummaryResponse.from(auction);
+                    Optional<GroupType> grouptype = inspectionRepository.findGroupTypeById(auction.getProductInspection().getProductInspectionId());
                     // 4-2. Redis에서 현재가 조회 후 DTO 설정
                     summary.setCurrentPrice(redisService.getCurrentPrice(auction.getStartPrice(), auction.getAuctionId()));
                     // 4-3. File info 조회 후 DTO 설정
                     summary.setFileInfos(inspectionRepository.findFilesByProductInspectionId(auction.getProductInspection().getProductInspectionId()));
                     // 4-4. 조회해둔 카테고리 이름 맵에서 카테고리명을 찾아 설정
                     summary.setCategoryName(categoryNameMap.get(auction.getAuctionId()));
-                    // 4-5. 완성된 DTO 반환
+                    // 4-5. 그룹타입 설정
+                    summary.setArtistGroupType( grouptype.map(Enum::name).orElse(null));
+                    // 4-6. 완성된 DTO 반환
                     return summary;
                 })
                 .collect(Collectors.toList());
@@ -217,12 +224,15 @@ public class AuctionService {
                 .map(auction -> {
                     // 4-1. 기본 DTO로 변환
                     AuctionSummaryResponse summary = AuctionSummaryResponse.from(auction);
+                    Optional<GroupType> grouptype = inspectionRepository.findGroupTypeById(auction.getProductInspection().getProductInspectionId());
                     // 4-2. Redis에서 현재가 조회 후 DTO 설정
                     summary.setCurrentPrice(redisService.getCurrentPrice(auction.getStartPrice(), auction.getAuctionId()));
                     // 4-3. File info 조회 후 DTO 설정
                     summary.setFileInfos(inspectionRepository.findFilesByProductInspectionId(auction.getProductInspection().getProductInspectionId()));
                     // 4-4. 조회해둔 카테고리 이름 맵에서 카테고리명을 찾아 설정
                     summary.setCategoryName(categoryNameMap.get(auction.getAuctionId()));
+                    // 4-5. 그룹타입 설정
+                    summary.setArtistGroupType( grouptype.map(Enum::name).orElse(null));
                     // 4-5. 완성된 DTO 반환
                     return summary;
                 })
