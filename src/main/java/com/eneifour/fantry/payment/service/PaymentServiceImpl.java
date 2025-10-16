@@ -4,11 +4,7 @@ import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
 import com.eneifour.fantry.payment.dto.PaymentCancelRequest;
 import com.eneifour.fantry.payment.dto.PaymentCreateRequest;
-import com.eneifour.fantry.payment.exception.ConcurrentPaymentException;
-import com.eneifour.fantry.payment.exception.CreatePaymentFailedException;
-import com.eneifour.fantry.payment.exception.NotFoundPaymentException;
-import com.eneifour.fantry.payment.exception.NotFoundReceiptException;
-import com.eneifour.fantry.payment.exception.OrderIdMismatchException;
+import com.eneifour.fantry.payment.exception.*;
 import com.eneifour.fantry.payment.mapper.PaymentMapper;
 import com.eneifour.fantry.payment.repository.PaymentRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -122,7 +118,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             BootpayReceiptDto receiptFromBootpay = bootpayService.getReceiptViaWebClient(receiptFromClient.getReceiptId());
             bootpayWebhookService.processPaymentVerification(payment, receiptFromBootpay);
-        } catch (ObjectOptimisticLockingFailureException e) {
+        } catch (ObjectOptimisticLockingFailureException | BootpayException e) {
             ghostPaymentService.createGhostPayment(receiptFromClient.getReceiptId());
             throw new ConcurrentPaymentException(e);
         }
@@ -137,7 +133,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public BootpayReceiptDto cancelPayment(String orderId, PaymentCancelRequest paymentCancelRequest) {
-        Payment payment = paymentRepository.findByReceiptId(paymentCancelRequest.getReceiptId())
+        Payment payment = paymentRepository.findByOrderId(paymentCancelRequest.getOrderId())
                 .orElseThrow(NotFoundReceiptException::new);
 
         if(!orderId.equals(payment.getOrderId())) {
@@ -145,9 +141,15 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         BootpayReceiptDto resultReceipt = bootpayService.getReceiptViaWebClient(payment.getReceiptId());
-        BootpayReceiptDto cancelResult = bootpayService.cancellationViaWebClient(payment.getReceiptId(), paymentCancelRequest.getCancelReason(), paymentCancelRequest.getMemberId(), resultReceipt.getOrderId(), paymentCancelRequest.getCancelPrice(), paymentCancelRequest.getBankDataDto());
+        BootpayReceiptDto cancelResult = bootpayService.cancellationViaWebClient(payment.getReceiptId(), paymentCancelRequest.getCancelReason(), paymentCancelRequest.getUsername(), resultReceipt.getOrderId(), paymentCancelRequest.getCancelPrice(), paymentCancelRequest.getBankDataDto());
         PaymentMapper.updateFromDto(payment, cancelResult);
         paymentRepository.save(payment);
         return cancelResult;
+    }
+
+    @Override
+    public BootpayReceiptDto voidPayment(String receiptId) {
+        BootpayReceiptDto resultReceipt = bootpayService.getReceiptViaWebClient(receiptId);
+        return bootpayService.cancellationViaWebClient(receiptId, "결제 무효처리", "FANTRY_SYSTEM", resultReceipt.getOrderId(), String.valueOf(resultReceipt.getPrice()), resultReceipt.getBankDataDto());
     }
 }
