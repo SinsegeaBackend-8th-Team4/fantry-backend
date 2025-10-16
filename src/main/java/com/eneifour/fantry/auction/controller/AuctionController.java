@@ -30,15 +30,26 @@ public class AuctionController {
     private final AuctionService auctionService;
 
     /**
-     * 특정 상품의 상세 정보를 조회합니다.
+     * 특정 경매 ID를 기준으로 상품의 상세 정보를 조회합니다.
      *
      * @param auctionId 조회할 상품의 ID
      * @return 상품 상세 정보.
      */
     @GetMapping("/{auctionId}")
-    public ResponseEntity<?> getAuctionById(@PathVariable("auctionId") int auctionId){
-        AuctionDetailResponse auctionDetail = auctionService.findOne(auctionId);
+    public ResponseEntity<AuctionDetailResponse> getAuctionById(@PathVariable("auctionId") int auctionId){
+        AuctionDetailResponse auctionDetail = auctionService.findByAuctionId(auctionId);
+        return ResponseEntity.ok(auctionDetail);
+    }
 
+    /**
+     * 특정 상품 검수 ID를 기준으로, 가장 최근에 등록된 경매 1건의 상세 정보를 조회합니다.
+     *
+     * @param productInspectionId 조회할 상품 검수 ID
+     * @return 가장 최근 경매의 상세 정보.
+     */
+    @GetMapping("/inspection/{productInspectionId}")
+    public ResponseEntity<AuctionDetailResponse> getAuctionByProductInspectionId(@PathVariable int productInspectionId) {
+        AuctionDetailResponse auctionDetail = auctionService.findByProductInspectionId(productInspectionId);
         return ResponseEntity.ok(auctionDetail);
     }
 
@@ -60,8 +71,6 @@ public class AuctionController {
 
         Optional<String> statusOptional = auctionService.getAuctionWinnerStatus(auctionId, memberId);
 
-        // Service에서 반환된 Optional 객체가 값을 가지고 있으면(isPresent), 그 값을 body로 사용합니다.
-        // 값이 없으면(empty), orElse("USER")를 통해 "USER"를 기본값으로 사용합니다.
         String responseBody = statusOptional.orElse("USER");
 
         return ResponseEntity.ok(responseBody);
@@ -151,10 +160,10 @@ public class AuctionController {
      * @return 작업 성공 메시지.
      */
     @PostMapping
-    public ResponseEntity<?> createAuction(@Valid @RequestBody AuctionRequest request) {
+    public ResponseEntity<AuctionDetailResponse> createAuction(@Valid @RequestBody AuctionRequest request) {
         log.info("Request to create auction for inspectionId: {}", request.getProductInspectionId());
-        auctionService.createAuction(request);
-        return ResponseEntity.ok("상품 등록 완료");
+        AuctionDetailResponse createdAuction = auctionService.createAuction(request);
+        return ResponseEntity.ok(createdAuction);
     }
 
     /**

@@ -13,6 +13,7 @@ public enum ErrorCode {
     AUCTION_NOT_MATCH_INSPECTION(HttpStatus.BAD_REQUEST, "A003", "상품 정보가 일치하지 않습니다"),
     CANNOT_RESCHEDULE_ACTIVE_AUCTION(HttpStatus.BAD_REQUEST,"A004","현재 판매중인 상품은 시작시간과 마감시간을 변경할 수 없습니다"),
     INVALID_AUCTION_TIME(HttpStatus.BAD_REQUEST,"A005","판매 시작 시간과 마감시간이 올바르지 않습니다"),
+    CANNOT_DELETE_ACTIVE_AUCTION(HttpStatus.BAD_REQUEST,"A006","현재 판매중인 상품은 삭제할 수 없습니다"),
 
     // Bid Exceptions
     BID_AMOUNT_INVALID(HttpStatus.BAD_REQUEST, "B001", "입찰 금액을 올바르게 입력해주세요."),
