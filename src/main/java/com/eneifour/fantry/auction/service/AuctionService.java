@@ -21,8 +21,10 @@ import com.eneifour.fantry.member.repository.MemberRepository;
 import com.eneifour.fantry.orders.domain.OrderStatus;
 import com.eneifour.fantry.orders.domain.Orders;
 import com.eneifour.fantry.orders.repository.OrdersRepository;
+import com.eneifour.fantry.auction.domain.AuctionClosedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +49,7 @@ public class AuctionService {
     private final OrdersRepository ordersRepository;
     private final BidRepository bidRepository;
     private final InspectionService inspectionService; // InspectionService 의존성 추가
+    private final ApplicationEventPublisher eventPublisher;
 
     // =============================================
     // 1. 상품 조회 (Read)
@@ -432,7 +435,9 @@ public class AuctionService {
             log.info("AuctionId {} has been successfully closed. Winner: {}, Final Price: {}",
                     auction.getAuctionId(), winner.getName(), finalPrice);
 
-            // TODO: 낙찰자에게 알림을 보내는 로직을 추가할 수 있습니다. (e.g., WebSocket, SMS, Email)
+            // TODO: 낙찰자에게 알림을 보내는 로직을 추가할 수 있음 (e.g., WebSocket, SMS, Email)
+            // 트랜잭션 커밋 후 이벤트 발행 (알림 전송)
+            eventPublisher.publishEvent(new AuctionClosedEvent(auction.getAuctionId()));
 
         } else {
             // --- Case 2: 입찰자가 아무도 없어 유찰된 경우 ---
