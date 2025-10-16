@@ -96,7 +96,7 @@ public class Auction {
      * 상품 상태를 '취소'로 변경합니다.
      */
     public void closeAsCancelled(){
-        this.saleStatus = SaleStatus.CANCELLED;
+        this.saleStatus = SaleStatus.CANCELED;
     }
 
     /**
@@ -104,6 +104,13 @@ public class Auction {
      */
     public void activate(){
         this.saleStatus = SaleStatus.ACTIVE;
+    }
+
+    /**
+     * 상품 상태를 '재활성'으로 변경합니다.
+     */
+    public void reactivate(){
+        this.saleStatus = SaleStatus.REACTIVE;
     }
 
     /**
