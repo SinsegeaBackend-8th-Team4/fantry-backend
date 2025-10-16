@@ -3,6 +3,7 @@ package com.eneifour.fantry.refund.repository;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.orders.domain.Orders;
 import com.eneifour.fantry.refund.domain.ReturnRequest;
+import com.eneifour.fantry.refund.domain.ReturnStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -38,4 +40,17 @@ public interface ReturnRepository extends JpaRepository<ReturnRequest, Integer>,
     @EntityGraph(attributePaths = {"orders", "member", "orders.payment", "attachments.filemeta", "statusHistories.updatedBy"})
     @Query("select r from ReturnRequest r where r.returnRequestId = :id")
     Optional<ReturnRequest> findWithAttachmentsAndHistoriesById(@Param("id") int id);
+
+    /**
+     * 각 ReturnStatus 별로 요청 건수를 집계하여 반환합니다.
+     * DELETED 상태는 통계에서 제외합니다.
+     * @return 각 ReturnStatus와 해당 상태의 건수를 담은 Object 배열의 리스트
+     */
+    @Query("""
+        select r.status, count(r)
+        from ReturnRequest r
+        where r.status != com.eneifour.fantry.refund.domain.ReturnStatus.DELETED
+        group by r.status
+    """)
+    List<Object[]> countByStatus();
 }

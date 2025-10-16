@@ -20,12 +20,17 @@ import com.eneifour.fantry.member.domain.RoleType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.eneifour.fantry.inquiry.domain.CsStatus;
+import com.eneifour.fantry.notice.dto.NoticeStatsAdminResponse;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 관리자용 공지사항 관리 서비스를 담당합니다.
@@ -124,5 +129,15 @@ public class NoticeAdminService {
     public Page<NoticeSummaryResponse> searchNoticesForAdmin(NoticeSearchRequest request, Pageable pageable) {
         Specification<Notice> spec = noticeSpecification.toSpecification(request);
         return noticeRepository.findAll(spec, pageable).map(NoticeSummaryResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public NoticeStatsAdminResponse getNoticeStatsForAdmin() {
+        Map<CsStatus, Long> statusCounts = Arrays.stream(CsStatus.values())
+                .collect(Collectors.toMap(
+                        status -> status,
+                        noticeRepository::countByStatus
+                ));
+        return NoticeStatsAdminResponse.from(statusCounts);
     }
 }

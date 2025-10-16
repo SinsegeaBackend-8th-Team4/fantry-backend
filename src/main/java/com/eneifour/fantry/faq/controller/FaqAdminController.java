@@ -1,16 +1,14 @@
 package com.eneifour.fantry.faq.controller;
 
-import com.eneifour.fantry.faq.dto.FaqCreateRequest;
-import com.eneifour.fantry.faq.dto.FaqResponse;
-import com.eneifour.fantry.faq.dto.FaqSearchRequest;
-import com.eneifour.fantry.faq.dto.FaqUpdateRequest;
+import com.eneifour.fantry.faq.dto.*;
 import com.eneifour.fantry.faq.service.FaqAdminService;
 import com.eneifour.fantry.faq.service.FaqService;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -102,18 +100,14 @@ public class FaqAdminController {
     }
 
     @Operation(summary = "FAQ 목록 동적 검색 (관리자)", description = "다양한 조건으로 FAQ 목록을 검색합니다.")
-    @Parameters({
-            @Parameter(name = "csTypeId", description = "카테고리 ID (1:배송, 2:결제 등)", example = "1"),
-            @Parameter(name = "keyword", description = "검색할 키워드", example = "환불"),
-            @Parameter(name = "status", description = "FAQ 상태 (DRAFT, ACTIVE, PINNED, INACTIVE)"),
-            @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", example = "0"),
-            @Parameter(name = "size", description = "페이지 당 항목 수", example = "10"),
-            @Parameter(name = "sort", description = "정렬 조건 (예: faqId,desc)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = Page.class)))
     })
     @GetMapping
     public ResponseEntity<Page<FaqResponse>> searchFaqs(
-            @ModelAttribute FaqSearchRequest request,
-            Pageable pageable
+            @Parameter(description = "검색 조건 (카테고리 ID, 키워드, 상태)") @ModelAttribute FaqSearchRequest request,
+            @Parameter(description = "페이징 정보 (page, size, sort)") Pageable pageable
     ) {
         Page<FaqResponse> results = faqService.searchFaqsForAdmin(request, pageable);
         return ResponseEntity.ok(results);
@@ -128,5 +122,16 @@ public class FaqAdminController {
     public ResponseEntity<FaqResponse> getFaqDetail(@Parameter(description = "조회할 FAQ의 ID") @PathVariable int faqId) {
         FaqResponse faq = faqAdminService.getFaq(faqId);
         return ResponseEntity.ok(faq);
+    }
+
+    @Operation(summary = "FAQ 통계 조회 (관리자)", description = "관리자 대시보드에 필요한 FAQ 통계 정보를 조회합니다. (상태별 개수)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "통계 조회 성공", content = @Content(schema = @Schema(implementation = FaqStatsAdminResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자 또는 권한 없음")
+    })
+    @GetMapping("/stats")
+    public ResponseEntity<FaqStatsAdminResponse> getFaqStats() {
+        FaqStatsAdminResponse stats = faqAdminService.getFaqStatsForAdmin();
+        return ResponseEntity.ok(stats);
     }
 }

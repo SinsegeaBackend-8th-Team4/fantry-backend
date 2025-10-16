@@ -13,6 +13,7 @@ import com.eneifour.fantry.refund.domain.ReturnStatus;
 import com.eneifour.fantry.refund.domain.ReturnStatusHistory;
 import com.eneifour.fantry.refund.dto.ReturnCreateRequest;
 import com.eneifour.fantry.refund.dto.ReturnDetailResponse;
+import com.eneifour.fantry.refund.dto.ReturnStatsAdminResponse;
 import com.eneifour.fantry.refund.dto.ReturnSummaryResponse;
 import com.eneifour.fantry.refund.exception.ReturnErrorCode;
 import com.eneifour.fantry.refund.exception.ReturnException;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -122,6 +124,19 @@ public class ReturnService {
         returnRequest.cancelByUser(member);
 
         addStatusHistory(returnRequest, oldStatus, ReturnStatus.USER_CANCELLED, member, "사용자가 직접 요청을 철회함");
+    }
+
+    @Transactional(readOnly = true)
+    public ReturnStatsAdminResponse getReturnStats() {
+        List<Object[]> statusCountsList = returnRepository.countByStatus();
+
+        Map<ReturnStatus, Long> statusCountsMap = statusCountsList.stream()
+                .collect(Collectors.toMap(
+                        row -> (ReturnStatus) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        return ReturnStatsAdminResponse.from(statusCountsMap);
     }
 
     // --- Helper Methods ---

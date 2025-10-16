@@ -13,15 +13,17 @@ import jakarta.validation.constraints.NotNull;
 public record NoticeCreateRequest(
         @NotNull int csTypeId,
         @NotBlank String title,
-        @NotBlank String content
+        @NotBlank String content,
+        CsStatus status
 ) {
     public Notice toEntity(Member admin, CsType csType, String sanitizedContent) {
+        CsStatus newStatus = (status == null) ? CsStatus.DRAFT : status;
         return Notice.builder()
                 .csType(csType)
                 .title(title)
                 .content(sanitizedContent)
                 .createdBy(admin)
-                .status(CsStatus.ACTIVE)
+                .status(newStatus)
                 .build();
     }
 }
