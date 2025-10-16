@@ -75,7 +75,7 @@ public class Auction {
      * @param finalPrice 최종 낙찰가
      */
     public void closeAsSold(int finalPrice) {
-        if (this.saleStatus != SaleStatus.ACTIVE) {
+        if (this.saleStatus != SaleStatus.ACTIVE && this.saleStatus != SaleStatus.REACTIVE) {
             throw new AuctionException(ErrorCode.AUCTION_NOT_ACTIVE);
         }
         this.saleStatus = SaleStatus.SOLD;
@@ -86,7 +86,7 @@ public class Auction {
      * 상품을 '유찰 / 미판매' 상태로 변경합니다.
      */
     public void closeAsNotSold() {
-        if (this.saleStatus != SaleStatus.ACTIVE) {
+        if (this.saleStatus != SaleStatus.ACTIVE && this.saleStatus != SaleStatus.REACTIVE) {
             throw new AuctionException(ErrorCode.AUCTION_NOT_ACTIVE);
         }
         this.saleStatus = SaleStatus.NOT_SOLD;
