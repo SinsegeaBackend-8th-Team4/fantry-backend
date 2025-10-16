@@ -4,12 +4,14 @@ import com.eneifour.fantry.auction.domain.SaleStatus;
 import com.eneifour.fantry.auction.domain.SaleType;
 import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
 import com.eneifour.fantry.auction.dto.AuctionRequest;
+import com.eneifour.fantry.auction.dto.AuctionSearchCondition; // AuctionSearchCondition 임포트 추가
 import com.eneifour.fantry.auction.dto.AuctionSummaryResponse;
 import com.eneifour.fantry.auction.service.AuctionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -30,15 +32,26 @@ public class AuctionController {
     private final AuctionService auctionService;
 
     /**
-     * 특정 상품의 상세 정보를 조회합니다.
+     * 특정 경매 ID를 기준으로 상품의 상세 정보를 조회합니다.
      *
      * @param auctionId 조회할 상품의 ID
      * @return 상품 상세 정보.
      */
     @GetMapping("/{auctionId}")
-    public ResponseEntity<?> getAuctionById(@PathVariable("auctionId") int auctionId){
-        AuctionDetailResponse auctionDetail = auctionService.findOne(auctionId);
+    public ResponseEntity<AuctionDetailResponse> getAuctionById(@PathVariable("auctionId") int auctionId){
+        AuctionDetailResponse auctionDetail = auctionService.findByAuctionId(auctionId);
+        return ResponseEntity.ok(auctionDetail);
+    }
 
+    /**
+     * 특정 상품 검수 ID를 기준으로, 가장 최근에 등록된 경매 1건의 상세 정보를 조회합니다.
+     *
+     * @param productInspectionId 조회할 상품 검수 ID
+     * @return 가장 최근 경매의 상세 정보.
+     */
+    @GetMapping("/inspection/{productInspectionId}")
+    public ResponseEntity<AuctionDetailResponse> getAuctionByProductInspectionId(@PathVariable int productInspectionId) {
+        AuctionDetailResponse auctionDetail = auctionService.findByProductInspectionId(productInspectionId);
         return ResponseEntity.ok(auctionDetail);
     }
 
@@ -60,8 +73,6 @@ public class AuctionController {
 
         Optional<String> statusOptional = auctionService.getAuctionWinnerStatus(auctionId, memberId);
 
-        // Service에서 반환된 Optional 객체가 값을 가지고 있으면(isPresent), 그 값을 body로 사용합니다.
-        // 값이 없으면(empty), orElse("USER")를 통해 "USER"를 기본값으로 사용합니다.
         String responseBody = statusOptional.orElse("USER");
 
         return ResponseEntity.ok(responseBody);
@@ -69,21 +80,19 @@ public class AuctionController {
 
     /**
      * 상품 목록을 조건에 따라 페이징하여 조회합니다.
-     * <p>판매 유형(saleType)이나 판매 상태(saleStatus)를 지정하여 필터링할 수 있습니다.
-     * <p>아무 조건도 지정하지 않으면 전체 상품 목록이 반환됩니다.
+     * AuctionSearchCondition DTO를 사용하여 판매 유형(saleType), 판매 상태(saleStatus), 그룹 유형(groupType)을 지정하여 필터링할 수 있습니다.
+     * 아무 조건도 지정하지 않으면 전체 상품 목록이 반환됩니다.
      *
-     * @param saleType   판매 유형 (AUCTION, INSTANT_BUY).
-     * @param saleStatus 판매 상태 (ACTIVE, SOLD, NOT_SOLD, CANCELLED).
+     * @param condition  검색 조건을 담는 DTO (saleType, saleStatus, groupType).
      * @param pageable   페이징 정보 (페이지 번호, 페이지 크기 등).
      * @return 페이징 처리된 상품 요약 목록.
      */
     @GetMapping
     public ResponseEntity<Page<AuctionSummaryResponse>> getAuctions(
-            @RequestParam(required = false) SaleType saleType,
-            @RequestParam(required = false) SaleStatus saleStatus,
+            @ModelAttribute AuctionSearchCondition condition, // AuctionSearchCondition으로 변경
             @PageableDefault(size = 10) Pageable pageable) {
-        log.info("Request to search auctions with saleType: {} and saleStatus: {}", saleType, saleStatus);
-        Page<AuctionSummaryResponse> auctions = auctionService.searchAuctions(saleType, saleStatus, pageable);
+        log.info("Request to search auctions with condition: {} and pageable: {}", condition, pageable);
+        Page<AuctionSummaryResponse> auctions = auctionService.searchAuctions(condition, pageable); // 변경된 searchAuctions 메서드 호출
         return ResponseEntity.ok(auctions);
     }
 
@@ -151,10 +160,10 @@ public class AuctionController {
      * @return 작업 성공 메시지.
      */
     @PostMapping
-    public ResponseEntity<?> createAuction(@Valid @RequestBody AuctionRequest request) {
+    public ResponseEntity<AuctionDetailResponse> createAuction(@Valid @RequestBody AuctionRequest request) {
         log.info("Request to create auction for inspectionId: {}", request.getProductInspectionId());
-        auctionService.createAuction(request);
-        return ResponseEntity.ok("상품 등록 완료");
+        AuctionDetailResponse createdAuction = auctionService.createAuction(request);
+        return ResponseEntity.ok(createdAuction);
     }
 
     /**

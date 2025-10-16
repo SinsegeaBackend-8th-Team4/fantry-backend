@@ -7,6 +7,7 @@ import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.common.util.file.FileException;
 import com.eneifour.fantry.inquiry.exception.InquiryException;
 import com.eneifour.fantry.member.exception.MemberException;
+import com.eneifour.fantry.notification.exception.NotificationException;
 import com.eneifour.fantry.payment.exception.BootpayException;
 import com.eneifour.fantry.payment.exception.PaymentException;
 import com.eneifour.fantry.report.exception.ReportException;
@@ -122,6 +123,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PaymentException.class)
     public ResponseEntity<ErrorResponse> handlePaymentException(PaymentException ex) {
         log.error("PaymentException 발생: {}", ex.getMessage(), ex);
+        ErrorResponse response = ErrorResponse.of(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getCode(),
+                ex.getErrorCode().getMessage()
+        );
+        return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
+    }
+
+    @ExceptionHandler(NotificationException.class)
+    public ResponseEntity<ErrorResponse> handleNotificationException(NotificationException ex) {
+        log.error("NotificationException 발생: {}", ex.getErrorCode().getMessage());
         ErrorResponse response = ErrorResponse.of(
                 ex.getErrorCode().getStatus(),
                 ex.getErrorCode().getCode(),

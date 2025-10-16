@@ -9,4 +9,6 @@ import lombok.Setter;
 public class PaymentVerifyRequest {
     @JsonAlias({"receiptId", "receipt_id"})
     private String receiptId;
+    @JsonAlias({"paymentStatus", "payment_status"})
+    private String paymentStatus;
 }

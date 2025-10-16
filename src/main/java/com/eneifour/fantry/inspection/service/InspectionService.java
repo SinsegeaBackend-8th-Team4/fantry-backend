@@ -1,5 +1,6 @@
 package com.eneifour.fantry.inspection.service;
 
+import com.eneifour.fantry.catalog.domain.GroupType;
 import com.eneifour.fantry.checklist.domain.ChecklistItem;
 import com.eneifour.fantry.checklist.domain.ChecklistTemplate;
 import com.eneifour.fantry.checklist.dto.OfflineChecklistItemResponse;
@@ -32,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -102,6 +104,17 @@ public class InspectionService {
      */
     public InspectionPageResponse<InspectionListResponse> getInspectionsByStatuses(List<InspectionStatus> statuses, Pageable pageable){
         Page<InspectionListResponse> page = inspectionRepository.findAllByInspectionStatusIn(statuses, pageable);
+        return InspectionPageResponse.fromPage(page);
+    }
+
+    /**
+     *  재고 상태 별 페이지 조회
+     * @param statuses 조회할 재고 상태 목록 (e.g. ?statuses=PENDING , SOLD)
+     * @param pageable 페이지네이션, 정렬 정보 (e.g. ?page=0&size=20&sort=submittedAt,desc)
+     * @return 페이징 처리된 검수 목록
+     */
+    public InspectionPageResponse<InventoryListResponse> getInspectionsByInventoryStatuses(List<InventoryStatus> statuses, Pageable pageable){
+        Page<InventoryListResponse> page = inspectionRepository.findAllByInventoryStatusIn(statuses, pageable);
         return InspectionPageResponse.fromPage(page);
     }
 
@@ -336,5 +349,15 @@ public class InspectionService {
         updateTimestamps(inspection);
 
         log.info("검수 ID {}의 재고 상태가 {}로 업데이트되었습니다.", productInspectionId, status);
+    }
+
+    /**
+     * 검수 ID로 등록한 아티스트 그룹 조회
+     * @param inspectionId 검수 ID
+     * @return 아티스트 그룹(ENUM)
+     */
+    public GroupType getGroupTypeById(int inspectionId) {
+        Optional<GroupType> groupType = inspectionRepository.findGroupTypeById(inspectionId);
+        return groupType.orElse(null);
     }
 }

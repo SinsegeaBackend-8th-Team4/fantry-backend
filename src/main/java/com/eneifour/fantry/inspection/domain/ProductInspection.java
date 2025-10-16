@@ -63,7 +63,7 @@ public class ProductInspection {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private InventoryStatus inventoryStatus = InventoryStatus.PENDING;
+    private InventoryStatus inventoryStatus = InventoryStatus.PENDING_REGIST;
 
     @Enumerated(EnumType.STRING)
     private SourceType sourceType;

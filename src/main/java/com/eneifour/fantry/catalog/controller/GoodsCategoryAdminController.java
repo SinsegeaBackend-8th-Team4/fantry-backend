@@ -24,7 +24,6 @@ public class GoodsCategoryAdminController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED) // 201 Created 상태 코드 반환
     public InspectionApiResponse<GoodsCategoryResponse> createGoodsCategory(@Valid @RequestBody GoodsCategoryCreateRequest request) {
-        log.debug("#####CategoryCreateRequest: {}", request);
         GoodsCategoryResponse goodsCategory = goodsCategoryService.createGoodsCategory(request);
         return InspectionApiResponse.ok(goodsCategory);
     }
@@ -33,7 +32,7 @@ public class GoodsCategoryAdminController {
      * 기존 굿즈 카테고리 수정
      */
     @PutMapping("/{goodsCategoryId}")
-    public InspectionApiResponse<GoodsCategoryResponse> createGoodsCategory(
+    public InspectionApiResponse<GoodsCategoryResponse> updateGoodsCategory(
             @PathVariable int goodsCategoryId,
             @Valid @RequestBody GoodsCategoryUpdateRequest request ) {
         GoodsCategoryResponse goodsCategory = goodsCategoryService.updateGoodsCategory(goodsCategoryId, request);

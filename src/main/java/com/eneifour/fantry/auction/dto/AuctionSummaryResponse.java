@@ -18,13 +18,17 @@ public class AuctionSummaryResponse {
     private int auctionId;
     private int itemId;
     private String itemName;
+    private String categoryName; // 카테고리명 필드 추가
+    private String artistGroupType;
     private int startPrice;
     private int currentPrice; // Redis에서 조회한 실시간 현재가
+    private int highestBidderId; // Redis 에서 조회한 최고가 입찰자 (없는경우 0)
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String saleType;
     private String saleStatus;
     private List fileInfos;
+
 
     public static AuctionSummaryResponse from(Auction auction) {
         return AuctionSummaryResponse.builder()

@@ -13,9 +13,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentCreateRequest {
-    @NotBlank(message = "멤버 아이디가 누락되었습니다.")
-    @JsonAlias({"member_id", "memberId"})
-    private String memberId;
+    @NotBlank(message = "유저아이디가 누락되었습니다.")
+    @JsonAlias({"user_name", "username"})
+    private String username;
 
     @Pattern(regexp = "^\\d{1,10}$", message = "잘못된 아이템 아이디 입니다.")
     @NotBlank(message = "아이템 아이디가 누락되었습니다.")
