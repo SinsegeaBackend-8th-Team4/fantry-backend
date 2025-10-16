@@ -29,17 +29,33 @@ public class PaymentController {
             @RequestBody
             PaymentCreateRequest paymentCreateRequest
     ) throws NoSuchAlgorithmException, ClassNotFoundException {
-            Payment createdPayment = paymentService.createPayment(paymentCreateRequest);
-            PaymentResponse response = PaymentMapper.entityToResponse(createdPayment, PaymentResponse.class);
-            return ResponseEntity.ok(new ApiResponse<>(true, response));
+        Payment createdPayment = paymentService.createPayment(paymentCreateRequest);
+        PaymentResponse response = PaymentMapper.entityToResponse(createdPayment, PaymentResponse.class);
+        return ResponseEntity.ok(new ApiResponse<>(true, response));
     }
 
-    @GetMapping("/api/payments/{orderId}/verify")
+    @PostMapping("/api/payments/{orderId}/verify")
     public ResponseEntity<ApiResponse<Payment>> requestPaymentVerify(
-            @PathVariable("orderId") String orderId
+            @PathVariable("orderId") String orderId,
+            @RequestBody PaymentVerifyRequest paymentVerifyRequest
     ) {
+        PaymentStatus paymentStatus = PaymentStatus.fromCode(paymentVerifyRequest.getPaymentStatus());
         Payment payment = paymentService.verifyPayment(orderId);
-        return ResponseEntity.ok(new ApiResponse<>(payment.getStatus() == PaymentStatus.COMPLETE, payment, null));
+        boolean verified;
+        switch (paymentStatus) {
+            case COMPLETE -> {
+                verified = payment.getStatus() == PaymentStatus.COMPLETE;
+            }
+            case RETURNED -> {
+                verified = payment.getStatus() == PaymentStatus.RETURNED;
+            }
+            case CANCELED -> {
+                verified = payment.getStatus() == PaymentStatus.CANCELED;
+            }
+            default -> throw new IllegalArgumentException("잘 못된 상태값 입니다.");
+        }
+
+        return ResponseEntity.ok(new ApiResponse<>(verified, payment, null));
     }
 
     @PostMapping("/api/payments/{orderId}/approve")
@@ -54,15 +70,13 @@ public class PaymentController {
         return ResponseEntity.ok(new ApiResponse<>(true, "결제가 완료되었습니다.", null));
     }
 
-    @PostMapping("/api/payments/{orderId}/cancel")
+    @PostMapping("/api/payments/{receiptId}/void")
     public ResponseEntity<ApiResponse<PaymentCancelResponse>> requestPaymentCancel(
-            @PathVariable("orderId") String orderId,
-            @Valid
-            @RequestBody
-            PaymentCancelRequest paymentCancelRequest
+            @PathVariable("receiptId") String receiptId
     ) throws Exception {
-        BootpayReceiptDto dto = paymentService.cancelPayment(orderId, paymentCancelRequest);
-        return ResponseEntity.ok(new ApiResponse<>(true, new PaymentCancelResponse()));
+        BootpayReceiptDto dto = paymentService.voidPayment(receiptId);
+        PaymentCancelResponse response = PaymentCancelResponse.from(dto);
+        return ResponseEntity.ok(new ApiResponse<>(true, response));
     }
 
     @PostMapping("/webhook/bootpay")
