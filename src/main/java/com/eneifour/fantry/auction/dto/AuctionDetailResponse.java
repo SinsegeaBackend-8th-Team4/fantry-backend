@@ -29,6 +29,7 @@ public class AuctionDetailResponse {
     private String hashtags;
     private String categoryName;
     private String artistName;
+    private String artistGroupType;
     private String albumTitle;
 
     //상품 사진 파일
@@ -71,6 +72,7 @@ public class AuctionDetailResponse {
             String hashtags,
             String categoryName,
             String artistName,
+            String artistGroupType,
             String albumTitle
     ) {
         this.auctionId = auctionId;
@@ -86,6 +88,7 @@ public class AuctionDetailResponse {
         this.hashtags = hashtags;
         this.categoryName = categoryName;
         this.artistName = artistName;
+        this.artistGroupType = artistGroupType;
         this.albumTitle = albumTitle;
     }
 
