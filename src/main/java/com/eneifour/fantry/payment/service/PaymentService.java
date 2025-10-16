@@ -1,6 +1,7 @@
 package com.eneifour.fantry.payment.service;
 
 import com.eneifour.fantry.payment.domain.Payment;
+import com.eneifour.fantry.payment.domain.PaymentStatus;
 import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
 import com.eneifour.fantry.payment.dto.PaymentCancelRequest;
 import com.eneifour.fantry.payment.dto.PaymentCreateRequest;
@@ -53,6 +54,18 @@ public interface PaymentService {
      * @throws Exception Bootpay API 호출 실패 시
      */
     BootpayReceiptDto cancelPayment(String orderId, PaymentCancelRequest paymentCancelRequest) throws Exception;
+
+    /**
+     * 결제를 무효(취소)합니다.
+     * <p>
+     * Bootpay를 통해 결제 취소를 요청하고, 취소 결과를 반환합니다.
+     * 이 API는 사용자가 결제를 완료했지만 서버오류로 인해서 검증이 안되었을때 클라이언트에서 호출합니다.
+     * </p>
+     *
+     * @return 취소된 결제의 영수증 정보
+     * @throws Exception Bootpay API 호출 실패 시
+     */
+    BootpayReceiptDto voidPayment(String receiptId) throws Exception;
 
     /**
      * Bootpay로부터 영수증 정보를 조회합니다.
