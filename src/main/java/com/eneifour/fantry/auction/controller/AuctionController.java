@@ -4,12 +4,14 @@ import com.eneifour.fantry.auction.domain.SaleStatus;
 import com.eneifour.fantry.auction.domain.SaleType;
 import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
 import com.eneifour.fantry.auction.dto.AuctionRequest;
+import com.eneifour.fantry.auction.dto.AuctionSearchCondition; // AuctionSearchCondition 임포트 추가
 import com.eneifour.fantry.auction.dto.AuctionSummaryResponse;
 import com.eneifour.fantry.auction.service.AuctionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -78,21 +80,19 @@ public class AuctionController {
 
     /**
      * 상품 목록을 조건에 따라 페이징하여 조회합니다.
-     * <p>판매 유형(saleType)이나 판매 상태(saleStatus)를 지정하여 필터링할 수 있습니다.
-     * <p>아무 조건도 지정하지 않으면 전체 상품 목록이 반환됩니다.
+     * AuctionSearchCondition DTO를 사용하여 판매 유형(saleType), 판매 상태(saleStatus), 그룹 유형(groupType)을 지정하여 필터링할 수 있습니다.
+     * 아무 조건도 지정하지 않으면 전체 상품 목록이 반환됩니다.
      *
-     * @param saleType   판매 유형 (AUCTION, INSTANT_BUY).
-     * @param saleStatus 판매 상태 (ACTIVE, SOLD, NOT_SOLD, CANCELLED).
+     * @param condition  검색 조건을 담는 DTO (saleType, saleStatus, groupType).
      * @param pageable   페이징 정보 (페이지 번호, 페이지 크기 등).
      * @return 페이징 처리된 상품 요약 목록.
      */
     @GetMapping
     public ResponseEntity<Page<AuctionSummaryResponse>> getAuctions(
-            @RequestParam(required = false) SaleType saleType,
-            @RequestParam(required = false) SaleStatus saleStatus,
+            @ModelAttribute AuctionSearchCondition condition, // AuctionSearchCondition으로 변경
             @PageableDefault(size = 10) Pageable pageable) {
-        log.info("Request to search auctions with saleType: {} and saleStatus: {}", saleType, saleStatus);
-        Page<AuctionSummaryResponse> auctions = auctionService.searchAuctions(saleType, saleStatus, pageable);
+        log.info("Request to search auctions with condition: {} and pageable: {}", condition, pageable);
+        Page<AuctionSummaryResponse> auctions = auctionService.searchAuctions(condition, pageable); // 변경된 searchAuctions 메서드 호출
         return ResponseEntity.ok(auctions);
     }
 

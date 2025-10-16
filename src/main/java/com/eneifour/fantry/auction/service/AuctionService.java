@@ -5,13 +5,16 @@ import com.eneifour.fantry.auction.domain.SaleStatus;
 import com.eneifour.fantry.auction.domain.SaleType;
 import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
 import com.eneifour.fantry.auction.dto.AuctionRequest;
+import com.eneifour.fantry.auction.dto.AuctionSearchCondition; // AuctionSearchCondition 임포트 추가
 import com.eneifour.fantry.auction.dto.AuctionSummaryResponse;
 import com.eneifour.fantry.auction.exception.AuctionException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.auction.exception.MemberException;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
+import com.eneifour.fantry.auction.repository.AuctionSpecification; // AuctionSpecification 임포트 추가
 import com.eneifour.fantry.bid.domain.Bid;
 import com.eneifour.fantry.bid.repository.BidRepository;
+import com.eneifour.fantry.catalog.domain.GroupType;
 import com.eneifour.fantry.inspection.domain.InventoryStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import com.eneifour.fantry.inspection.repository.InspectionRepository;
@@ -28,6 +31,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification; // Specification 임포트 추가
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +53,7 @@ public class AuctionService {
     private final OrdersRepository ordersRepository;
     private final BidRepository bidRepository;
     private final InspectionService inspectionService; // InspectionService 의존성 추가
+    private final AuctionSpecification auctionSpecification; // AuctionSpecification 의존성 추가
     private final ApplicationEventPublisher eventPublisher;
 
     // =============================================
@@ -68,24 +73,18 @@ public class AuctionService {
 
     /**
      * 조건에 따라 경매 상품 목록을 페이징하여 조회합니다.
-     * @param saleType 판매 유형 (AUCTION, INSTANT_BUY)
-     * @param saleStatus 판매 상태 (ACTIVE, SOLD, 등)
+     * AuctionSearchCondition DTO를 사용하여 동적으로 쿼리 조건을 생성합니다.
+     * @param condition 검색 조건을 담는 DTO (saleType, saleStatus, groupType)
      * @param pageable 페이징 정보
      * @return 페이징된 경매 요약 정보 목록
      */
     @Transactional(readOnly = true)
-    public Page<AuctionSummaryResponse> searchAuctions(SaleType saleType , SaleStatus saleStatus, Pageable pageable) {
-        // 1. 조건에 따라 DB에서 경매 목록(Page<Auction>)을 조회합니다.
-        Page<Auction> auctions;
-        if (saleType != null && saleStatus != null) {
-            auctions = auctionRepository.findBySaleTypeAndSaleStatus(saleType, saleStatus, pageable);
-        } else if (saleType != null) {
-            auctions = auctionRepository.findBySaleType(saleType, pageable);
-        } else if (saleStatus != null) {
-            auctions = auctionRepository.findBySaleStatus(saleStatus, pageable);
-        } else {
-            auctions = auctionRepository.findAll(pageable);
-        }
+    public Page<AuctionSummaryResponse> searchAuctions(AuctionSearchCondition condition, Pageable pageable) {
+        // AuctionSearchCondition을 기반으로 Specification을 생성합니다.
+        Specification<Auction> spec = auctionSpecification.toSpecification(condition);
+
+        // 생성된 Specification과 Pageable을 사용하여 경매 목록을 조회합니다.
+        Page<Auction> auctions = auctionRepository.findAll(spec, pageable);
 
         List<Auction> auctionList = auctions.getContent();
         if (auctionList.isEmpty()) {
@@ -98,6 +97,8 @@ public class AuctionService {
                 .collect(Collectors.toList());
 
         // 3. 경매 ID 목록으로 카테고리 이름 맵을 한 번에 조회합니다 (N+1 방지).
+        //    (참고: 이 부분은 Auction 엔티티에 직접 categoryName 필드를 추가하거나,
+        //     Specification 내에서 fetch join을 통해 최적화할 수 있습니다.)
         Map<Integer, String> categoryNameMap = auctionRepository.findCategoryNamesByAuctionIds(auctionIds).stream()
                 .collect(Collectors.toMap(
                         row -> (Integer) row[0], // auctionId
@@ -107,12 +108,15 @@ public class AuctionService {
         // 4. 각 Auction 엔티티를 AuctionSummaryResponse DTO로 변환합니다.
         List<AuctionSummaryResponse> summaryResponses = auctionList.stream().map(auction -> {
             AuctionSummaryResponse summary = AuctionSummaryResponse.from(auction);
+            Optional<GroupType> grouptype = inspectionRepository.findGroupTypeById(auction.getProductInspection().getProductInspectionId());
             // Redis에서 현재가를 조회하여 DTO에 설정
             summary.setCurrentPrice(redisService.getCurrentPrice(auction.getStartPrice(), auction.getAuctionId()));
             // Redis 에서 최고 입찰자를 조회하여 DTO에 설정
             summary.setHighestBidderId(redisService.getHighestBidderId(auction.getAuctionId()));
             // File info를 조회하여 DTO에 설정
             summary.setFileInfos(inspectionRepository.findFilesByProductInspectionId(auction.getProductInspection().getProductInspectionId()));
+            // group type 조회하여 DTO 설정
+            summary.setArtistGroupType( grouptype.map(Enum::name).orElse(null));
             // 조회해둔 카테고리 이름 맵에서 카테고리명을 찾아 설정
             summary.setCategoryName(categoryNameMap.get(auction.getAuctionId()));
             return summary;
@@ -153,13 +157,16 @@ public class AuctionService {
                 .map(auction -> {
                     // 4-1. 기본 DTO로 변환
                     AuctionSummaryResponse summary = AuctionSummaryResponse.from(auction);
+                    Optional<GroupType> grouptype = inspectionRepository.findGroupTypeById(auction.getProductInspection().getProductInspectionId());
                     // 4-2. Redis에서 현재가 조회 후 DTO 설정
                     summary.setCurrentPrice(redisService.getCurrentPrice(auction.getStartPrice(), auction.getAuctionId()));
                     // 4-3. File info 조회 후 DTO 설정
                     summary.setFileInfos(inspectionRepository.findFilesByProductInspectionId(auction.getProductInspection().getProductInspectionId()));
                     // 4-4. 조회해둔 카테고리 이름 맵에서 카테고리명을 찾아 설정
                     summary.setCategoryName(categoryNameMap.get(auction.getAuctionId()));
-                    // 4-5. 완성된 DTO 반환
+                    // 4-5. 그룹타입 설정
+                    summary.setArtistGroupType( grouptype.map(Enum::name).orElse(null));
+                    // 4-6. 완성된 DTO 반환
                     return summary;
                 })
                 .collect(Collectors.toList());
@@ -220,12 +227,15 @@ public class AuctionService {
                 .map(auction -> {
                     // 4-1. 기본 DTO로 변환
                     AuctionSummaryResponse summary = AuctionSummaryResponse.from(auction);
+                    Optional<GroupType> grouptype = inspectionRepository.findGroupTypeById(auction.getProductInspection().getProductInspectionId());
                     // 4-2. Redis에서 현재가 조회 후 DTO 설정
                     summary.setCurrentPrice(redisService.getCurrentPrice(auction.getStartPrice(), auction.getAuctionId()));
                     // 4-3. File info 조회 후 DTO 설정
                     summary.setFileInfos(inspectionRepository.findFilesByProductInspectionId(auction.getProductInspection().getProductInspectionId()));
                     // 4-4. 조회해둔 카테고리 이름 맵에서 카테고리명을 찾아 설정
                     summary.setCategoryName(categoryNameMap.get(auction.getAuctionId()));
+                    // 4-5. 그룹타입 설정
+                    summary.setArtistGroupType( grouptype.map(Enum::name).orElse(null));
                     // 4-5. 완성된 DTO 반환
                     return summary;
                 })
@@ -277,6 +287,7 @@ public class AuctionService {
                 .hashtags(baseDetail.getHashtags())
                 .categoryName(baseDetail.getCategoryName())
                 .artistName(baseDetail.getArtistName())
+                .artistGroupType(baseDetail.getArtistGroupType())
                 .albumTitle(baseDetail.getAlbumTitle())
                 .startPrice(baseDetail.getStartPrice())
                 // --- 추가 정보 설정 ---
@@ -326,6 +337,7 @@ public class AuctionService {
                 .hashtags(baseDetail.getHashtags())
                 .categoryName(baseDetail.getCategoryName())
                 .artistName(baseDetail.getArtistName())
+                .artistGroupType(baseDetail.getArtistGroupType())
                 .albumTitle(baseDetail.getAlbumTitle())
                 .startPrice(baseDetail.getStartPrice())
                 // --- 추가 정보 설정 ---

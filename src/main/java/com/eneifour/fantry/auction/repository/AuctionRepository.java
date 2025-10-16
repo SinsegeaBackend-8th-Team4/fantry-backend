@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor; // JpaSpecificationExecutor 임포트 추가
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -18,12 +19,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AuctionRepository extends JpaRepository<Auction,Integer> {
+public interface AuctionRepository extends JpaRepository<Auction,Integer>, JpaSpecificationExecutor<Auction> { // JpaSpecificationExecutor 추가
 
     @Query("""
         SELECT NEW com.eneifour.fantry.auction.dto.AuctionDetailResponse(
             a.auctionId, pi.productInspectionId, pi.memberId, a.startPrice, CAST(a.saleStatus AS string), CAST(a.saleType AS string),
-            a.startTime, a.endTime, pi.itemName, pi.itemDescription, pi.hashtags, gc.name, ar.nameKo, al.title
+            a.startTime, a.endTime, pi.itemName, pi.itemDescription, pi.hashtags, gc.name, ar.nameKo, CAST(ar.groupType AS string) , al.title
         )
         FROM Auction a
         JOIN a.productInspection pi
@@ -37,7 +38,7 @@ public interface AuctionRepository extends JpaRepository<Auction,Integer> {
     @Query("""
         SELECT NEW com.eneifour.fantry.auction.dto.AuctionDetailResponse(
             a.auctionId, pi.productInspectionId, pi.memberId, a.startPrice, CAST(a.saleStatus AS string), CAST(a.saleType AS string),
-            a.startTime, a.endTime, pi.itemName, pi.itemDescription, pi.hashtags, gc.name, ar.nameKo, al.title
+            a.startTime, a.endTime, pi.itemName, pi.itemDescription, pi.hashtags, gc.name, ar.nameKo, CAST(ar.groupType AS string) , al.title
         )
         FROM Auction a
         JOIN a.productInspection pi
