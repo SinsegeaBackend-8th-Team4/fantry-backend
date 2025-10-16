@@ -2,8 +2,11 @@ package com.eneifour.fantry.notice.dto;
 
 import com.eneifour.fantry.inquiry.domain.CsStatus;
 
+import java.util.List;
+
 public record NoticeSearchRequest(
-        Integer csTypeId,
+        Integer noticeTypeId,
         String keyword,
-        CsStatus status
-) {}
+        List<CsStatus> status
+) {
+}

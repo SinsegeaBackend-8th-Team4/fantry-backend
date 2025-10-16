@@ -15,10 +15,15 @@ public class NoticeSpecification {
 
     public Specification<Notice> toSpecification(NoticeSearchRequest request) {
         return (root, query, cb) -> {
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                root.fetch("noticeType");
+                root.fetch("createdBy");
+            }
+
             List<Predicate> predicates = new ArrayList<>();
 
-            if (request.csTypeId() != null) {
-                predicates.add(cb.equal(root.get("csType").get("csTypeId"), request.csTypeId()));
+            if (request.noticeTypeId() != null) {
+                predicates.add(cb.equal(root.get("noticeType").get("noticeTypeId"), request.noticeTypeId()));
             }
 
             if (request.keyword() != null && !request.keyword().isBlank()) {
@@ -28,7 +33,7 @@ public class NoticeSpecification {
                 ));
             }
 
-            if (request.status() != null) {
+            if (request.status() != null && !request.status().isEmpty()) {
                 predicates.add(root.get("status").in(request.status()));
             }
 
@@ -38,11 +43,15 @@ public class NoticeSpecification {
 
     public Specification<Notice> toUserSpecification(NoticeSearchRequest request) {
         return (root, query, cb) -> {
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                root.fetch("noticeType");
+            }
+
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(root.get("status").in(CsStatus.ACTIVE, CsStatus.PINNED));
 
-            if (request.csTypeId() != null) {
-                predicates.add(cb.equal(root.get("csType").get("csTypeId"), request.csTypeId()));
+            if (request.noticeTypeId() != null) {
+                predicates.add(cb.equal(root.get("noticeType").get("noticeTypeId"), request.noticeTypeId()));
             }
 
             if (request.keyword() != null && !request.keyword().isBlank()) {

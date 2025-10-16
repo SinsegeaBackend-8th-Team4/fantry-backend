@@ -11,7 +11,7 @@ import java.util.List;
  */
 public record NoticeDetailResponse(
         int noticeId,
-        String csType,
+        String noticeType,
         String title,
         String content,
         CsStatus status,
@@ -31,7 +31,7 @@ public record NoticeDetailResponse(
 
         return new NoticeDetailResponse(
                 notice.getNoticeId(),
-                notice.getCsType().getName(),
+                notice.getNoticeType().getName(),
                 notice.getTitle(),
                 notice.getContent(),
                 notice.getStatus(),

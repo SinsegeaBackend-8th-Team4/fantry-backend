@@ -3,8 +3,8 @@ package com.eneifour.fantry.notice.service;
 import com.eneifour.fantry.common.util.HtmlSanitizer;
 import com.eneifour.fantry.common.util.file.FileMeta;
 import com.eneifour.fantry.common.util.file.FileService;
-import com.eneifour.fantry.inquiry.domain.CsType;
 import com.eneifour.fantry.notice.domain.Notice;
+import com.eneifour.fantry.notice.domain.NoticeType;
 import com.eneifour.fantry.notice.dto.NoticeCreateRequest;
 import com.eneifour.fantry.notice.dto.NoticeDetailResponse;
 import com.eneifour.fantry.notice.dto.NoticeSearchRequest;
@@ -12,9 +12,9 @@ import com.eneifour.fantry.notice.dto.NoticeSummaryResponse;
 import com.eneifour.fantry.notice.dto.NoticeUpdateRequest;
 import com.eneifour.fantry.notice.exception.NoticeErrorCode;
 import com.eneifour.fantry.notice.exception.NoticeException;
-import com.eneifour.fantry.inquiry.repository.CsTypeRepository;
 import com.eneifour.fantry.notice.repository.NoticeRepository;
 import com.eneifour.fantry.notice.repository.NoticeSpecification;
+import com.eneifour.fantry.notice.repository.NoticeTypeRepository;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.domain.RoleType;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class NoticeAdminService {
 
     private final NoticeRepository noticeRepository;
     private final NoticeSpecification noticeSpecification;
-    private final CsTypeRepository csTypeRepository;
+    private final NoticeTypeRepository noticeTypeRepository;
     private final FileService fileService;
     private final HtmlSanitizer htmlSanitizer;
     private final String SUB_DIRECTORY = "cs/notice";
@@ -54,12 +54,12 @@ public class NoticeAdminService {
      * @return 생성된 공지사항의 상세 정보
      */
     public NoticeDetailResponse createNotice(NoticeCreateRequest request, Member admin) {
-        CsType csType = csTypeRepository.findById(request.csTypeId())
+        NoticeType noticeType = noticeTypeRepository.findById(request.noticeTypeId())
                 .orElseThrow(() -> new NoticeException(NoticeErrorCode.CSTYPE_NOT_FOUND));
 
         String sanitizedContent = htmlSanitizer.sanitizeWithImages(request.content());
 
-        Notice notice = request.toEntity(admin, csType, sanitizedContent);
+        Notice notice = request.toEntity(admin, noticeType, sanitizedContent);
         Notice savedNotice = noticeRepository.save(notice);
 
         return NoticeDetailResponse.from(savedNotice);
@@ -76,14 +76,14 @@ public class NoticeAdminService {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND));
 
-        CsType csType = notice.getCsType();
-        if (request.csTypeId() != csType.getCsTypeId()) {
-            csType = csTypeRepository.findById(request.csTypeId())
+        NoticeType noticeType = notice.getNoticeType();
+        if (request.noticeTypeId() != noticeType.getNoticeTypeId()) {
+            noticeType = noticeTypeRepository.findById(request.noticeTypeId())
                     .orElseThrow(() -> new NoticeException(NoticeErrorCode.CSTYPE_NOT_FOUND));
         }
 
         String sanitizedContent = htmlSanitizer.sanitizeWithImages(request.content());
-        notice.update(request.title(), sanitizedContent, csType, admin);
+        notice.update(request.title(), sanitizedContent, noticeType, admin);
 
         if (request.status() != null) {
             notice.changeStatus(request.status());
