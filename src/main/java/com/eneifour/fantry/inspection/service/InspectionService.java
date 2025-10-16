@@ -1,5 +1,6 @@
 package com.eneifour.fantry.inspection.service;
 
+import com.eneifour.fantry.catalog.domain.GroupType;
 import com.eneifour.fantry.checklist.domain.ChecklistItem;
 import com.eneifour.fantry.checklist.domain.ChecklistTemplate;
 import com.eneifour.fantry.checklist.dto.OfflineChecklistItemResponse;
@@ -32,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -347,5 +349,15 @@ public class InspectionService {
         updateTimestamps(inspection);
 
         log.info("검수 ID {}의 재고 상태가 {}로 업데이트되었습니다.", productInspectionId, status);
+    }
+
+    /**
+     * 검수 ID로 등록한 아티스트 그룹 조회
+     * @param inspectionId 검수 ID
+     * @return 아티스트 그룹(ENUM)
+     */
+    public GroupType getGroupTypeById(int inspectionId) {
+        Optional<GroupType> groupType = inspectionRepository.findGroupTypeById(inspectionId);
+        return groupType.orElse(null);
     }
 }
