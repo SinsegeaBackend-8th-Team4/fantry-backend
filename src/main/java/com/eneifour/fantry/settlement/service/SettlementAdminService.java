@@ -21,6 +21,7 @@ import com.eneifour.fantry.settlement.dto.SettlementSearchCondition;
 import com.eneifour.fantry.settlement.dto.SettlementSummaryResponse;
 import com.eneifour.fantry.settlement.repository.SettlementSpecification;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 /**
  * 관리자용 정산 관련 서비스를 담당합니다.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -105,7 +107,7 @@ public class SettlementAdminService {
     @Transactional(readOnly = true)
     public SettlementDetailResponse getSettlementDetail(int settlementId) {
         Settlement settlement = settlementRepository.findById(settlementId)
-                .orElseThrow(() -> new SettlementException(SettlementErrorCode.SETTLEMENT_NOT_FOUND)); // SETTLEMENT_NOT_FOUND 에러 코드 추가 필요
+                .orElseThrow(() -> new SettlementException(SettlementErrorCode.SETTLEMENT_NOT_FOUND));
         return SettlementDetailResponse.from(settlement);
     }
 
@@ -115,13 +117,22 @@ public class SettlementAdminService {
      * @param settlementDate 정산 기준일
      */
     public void executeSettlement(LocalDate settlementDate) {
-        // 1. 정산 대상 기간 정의 (예: 정산일 기준 7일 이전까지)
+        // 1. 정산 대상 기간 정의 (예: 정산일 기준 7일 이전까지 배송 완료된 건)
         LocalDateTime cutoffDate = settlementDate.atStartOfDay().minusDays(7);
 
-        // 2. 정산 대상 주문 조회 (배송 완료 상태, 반품되지 않은 건)
-        List<Orders> eligibleOrders = ordersRepository.findByOrderStatusAndUpdatedAtBefore(OrderStatus.DELIVERED, cutoffDate);
+        // 2. 정산 대상 주문 조회 (배송 완료 상태)
+        // XXX: `updatedAt`이 아닌 `deliveredAt` 기준으로 조회하는 것이 더 정확합니다.
+        //      향후 `OrdersRepository`에 `findByOrderStatusAndDeliveredAtBefore` 메서드 추가를 권장합니다.
+        List<Orders> ordersDelivered = ordersRepository.findByOrderStatusAndUpdatedAtBefore(OrderStatus.DELIVERED, cutoffDate);
+
+        // 추가 필터링: deliveredAt이 cutoffDate 이전인지 다시 확인하여 정확성 확보
+        List<Orders> eligibleOrders = ordersDelivered.stream()
+                .filter(order -> order.getDeliveredAt() != null && order.getDeliveredAt().isBefore(cutoffDate))
+                .collect(Collectors.toList());
 
         // 3. 판매자 ID별로 주문 그룹화
+        // XXX: `Orders` 엔티티에 Seller(판매자)를 직접 연결하는 것이 좋습니다.
+        //      현재 구조는 경매를 통한 판매에만 의존하고 있어, 다른 판매 방식 추가 시 정산 로직이 동작하지 않을 수 있습니다.
         Map<Integer, List<Orders>> ordersBySellerId = eligibleOrders.stream()
                 .filter(order -> order.getAuction() != null && order.getAuction().getProductInspection() != null)
                 .collect(Collectors.groupingBy(order -> order.getAuction().getProductInspection().getMemberId()));
@@ -131,10 +142,10 @@ public class SettlementAdminService {
             Integer sellerId = entry.getKey();
             List<Orders> sellerOrders = entry.getValue();
 
-            Member seller = memberRepository.findById(sellerId)
-                    .orElse(null);
+            Member seller = memberRepository.findById(sellerId).orElse(null);
             if (seller == null) {
-                continue; // 판매자 정보가 없으면 정산 건너뛰기
+                log.warn("판매자 정보를 찾을 수 없어 정산을 건너뜁니다. sellerId: {}", sellerId);
+                continue;
             }
 
             // 기본 수수료율 조회
@@ -142,8 +153,17 @@ public class SettlementAdminService {
                     .orElseThrow(() -> new SettlementException(SettlementErrorCode.SETTING_NOT_FOUND));
             BigDecimal commissionRate = setting.getCommissionRate().divide(new BigDecimal("100"));
 
-            BigDecimal totalSaleAmount = sellerOrders.stream()
-                    .map(order -> new BigDecimal(order.getPrice()))
+            // 5. 실제 결제 금액(Payment) 기준으로 정산 금액 계산
+            List<Orders> validOrders = sellerOrders.stream()
+                    .filter(o -> o.getPayment() != null && o.getPayment().getPrice() != null)
+                    .collect(Collectors.toList());
+
+            if (validOrders.isEmpty()) {
+                continue;
+            }
+
+            BigDecimal totalSaleAmount = validOrders.stream()
+                    .map(order -> new BigDecimal(order.getPayment().getPrice()))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal totalCommission = totalSaleAmount.multiply(commissionRate);
@@ -158,16 +178,17 @@ public class SettlementAdminService {
                     .requestedAt(LocalDateTime.now())
                     .build();
 
-            List<SettlementItem> items = sellerOrders.stream().map(order -> {
-                BigDecimal itemCommission = new BigDecimal(order.getPrice()).multiply(commissionRate);
+            List<SettlementItem> items = validOrders.stream().map(order -> {
+                BigDecimal itemPrice = new BigDecimal(order.getPayment().getPrice());
+                BigDecimal itemCommission = itemPrice.multiply(commissionRate);
                 return SettlementItem.builder()
                         .settlement(settlement)
                         .order(order)
-                        .itemSaleAmount(new BigDecimal(order.getPrice()))
+                        .itemSaleAmount(itemPrice)
                         .commissionRate(commissionRate)
                         .commissionAmount(itemCommission)
-                        .totalAmount(new BigDecimal(order.getPrice()).subtract(itemCommission))
-                        .isReturned(false)
+                        .totalAmount(itemPrice.subtract(itemCommission))
+                        .isReturned(false) // TODO: 환불/반품 정책 확정 후 연동 필요
                         .build();
             }).collect(Collectors.toList());
 
@@ -188,7 +209,6 @@ public class SettlementAdminService {
 
 
     /**
-     * 현재 적용 중인 정산 설정을 조회합니다。
      * 현재 적용 중인 정산 설정을 조회합니다.
      * @return SettlementSettingResponse
      */
@@ -201,18 +221,13 @@ public class SettlementAdminService {
 
     /**
      * 정산 설정을 생성하거나 수정합니다.
-     * 시스템에는 단 하나의 설정만 존재하므로, 기존 설정이 있으면 업데이트하고 없으면 새로 생성합니다.
      * @param request 설정 요청 DTO
      * @param admin   작업을 수행하는 관리자
      * @return SettlementSettingResponse
      */
     public SettlementSettingResponse createOrUpdateSettlementSetting(SettlementSettingRequest request, Member admin) {
-        // 수수료율 유효성 검사는 DTO의 @DecimalMin/Max Annotation으로 처리되므로 서비스 로직에서 제거.
-
-        // 기존 설정이 있는지 확인
         return settlementSettingRepository.findFirstByOrderByCreatedAtDesc()
                 .map(existingSetting -> {
-                    // 기존 설정이 있으면 업데이트
                     existingSetting.update(
                             request.commissionRate(),
                             request.settlementCycleType(),
@@ -222,7 +237,6 @@ public class SettlementAdminService {
                     return SettlementSettingResponse.from(existingSetting);
                 })
                 .orElseGet(() -> {
-                    // 기존 설정이 없으면 새로 생성
                     SettlementSetting newSetting = request.toEntity(admin);
                     SettlementSetting savedSetting = settlementSettingRepository.save(newSetting);
                     return SettlementSettingResponse.from(savedSetting);
