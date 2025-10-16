@@ -1,6 +1,7 @@
 package com.eneifour.fantry.inspection.repository;
 
 import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
+import com.eneifour.fantry.catalog.domain.GroupType;
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
 import com.eneifour.fantry.inspection.domain.InventoryStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
@@ -95,7 +96,7 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
 
     /**
      * 재고 상태로 리스트 조회
-     * @param statuses 재고 상태 리스트
+     * @param inventoryStatuses 재고 상태 리스트
      * @param pageable 페이지 정보
      * @return 재고 리스트
      */
@@ -210,5 +211,18 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         ORDER BY i.submittedAt DESC
     """)
     Page<MyInspectionResponse> findMyInspectionsByMemberId(@Param("memberId") int memberId, Pageable pageable);
+
+    /**
+     * 검수 ID로 등록한 아티스트 그룹 조회
+     * @param inspectionId 검수 ID
+     * @return 아티스트 그룹(ENUM)
+     */
+    @Query("""
+        SELECT a.groupType
+        FROM ProductInspection i
+        JOIN Artist a ON a.artistId = i.artistId
+        WHERE i.productInspectionId = :inspectionId
+    """)
+    Optional<GroupType> findGroupTypeById(@Param("inspectionId") int inspectionId);
 
 }
