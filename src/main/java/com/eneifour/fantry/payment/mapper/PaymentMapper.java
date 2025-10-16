@@ -2,8 +2,8 @@ package com.eneifour.fantry.payment.mapper;
 
 import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.domain.PaymentStatus;
-import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
 import com.eneifour.fantry.payment.domain.bootpay.BootPayStatus;
+import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
 import com.eneifour.fantry.payment.dto.PaymentCreateRequest;
 import com.eneifour.fantry.payment.dto.PaymentResponse;
 import com.eneifour.fantry.payment.util.Encryptor;
@@ -19,7 +19,7 @@ public class PaymentMapper {
     public static Payment requestToEntity(PaymentCreateRequest paymentCreateRequest) throws NoSuchAlgorithmException {
         Integer itemId = Integer.parseInt(paymentCreateRequest.getItemId());
         Integer price = Integer.parseInt(paymentCreateRequest.getPrice());
-        String orderId = Encryptor.createOrderId(paymentCreateRequest.getMemberId(), itemId);
+        String orderId = Encryptor.createOrderId(paymentCreateRequest.getUsername(), itemId);
         Payment payment = new Payment();
         payment.setOrderId(orderId);
         payment.setPrice(price);
@@ -72,9 +72,9 @@ public class PaymentMapper {
         }
 
         if (payment.getBootpayStatus() == BootPayStatus.PAYMENT_COMPLETED && payment.getCancelledPrice() > 0) {
-            payment.setStatus(PaymentStatus.CANCELLED);
+            payment.setStatus(PaymentStatus.RETURNED);
         } else if (payment.getBootpayStatus() == BootPayStatus.PAYMENT_CANCELLED) {
-            payment.setStatus(PaymentStatus.VOID);
+            payment.setStatus(PaymentStatus.CANCELED);
         }
     }
 }

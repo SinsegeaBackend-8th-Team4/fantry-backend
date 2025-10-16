@@ -137,13 +137,13 @@ public class ReturnAdminService {
 
     private void cancelPaymentForRequest(ReturnRequest returnRequest) {
         try {
-            String receiptId = returnRequest.getOrders().getPayment().getReceiptId();
-            if (receiptId == null) throw new ReturnException(ReturnErrorCode.PAYMENT_INFO_NOT_FOUND);
+            String orderId = returnRequest.getOrders().getPayment().getOrderId();
+            if (orderId == null) throw new ReturnException(ReturnErrorCode.PAYMENT_INFO_NOT_FOUND);
 
             PaymentCancelRequest cancelRequest = PaymentCancelRequest.builder()
-                    .receiptId(receiptId)
+                    .orderId(orderId)
                     .cancelPrice(returnRequest.getFinalRefundAmount().toString())
-                    .memberId(String.valueOf(returnRequest.getMember().getMemberId()))
+                    .username(String.valueOf(returnRequest.getMember().getMemberId()))
                     .cancelReason("관리자 환불 승인")
                     .build();
             paymentService.cancelPayment(returnRequest.getOrders().getPayment().getOrderId(), cancelRequest);
