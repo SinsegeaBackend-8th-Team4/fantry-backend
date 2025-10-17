@@ -1,17 +1,26 @@
 package com.eneifour.fantry.payment.service;
 
+import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
+import com.eneifour.fantry.auction.service.AuctionService;
+import com.eneifour.fantry.orders.domain.Orders;
+import com.eneifour.fantry.orders.dto.OrdersRequest;
+import com.eneifour.fantry.orders.dto.OrdersResponse;
+import com.eneifour.fantry.orders.service.OrdersService;
 import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.domain.PaymentStatus;
 import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
 import com.eneifour.fantry.payment.exception.NotFoundPaymentException;
 import com.eneifour.fantry.payment.mapper.PaymentMapper;
 import com.eneifour.fantry.payment.repository.PaymentRepository;
+import com.eneifour.fantry.payment.util.OrderUpdateHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Bootpay Webhook 이벤트를 처리하는 서비스입니다.
@@ -42,7 +51,9 @@ import java.util.Map;
 public class BootpayWebhookService {
     private final PaymentRepository paymentRepository;
     private final GhostPaymentService ghostPaymentService;
-
+    private final OrdersService ordersService;
+    private final AuctionService auctionService;
+    private final OrderUpdateHelper orderUpdateHelper;
     /**
      * 결제 완료 Webhook을 처리합니다.
      *
@@ -53,8 +64,14 @@ public class BootpayWebhookService {
         log.info("결제 완료 : {}", bootpayReceiptDto);
         Payment payment = paymentRepository.findByOrderId(bootpayReceiptDto.getOrderId())
                 .orElseThrow(NotFoundPaymentException::new);
-
-        processPaymentVerification(payment, bootpayReceiptDto);
+        try {
+            processPaymentVerification(payment, bootpayReceiptDto);
+            if (payment.getStatus() == PaymentStatus.COMPLETE) {
+                orderUpdateHelper.purchase(payment, bootpayReceiptDto);
+            }
+        } catch (Exception e) {
+            log.error("completeError", e);
+        }
     }
 
     /**
@@ -75,6 +92,9 @@ public class BootpayWebhookService {
         }
 
         PaymentMapper.updateFromDto(payment, bootpayReceiptDto);
+        if (payment.getStatus() == PaymentStatus.CANCELED) {
+           orderUpdateHelper.cancel(bootpayReceiptDto);
+        }
         paymentRepository.save(payment);
     }
 
@@ -96,6 +116,9 @@ public class BootpayWebhookService {
         }
 
         PaymentMapper.updateFromDto(payment, bootpayReceiptDto);
+        if(payment.getStatus() == PaymentStatus.RETURNED) {
+            orderUpdateHelper.refund(bootpayReceiptDto);
+        }
         paymentRepository.save(payment);
     }
 
@@ -151,6 +174,7 @@ public class BootpayWebhookService {
      * @param payment    검증할 결제 엔티티
      * @param receiptDto Bootpay 영수증 정보
      */
+    @Transactional
     public void processPaymentVerification(Payment payment, BootpayReceiptDto receiptDto) {
         if (payment.getStatus() == PaymentStatus.COMPLETE) {
             return;
