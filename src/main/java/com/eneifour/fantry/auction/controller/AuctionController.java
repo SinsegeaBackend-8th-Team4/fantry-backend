@@ -4,14 +4,13 @@ import com.eneifour.fantry.auction.domain.SaleStatus;
 import com.eneifour.fantry.auction.domain.SaleType;
 import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
 import com.eneifour.fantry.auction.dto.AuctionRequest;
-import com.eneifour.fantry.auction.dto.AuctionSearchCondition; // AuctionSearchCondition 임포트 추가
+import com.eneifour.fantry.auction.dto.AuctionSearchCondition;
 import com.eneifour.fantry.auction.dto.AuctionSummaryResponse;
 import com.eneifour.fantry.auction.service.AuctionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -79,21 +78,42 @@ public class AuctionController {
     }
 
     /**
-     * 상품 목록을 조건에 따라 페이징하여 조회합니다.
-     * AuctionSearchCondition DTO를 사용하여 판매 유형(saleType), 판매 상태(saleStatus), 그룹 유형(groupType)을 지정하여 필터링할 수 있습니다.
-     * 아무 조건도 지정하지 않으면 전체 상품 목록이 반환됩니다.
+     * 경매 목록을 동적 조건에 따라 페이징하여 조회합니다.
+     * {@link AuctionSearchCondition} DTO를 사용하여 다양한 검색 조건을 조합할 수 있습니다.
+     * 모든 조건은 AND로 연결되며, 필드가 null이거나 비어있으면 해당 조건은 무시됩니다.
      *
-     * @param condition  검색 조건을 담는 DTO (saleType, saleStatus, groupType).
-     * @param pageable   페이징 정보 (페이지 번호, 페이지 크기 등).
-     * @return 페이징 처리된 상품 요약 목록.
+     * @param condition  검색 조건을 담는 DTO.
+     *                   <ul>
+     *                      <li><b>saleType</b>: 판매 유형 (AUCTION, INSTANT_BUY)</li>
+     *                      <li><b>saleStatus</b>: 판매 상태 (PREPARING, ACTIVE, SOLD_OUT, CANCELLED 등)</li>
+     *                      <li><b>artistGroupType</b>: 아티스트 그룹 유형 (MALE_SOLO, GIRL_GROUP 등)</li>
+     *                      <li><b>keyword</b>: 검색 키워드. 상품명(itemName), 아티스트 한글명(nameKo), 아티스트 영문명(nameEn)을 대상으로 LIKE 검색을 수행합니다.</li>
+     *                   </ul>
+     * @param pageable   페이징 정보 (예: page, size, sort). 'sort' 파라미터를 통해 정렬 기준을 지정할 수 있습니다.
+     * @return           조건에 맞는 경매 요약 정보의 페이지 객체 ({@link Page<AuctionSummaryResponse>})
      */
     @GetMapping
     public ResponseEntity<Page<AuctionSummaryResponse>> getAuctions(
-            @ModelAttribute AuctionSearchCondition condition, // AuctionSearchCondition으로 변경
+            @ModelAttribute AuctionSearchCondition condition,
             @PageableDefault(size = 10) Pageable pageable) {
         log.info("Request to search auctions with condition: {} and pageable: {}", condition, pageable);
-        Page<AuctionSummaryResponse> auctions = auctionService.searchAuctions(condition, pageable); // 변경된 searchAuctions 메서드 호출
+        Page<AuctionSummaryResponse> auctions = auctionService.searchAuctions(condition, pageable);
         return ResponseEntity.ok(auctions);
+    }
+
+    /**
+     * 핫딜 상품 목록을 조회합니다. (활성 상태, 입찰 수 기준 정렬)
+     * <p>현재 활성(ACTIVE) 상태인 경매 중에서 입찰이 가장 많은 순서대로 상품을 조회합니다.
+     *
+     * @param pageable 페이징 정보 (size, sort 등). 'sort' 파라미터는 서비스 로직에 의해 입찰 수 기준으로 고정됩니다.
+     * @return 핫딜 상품 요약 정보의 페이지 객체
+     */
+    @GetMapping("/hotdeal")
+    public ResponseEntity<Page<AuctionSummaryResponse>> getHotDealAuctions(
+            @PageableDefault(size = 5) Pageable pageable) {
+        log.info("Request to get hot deal auctions with pageable: {}", pageable);
+        Page<AuctionSummaryResponse> hotDealAuctions = auctionService.getHotDealAuctions(pageable);
+        return ResponseEntity.ok(hotDealAuctions);
     }
 
     /**
