@@ -5,9 +5,12 @@ public class SecurityConstants {
 
     public static final String[] PUBLIC_URIS = {
             "/actuator/**",
+            "/api/cs/notices/**",
+            "/api/cs/faq/**",
             "/api/login",
             "/api/reissue",
             "/api/user/**",
+            "/api/admin/signup",
             "/api/send/**",
             "/app/**",
             "/api/auctions/**",

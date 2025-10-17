@@ -1,8 +1,12 @@
 package com.eneifour.fantry.inspection.repository;
 
+import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
+import com.eneifour.fantry.catalog.domain.GroupType;
 import com.eneifour.fantry.inspection.domain.InspectionStatus;
+import com.eneifour.fantry.inspection.domain.InventoryStatus;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import com.eneifour.fantry.inspection.dto.InspectionListResponse;
+import com.eneifour.fantry.inspection.dto.InventoryListResponse;
 import com.eneifour.fantry.inspection.dto.MyInspectionResponse;
 import com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse;
 import io.lettuce.core.dynamic.annotation.Param;
@@ -91,6 +95,39 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
     Page<InspectionListResponse> findAllByInspectionStatusIn(@Param("statuses") List<InspectionStatus> statuses, Pageable pageable);
 
     /**
+     * 재고 상태로 리스트 조회
+     * @param inventoryStatuses 재고 상태 리스트
+     * @param pageable 페이지 정보
+     * @return 재고 리스트
+     */
+    @Query(value = """
+        select new com.eneifour.fantry.inspection.dto.InventoryListResponse(
+            i.productInspectionId,
+            i.memberId, m.name,
+            i.goodsCategoryId, gc.name,
+            i.artistId, a.nameKo,
+            i.albumId, al.title,
+            i.itemName,
+            i.expectedPrice,
+            i.marketAvgPrice,
+            i.sellerHopePrice,
+            i.submittedAt,
+            i.inspectionStatus,
+            i.inventoryStatus
+        )
+        from ProductInspection i
+        join Member m on m.memberId = i.memberId
+        join GoodsCategory gc on gc.goodsCategoryId = i.goodsCategoryId
+        join Artist a on a.artistId = i.artistId
+        left join Album al on al.albumId = i.albumId
+        where i.inspectionStatus = 'COMPLETED'
+        and i.inventoryStatus in :inventoryStatuses
+        """)
+    Page<InventoryListResponse> findAllByInventoryStatusIn(
+            @Param("inventoryStatuses") List<InventoryStatus> inventoryStatuses,
+            Pageable pageable);
+
+    /**
      * 검수 ID로 검수 상세 정보 조회 (파일 제외)
      * @param productInspectionId 검수 ID
      * @return 조회된 검수 상세 정보
@@ -99,7 +136,7 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         select new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse(
             i.productInspectionId, i.submissionUuid, i.inspectionStatus, i.submittedAt,
             i.itemName, i.itemDescription, i.hashtags,
-            gc.name, a.nameKo, al.title,
+            i.goodsCategoryId, gc.name,i.artistId, a.nameKo, i.albumId, al.title,
             i.expectedPrice, i.marketAvgPrice, i.sellerHopePrice,
             new com.eneifour.fantry.inspection.dto.OnlineInspectionDetailResponse$UserInfo(m.memberId, m.name, m.email, m.tel),
             i.bankName, i.bankAccount,
@@ -136,15 +173,36 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
     List<OnlineInspectionDetailResponse.FileInfo> findFilesById(@Param("productInspectionId") int productInspectionId);
 
     /**
+     * 검수 ID로 검수 파일 정보 목록 조회 (Auction DTO 용)
+     * @param productInspectionId 검수 ID
+     * @return 조회된 파일 정보 DTO 리스트
+     */
+    @Query("""
+        select new com.eneifour.fantry.auction.dto.AuctionDetailResponse$FileInfo(
+            f.inspectionFileId,
+            fm.storedFilePath,
+            fm.fileType
+        )
+        from InspectionFile f
+        join f.fileMeta fm
+        where f.productInspection.productInspectionId = :productInspectionId
+        """)
+    List<AuctionDetailResponse.FileInfo> findFilesByProductInspectionId(@Param("productInspectionId") int productInspectionId);
+
+    /**
      * 특정 회원 검수 신청 목록 조회
+     *
      * @param memberId 회원 ID
+     * @param pageable 페이지 정보
      * @return 해당 회원 검수 현황 리스트
      */
     @Query("""
         SELECT new com.eneifour.fantry.inspection.dto.MyInspectionResponse(
-            i.productInspectionId, i.itemName,
-            gc.name, a.nameKo, i.sellerHopePrice,
-            i.inspectionStatus, i.submittedAt
+            i.productInspectionId, i.itemName, i.itemDescription,
+            gc.name, a.nameKo, i.sellerHopePrice, i.finalBuyPrice,
+            i.inspectionStatus, i.submittedAt, i.firstRejectionReason,
+            i.secondRejectionReason, i.priceDeductionReason, i.onlineInspectedAt,
+            i.offlineInspectedAt, i.completedAt
         )
         FROM ProductInspection i
         JOIN GoodsCategory gc ON gc.goodsCategoryId = i.goodsCategoryId
@@ -152,5 +210,19 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
         WHERE i.memberId = :memberId
         ORDER BY i.submittedAt DESC
     """)
-    List<MyInspectionResponse> findMyInspectionsByMemberId(@Param("memberId") int memberId);
+    Page<MyInspectionResponse> findMyInspectionsByMemberId(@Param("memberId") int memberId, Pageable pageable);
+
+    /**
+     * 검수 ID로 등록한 아티스트 그룹 조회
+     * @param inspectionId 검수 ID
+     * @return 아티스트 그룹(ENUM)
+     */
+    @Query("""
+        SELECT a.groupType
+        FROM ProductInspection i
+        JOIN Artist a ON a.artistId = i.artistId
+        WHERE i.productInspectionId = :inspectionId
+    """)
+    Optional<GroupType> findGroupTypeById(@Param("inspectionId") int inspectionId);
+
 }

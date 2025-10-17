@@ -12,6 +12,7 @@ import com.eneifour.fantry.bid.dto.BidRequest;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
 import com.eneifour.fantry.bid.repository.BidRepository;
 
+import com.eneifour.fantry.notification.service.SseConnectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -42,6 +43,7 @@ public class BidService {
     private final BlockingQueue<Bid> bidLogQueue;
     private final BidDbFallbackHandler bidDbFallbackHandler;
     private final BidActionHelper bidActionHelper;
+    private final SseConnectionService sseConnectionService;
     // --- 상태 플래그 및 상수 ---
     private final AtomicBoolean isDbFallbackMode = new AtomicBoolean(false); // DB <-> Redis 동기화 및 자기 치유 로직을 위한 상태 플래그
     private static final int MIN_BID_INCREMENT = 1000; // 최소 입찰 증가액 (1,000원) 상수화
@@ -135,6 +137,7 @@ public class BidService {
                 .orElseThrow(() -> new MemberException(ErrorCode.MEMBER_NOT_FOUND));
 
         bidActionHelper.broadcastNewBid(auction.getAuctionId(), bidder, bidAmount);
+        sseConnectionService.broadcastToAuctionSubscribersExcludingUser(auction.getAuctionId(), bidder.getId(), "\""+auction.getProductInspection().getItemName()+"\""+" 상품 경매 입찰가가 갱신되었습니다.");
 
         Bid bidToLog = bidActionHelper.createBidLog(auction, bidder, bidAmount);
         if (!bidLogQueue.offer(bidToLog)) {

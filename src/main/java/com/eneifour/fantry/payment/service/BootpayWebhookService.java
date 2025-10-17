@@ -70,7 +70,7 @@ public class BootpayWebhookService {
         log.info("결제 취소 : {}", bootpayReceiptDto);
         Payment payment = paymentRepository.findByOrderId(bootpayReceiptDto.getOrderId())
                 .orElseThrow(NotFoundPaymentException::new);
-        if (payment.getStatus() == PaymentStatus.VOID) {
+        if (payment.getStatus() == PaymentStatus.CANCELED) {
             return;
         }
 
@@ -91,7 +91,7 @@ public class BootpayWebhookService {
         log.info("부분 결제 취소 : {}", bootpayReceiptDto);
         Payment payment = paymentRepository.findByOrderId(bootpayReceiptDto.getOrderId())
                 .orElseThrow(NotFoundPaymentException::new);
-        if (payment.getStatus() == PaymentStatus.CANCELLED) {
+        if (payment.getStatus() == PaymentStatus.RETURNED) {
             return;
         }
 

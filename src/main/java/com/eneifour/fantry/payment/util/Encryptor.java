@@ -10,11 +10,11 @@ import java.security.NoSuchAlgorithmException;
 public class Encryptor {
     private static final String SHA_256 = "SHA-256";
 
-    public static String createOrderId(String memberId, Integer itemId) throws NoSuchAlgorithmException {
+    public static String createOrderId(String username, Integer itemId) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance(SHA_256);
         long currentTime = System.currentTimeMillis();
         long nanoTime = System.nanoTime();
-        String composed = memberId + "-" + itemId + "-" + currentTime + "-" + nanoTime;
+        String composed = username + "-" + itemId + "-" + currentTime + "-" + nanoTime;
         byte[] hashBytes = md.digest(composed.getBytes(StandardCharsets.UTF_8));
         StringBuilder hexString = new StringBuilder();
         for (byte b : hashBytes) {

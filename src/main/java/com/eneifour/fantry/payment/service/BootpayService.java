@@ -146,18 +146,18 @@ public class BootpayService {
      *
      * @param receiptId    취소할 영수증 ID
      * @param cancelReason 취소 사유
-     * @param memberId     취소를 요청한 관리자 ID
+     * @param username     취소를 요청한 관리자 ID
      * @param orderId      주문 ID (선택 사항)
      * @param cancelPrice  취소 금액 (부분 취소 시 사용)
      * @param bankDataDto  환불 받을 계좌 정보 (가상계좌 등 환불 시 필요)
      * @return 취소된 결제 영수증 정보
      */
-    public BootpayReceiptDto cancellationViaWebClient(String receiptId, String cancelReason, String memberId, String orderId, String cancelPrice, BankDataDto bankDataDto) {
+    public BootpayReceiptDto cancellationViaWebClient(String receiptId, String cancelReason, String username, String orderId, String cancelPrice, BankDataDto bankDataDto) {
         log.info("WebClient로 Bootpay 결제 취소 시작. receiptId: {}", receiptId);
 
         try {
             String token = getAccessTokenViaWebClient();
-            Map<String, Object> request = Map.of("receipt_id", receiptId, "cancel_message", cancelReason, "cancel_username", memberId, "cancel_id", orderId, "cancel_price", cancelPrice);
+            Map<String, Object> request = Map.of("receipt_id", receiptId, "cancel_message", cancelReason, "cancel_username", username, "cancel_id", orderId, "cancel_price", cancelPrice);
             Map<String, Object> response = bootpayWebClient.post()
                     .uri("/cancel")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
