@@ -28,7 +28,7 @@ public class NotificationController {
     private final SseConnectionService sseConnectionService;
     private final AuctionSubscriptionService auctionSubscriptionService;
 
-    @GetMapping(value = "/notification/{username}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "/notification/sse/{username}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter connection(
             @PathVariable("username") String username,
             @AuthenticationPrincipal CustomUserDetails customUserDetails
