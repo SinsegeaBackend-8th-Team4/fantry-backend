@@ -196,7 +196,8 @@ public class SseConnectionService {
             log.debug("연결 {} 통합 알림 전송 완료: {}", connectionId, notification.getType());
 
         } catch (IOException e) {
-            log.warn("연결 {} 통합 알림 전송 실패 - 연결 제거", connectionId, e);
+            // 클라이언트 연결 끊김은 정상 상황
+            log.debug("연결 {} 끊김 감지 - 연결 제거 중", connectionId);
             removeConnection(connectionId);
         } catch (Exception e) {
             log.error("연결 {} 통합 알림 처리 오류", connectionId, e);
@@ -220,9 +221,6 @@ public class SseConnectionService {
                 connectionInfo.getEmitter().complete();
             } catch (Exception e) {
                 log.debug("통합 SSE 연결 종료 중 오류: connectionId={}", connectionId, e);
-                throw new NotificationException(
-                        NotificationErrorCode.SSE_DISCONNECTION_FAILED, e.getCause()
-                );
             }
             log.info("통합 SSE 연결 제거 완료: connectionId={}, username={}",
                     connectionId, connectionInfo.getUserId());
@@ -285,7 +283,13 @@ public class SseConnectionService {
                     log.debug("[SSE] Heartbeat 중단됨: connectionId={}", connectionId);
                     Thread.currentThread().interrupt(); // Interrupt 상태 복원
                     break;
+                } catch (IOException e) {
+                    // 클라이언트 연결 끊김은 정상 상황 - debug 레벨로 처리
+                    log.debug("[SSE] 클라이언트 연결 끊김, 정리 중: connectionId={}", connectionId);
+                    removeConnection(connectionId);
+                    break;
                 } catch (Exception e) {
+                    // 그 외 예외는 warn 레벨로 기록
                     log.warn("[SSE] Heartbeat 전송 실패, 연결 제거: connectionId={}", connectionId, e);
                     removeConnection(connectionId);
                     break;

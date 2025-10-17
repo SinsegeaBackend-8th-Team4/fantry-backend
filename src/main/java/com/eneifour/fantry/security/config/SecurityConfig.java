@@ -74,6 +74,9 @@ public class SecurityConfig {
                                 SecurityConstants.PUBLIC_URIS
                         ).permitAll() // 위에 명시된 경로들은 모두 허용
 
+                        // SSE 엔드포인트 - JWT 필터는 거치지만 비동기 응답 중 권한 검증 방지
+                        .requestMatchers("/api/notification/**").permitAll()
+
                         // 여기에 관리자만 접근을 허용할 URL 경로 목록 작성
                         .requestMatchers(
                                 "/api/admin/**"
