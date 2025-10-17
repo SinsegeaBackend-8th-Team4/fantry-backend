@@ -15,7 +15,7 @@ public class SecurityConstants {
             "/app/**",
             "/api/auctions/**",
             "/api/bids/**",
-            "/ws-auction/**",
+            "/api/ws-auction/**",
             "/api/file/**",
             "/api/payments/**",
             "/webhook/**",
