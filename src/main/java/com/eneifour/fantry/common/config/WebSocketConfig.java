@@ -21,7 +21,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // WebSocket 연결 엔드 포인트 설정
-        registry.addEndpoint("/ws-auction")
+        registry.addEndpoint("/api/ws-auction")
                 .setAllowedOrigins("http://localhost:5173")
                 .withSockJS();
 
