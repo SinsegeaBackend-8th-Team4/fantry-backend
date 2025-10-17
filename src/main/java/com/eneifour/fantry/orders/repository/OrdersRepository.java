@@ -21,5 +21,6 @@ public interface OrdersRepository extends JpaRepository<Orders,Integer> {
     Page<Orders> findByOrderStatus(Pageable pageable, OrderStatus orderStatus);
     Optional<Orders> findByPayment(Payment payment);
 
+
     Optional<Orders> findByAuction_AuctionId(int auctionId);
 }

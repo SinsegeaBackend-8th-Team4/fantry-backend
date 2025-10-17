@@ -107,6 +107,33 @@ public class OrdersService {
             ordersResponse.setPaidAt(orders.getPayment().getPurchasedAt());
         }
 
+
+        return ordersResponse;
+    }
+
+    //auction_id 와 일치하는 주문 단건 조회
+    public OrdersResponse findByAuctionId(int auctionId){
+        Orders orders = ordersRepository.findByAuction_AuctionId(auctionId)
+                .orElseThrow(() ->new OrdersException(ErrorCode.ORDER_NOT_FOUND) );
+
+        OrdersResponse ordersResponse  = OrdersResponse.from(orders);
+
+        if(orders.getShippingAddress() != null) {
+            ordersResponse.setShippingAddress(orders.getShippingAddress());
+        }
+
+        if (orders.getDeliveredAt() != null) {
+            ordersResponse.setDeliveredAt(orders.getDeliveredAt());
+        }
+
+        if (orders.getCancelledAt() != null) {
+            ordersResponse.setCancelledAt(orders.getCancelledAt());
+        }
+
+        if (orders.getPayment() != null) {
+            ordersResponse.setPaidAt(orders.getPayment().getPurchasedAt());
+        }
+
         return ordersResponse;
     }
 
