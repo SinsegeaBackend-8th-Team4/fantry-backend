@@ -215,8 +215,8 @@ public class SseConnectionService {
             // Heartbeat 중단
             stopHeartbeat(connectionId);
 
+            auctionSubscriptionService.unsubscribeAll(connectionInfo.connectionId);
             usernameToConnectionId.remove(connectionInfo.getUserId());
-
             try {
                 connectionInfo.getEmitter().complete();
             } catch (Exception e) {
