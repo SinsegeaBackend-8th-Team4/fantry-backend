@@ -10,6 +10,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface OrdersRepository extends JpaRepository<Orders,Integer> {
@@ -22,4 +25,13 @@ public interface OrdersRepository extends JpaRepository<Orders,Integer> {
     Optional<Orders> findByPayment(Payment payment);
 
     Optional<Orders> findByAuction_AuctionId(int auctionId);
+    List<Orders> findByMember_MemberId(int memberId);
+
+    /**
+     * 특정 상태와 업데이트 시간을 기준으로 주문을 조회합니다. (정산 대상 조회용)
+     * @param orderStatus 조회할 주문 상태
+     * @param cutoffDate 기준 시간
+     * @return 주문 목록
+     */
+    List<Orders> findByOrderStatusAndUpdatedAtBefore(OrderStatus orderStatus, LocalDateTime cutoffDate);
 }

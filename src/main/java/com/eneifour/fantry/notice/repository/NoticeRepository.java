@@ -1,6 +1,7 @@
 package com.eneifour.fantry.notice.repository;
 
 import com.eneifour.fantry.notice.domain.Notice;
+import com.eneifour.fantry.inquiry.domain.CsStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -21,4 +22,6 @@ public interface NoticeRepository extends JpaRepository<Notice, Integer>, JpaSpe
     @EntityGraph(attributePaths = {"createdBy", "updatedBy", "csType", "attachments", "attachments.filemeta"})
     @Query("select n from Notice n where n.noticeId = :id")
     Optional<Notice> findWithAttachmentsById(@Param("id") int id);
+
+    long countByStatus(CsStatus status);
 }

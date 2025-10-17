@@ -1,6 +1,7 @@
 package com.eneifour.fantry.faq.repository;
 
 import com.eneifour.fantry.faq.domain.Faq;
+import com.eneifour.fantry.inquiry.domain.CsStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -16,4 +17,6 @@ public interface FaqRepository extends JpaRepository<Faq, Integer>, JpaSpecifica
     @EntityGraph(attributePaths = {"createdBy", "updatedBy", "csType", "attachments", "attachments.filemeta"})
     @Query("select f from Faq f where f.faqId = :id")
     Optional<Faq> findWithAttachmentsById(@Param("id") int id);
+
+    long countByStatus(CsStatus status);
 }

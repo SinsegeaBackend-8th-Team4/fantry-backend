@@ -25,18 +25,23 @@ public class FaqService {
     private final FaqSpecification faqSpecification;
 
     /**
-     * FAQ 목록을 동적 조건과 페이징을 적용하여 조회합니다.
-     * 아코디언 UI를 위해, 응답 DTO에 질문(title)과 답변(content)을 모두 포함하여 반환합니다.
-     *
-     * @param request  검색 조건 (csType, title, content)
-     * @param pageable 페이징 정보
-     * @return 페이징된 FAQ 응답 DTO
+     * (관리자용) FAQ 목록을 동적 조건과 페이징을 적용하여 조회합니다.
      */
-    public Page<FaqResponse> searchFaqs(FaqSearchRequest request, Pageable pageable) {
+    public Page<FaqResponse> searchFaqsForAdmin(FaqSearchRequest request, Pageable pageable) {
         Specification<Faq> spec = faqSpecification.toSpecification(request);
         Page<Faq> faqPage = faqRepository.findAll(spec, pageable);
 
-        // Page 객체의 .map() 기능을 활용하여, Page<Faq>를 Page<FaqResponse>로 효율적으로 변환합니다.
+        return faqPage.map(FaqResponse::from);
+    }
+
+    /**
+     * (사용자용) FAQ 목록을 동적 조건과 페이징을 적용하여 조회합니다.
+     * 공개된 상태(ACTIVE, PINNED)의 FAQ만 조회합니다.
+     */
+    public Page<FaqResponse> searchFaqsForUser(FaqSearchRequest request, Pageable pageable) {
+        Specification<Faq> spec = faqSpecification.toUserSpecification(request);
+        Page<Faq> faqPage = faqRepository.findAll(spec, pageable);
+
         return faqPage.map(FaqResponse::from);
     }
 }

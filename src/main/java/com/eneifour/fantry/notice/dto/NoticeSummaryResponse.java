@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  */
 public record NoticeSummaryResponse(
         int noticeId,
-        String csType,
+        String noticeType,
         String title,
         CsStatus status,
         String createdBy,
@@ -19,7 +19,7 @@ public record NoticeSummaryResponse(
         String createdBy = (notice.getCreatedBy() != null) ? notice.getCreatedBy().getName() : null;
         return new NoticeSummaryResponse(
                 notice.getNoticeId(),
-                notice.getCsType().getName(),
+                notice.getNoticeType().getName(),
                 notice.getTitle(),
                 notice.getStatus(),
                 createdBy,

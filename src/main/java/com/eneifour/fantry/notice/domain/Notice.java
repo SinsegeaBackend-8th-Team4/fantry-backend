@@ -3,7 +3,6 @@ package com.eneifour.fantry.notice.domain;
 import com.eneifour.fantry.common.domain.BaseAuditingEntity;
 import com.eneifour.fantry.common.util.file.FileMeta;
 import com.eneifour.fantry.inquiry.domain.CsStatus;
-import com.eneifour.fantry.inquiry.domain.CsType;
 import com.eneifour.fantry.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,8 +26,8 @@ public class Notice extends BaseAuditingEntity {
     private int noticeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cs_type_id")
-    private CsType csType;
+    @JoinColumn(name = "notice_type_id")
+    private NoticeType noticeType;
 
     private String title;
 
@@ -55,13 +54,13 @@ public class Notice extends BaseAuditingEntity {
      * 공지사항의 주요 정보를 수정합니다.
      * @param title 수정할 제목
      * @param content 수정할 내용 (HTML)
-     * @param csType 수정할 카테고리
+     * @param noticeType 수정할 카테고리
      * @param modifier 수정 작업을 수행하는 관리자
      */
-    public void update(String title, String content, CsType csType, Member modifier) {
+    public void update(String title, String content, NoticeType noticeType, Member modifier) {
         this.title = title;
         this.content = content;
-        this.csType = csType;
+        this.noticeType = noticeType;
         this.updatedBy = modifier;
     }
 

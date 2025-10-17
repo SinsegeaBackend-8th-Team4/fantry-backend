@@ -1,13 +1,17 @@
 package com.eneifour.fantry.faq.controller;
 
-import com.eneifour.fantry.faq.dto.FaqCreateRequest;
-import com.eneifour.fantry.faq.dto.FaqResponse;
-import com.eneifour.fantry.faq.dto.FaqSearchRequest;
-import com.eneifour.fantry.faq.dto.FaqUpdateRequest;
+import com.eneifour.fantry.faq.dto.*;
 import com.eneifour.fantry.faq.service.FaqAdminService;
 import com.eneifour.fantry.faq.service.FaqService;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.security.dto.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,13 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-/**
- * 관리자용 FAQ(자주 묻는 질문) 관련 API를 제공하는 컨트롤러입니다.
- * <p>모든 API는 관리자 권한을 가진 사용자만 접근할 수 있습니다.
- *
- * @author 정재환
- * @since 2025.10.11
- */
+@Tag(name = "FAQ (Admin)", description = "관리자용 FAQ API")
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -38,21 +36,11 @@ public class FaqAdminController {
     private final FaqAdminService faqAdminService;
     private final FaqService faqService;
 
-    /**
-     * 새로운 FAQ를 등록합니다.
-     *
-     * @param request     FAQ 생성에 필요한 데이터 (제목, 내용, 카테고리 ID 등).
-     *                    <p><b>[카테고리(csTypeId) ID]</b></p>
-     *                    <ul>
-     *                      <li>1: 배송문의</li>
-     *                      <li>2: 결제문의</li>
-     *                      <li>3: 기타문의</li>
-     *                      <li>4: 상품문의</li>
-     *                      <li>5: 환불/반품 문의</li>
-     *                      <li>6: 판매 문의</li>
-     *                    </ul>
-     * @return 생성된 FAQ 정보.
-     */
+    @Operation(summary = "신규 FAQ 등록", description = "새로운 FAQ를 시스템에 등록합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "FAQ 생성 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
+    })
     @PostMapping
     public ResponseEntity<FaqResponse> createFaq(
             @RequestBody @Valid FaqCreateRequest request,
@@ -63,16 +51,14 @@ public class FaqAdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * 특정 FAQ에 파일을 첨부합니다.
-     *
-     * @param faqId       파일을 첨부할 FAQ의 ID
-     * @param files       첨부할 파일 목록
-     * @return 작업 성공 시 200 OK.
-     */
+    @Operation(summary = "FAQ 파일 첨부", description = "특정 FAQ에 파일을 첨부합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "파일 첨부 성공"),
+            @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음")
+    })
     @PostMapping(value = "/{faqId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> addAttachments(
-            @PathVariable int faqId,
+            @Parameter(description = "파일을 첨부할 FAQ의 ID") @PathVariable int faqId,
             @RequestParam("files") List<MultipartFile> files,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -81,32 +67,15 @@ public class FaqAdminController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * 특정 FAQ의 내용을 수정합니다.
-     *
-     * @param faqId       수정할 FAQ의 ID
-     * @param request     FAQ 수정에 필요한 데이터.
-     *                    <p><b>[변경 가능한 상태(status)]</b></p>
-     *                    <ul>
-     *                       <li>DRAFT: 임시저장</li>
-     *                       <li>ACTIVE: 활성 (노출)</li>
-     *                       <li>PINNED: 상단 고정</li>
-     *                       <li>INACTIVE: 비활성 (미노출)</li>
-     *                    </ul>
-     *                    <p><b>[카테고리(csTypeId) ID]</b></p>
-     *                    <ul>
-     *                      <li>1: 배송문의</li>
-     *                      <li>2: 결제문의</li>
-     *                      <li>3: 기타문의</li>
-     *                      <li>4: 상품문의</li>
-     *                      <li>5: 환불/반품 문의</li>
-     *                      <li>6: 판매 문의</li>
-     *                    </ul>
-     * @return 수정된 FAQ 정보.
-     */
+    @Operation(summary = "FAQ 내용 수정", description = "특정 FAQ의 제목, 내용, 상태 등을 수정합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "FAQ 수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+            @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음")
+    })
     @PatchMapping("/{faqId}")
     public ResponseEntity<FaqResponse> updateFaq(
-            @PathVariable int faqId,
+            @Parameter(description = "수정할 FAQ의 ID") @PathVariable int faqId,
             @RequestBody @Valid FaqUpdateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -115,15 +84,14 @@ public class FaqAdminController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * 특정 FAQ를 삭제합니다.
-     *
-     * @param faqId       삭제할 FAQ의 ID
-     * @return 작업 성공 시 204 No Content.
-     */
+    @Operation(summary = "FAQ 삭제", description = "특정 FAQ를 시스템에서 삭제합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "FAQ 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음")
+    })
     @DeleteMapping("/{faqId}")
     public ResponseEntity<Void> deleteFaq(
-            @PathVariable int faqId,
+            @Parameter(description = "삭제할 FAQ의 ID") @PathVariable int faqId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ){
         Member admin = userDetails.getMember();
@@ -131,47 +99,39 @@ public class FaqAdminController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * FAQ 목록을 검색 조건에 따라 페이징하여 조회합니다.
-     *
-     * @param request  검색 조건 DTO.
-     *                 <p><b>[검색 가능한 상태(status)]</b></p>
-     *                  <ul>
-     *                      <li>DRAFT: 임시저장</li>
-     *                      <li>ACTIVE: 활성 (노출)</li>
-     *                      <li>PINNED: 상단 고정</li>
-     *                      <li>INACTIVE: 비활성 (미노출)</li>
-     *                  </ul>
-     *                  <p><b>[카테고리(csTypeId) ID]</b></p>
-     *                  <ul>
-     *                      <li>1: 배송문의</li>
-     *                      <li>2: 결제문의</li>
-     *                      <li>3: 기타문의</li>
-     *                      <li>4: 상품문의</li>
-     *                      <li>5: 환불/반품 문의</li>
-     *                      <li>6: 판매 문의</li>
-     *                  </ul>
-     * @param pageable 페이징 정보 (페이지 번호, 페이지 크기, 정렬).
-     * @return 페이징 처리된 FAQ 목록.
-     */
+    @Operation(summary = "FAQ 목록 동적 검색 (관리자)", description = "다양한 조건으로 FAQ 목록을 검색합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = Page.class)))
+    })
     @GetMapping
     public ResponseEntity<Page<FaqResponse>> searchFaqs(
-            @ModelAttribute FaqSearchRequest request,
-            Pageable pageable
+            @Parameter(description = "검색 조건 (카테고리 ID, 키워드, 상태)") @ModelAttribute FaqSearchRequest request,
+            @Parameter(description = "페이징 정보 (page, size, sort)") Pageable pageable
     ) {
-        Page<FaqResponse> results = faqService.searchFaqs(request, pageable);
+        Page<FaqResponse> results = faqService.searchFaqsForAdmin(request, pageable);
         return ResponseEntity.ok(results);
     }
 
-    /**
-     * 특정 FAQ의 상세 정보를 조회합니다.
-     *
-     * @param faqId 조회할 FAQ의 ID.
-     * @return FAQ 상세 정보.
-     */
+    @Operation(summary = "FAQ 상세 정보 조회", description = "특정 FAQ의 상세 정보를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "FAQ를 찾을 수 없음")
+    })
     @GetMapping("/{faqId}")
-    public ResponseEntity<FaqResponse> getFaqDetail(@PathVariable int faqId) {
+    public ResponseEntity<FaqResponse> getFaqDetail(@Parameter(description = "조회할 FAQ의 ID") @PathVariable int faqId) {
         FaqResponse faq = faqAdminService.getFaq(faqId);
         return ResponseEntity.ok(faq);
+    }
+
+    @Operation(summary = "FAQ 통계 조회 (관리자)", description = "관리자 대시보드에 필요한 FAQ 통계 정보를 조회합니다. (상태별 개수)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "통계 조회 성공", content = @Content(schema = @Schema(implementation = FaqStatsAdminResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자 또는 권한 없음")
+    })
+    @GetMapping("/stats")
+    public ResponseEntity<FaqStatsAdminResponse> getFaqStats() {
+        FaqStatsAdminResponse stats = faqAdminService.getFaqStatsForAdmin();
+        return ResponseEntity.ok(stats);
     }
 }

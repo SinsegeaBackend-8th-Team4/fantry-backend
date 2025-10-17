@@ -1,4 +1,4 @@
-package com.eneifour.fantry.refund.service;
+package com.eneifour.fantry.refund.repository;
 
 import com.eneifour.fantry.common.util.AbstractSpecification;
 import com.eneifour.fantry.refund.domain.ReturnRequest;
