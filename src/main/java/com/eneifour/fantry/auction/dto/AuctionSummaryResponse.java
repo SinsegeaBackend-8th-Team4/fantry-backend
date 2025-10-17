@@ -20,6 +20,7 @@ public class AuctionSummaryResponse {
     private String itemName;
     private String categoryName; // 카테고리명 필드 추가
     private String artistGroupType;
+    private String hashTags;
     private int startPrice;
     private int currentPrice; // Redis에서 조회한 실시간 현재가
     private int highestBidderId; // Redis 에서 조회한 최고가 입찰자 (없는경우 0)
@@ -35,6 +36,7 @@ public class AuctionSummaryResponse {
                 .auctionId(auction.getAuctionId())
                 .itemId(auction.getProductInspection().getProductInspectionId())
                 .itemName(auction.getProductInspection().getItemName())
+                .hashTags(auction.getProductInspection().getHashtags())
                 .startPrice(auction.getStartPrice())
                 .startTime(auction.getStartTime())
                 .endTime(auction.getEndTime())
