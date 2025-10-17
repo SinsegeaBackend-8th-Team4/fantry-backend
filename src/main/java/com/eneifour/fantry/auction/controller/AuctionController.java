@@ -102,6 +102,21 @@ public class AuctionController {
     }
 
     /**
+     * 핫딜 상품 목록을 조회합니다. (활성 상태, 입찰 수 기준 정렬)
+     * <p>현재 활성(ACTIVE) 상태인 경매 중에서 입찰이 가장 많은 순서대로 상품을 조회합니다.
+     *
+     * @param pageable 페이징 정보 (size, sort 등). 'sort' 파라미터는 서비스 로직에 의해 입찰 수 기준으로 고정됩니다.
+     * @return 핫딜 상품 요약 정보의 페이지 객체
+     */
+    @GetMapping("/hotdeal")
+    public ResponseEntity<Page<AuctionSummaryResponse>> getHotDealAuctions(
+            @PageableDefault(size = 5) Pageable pageable) {
+        log.info("Request to get hot deal auctions with pageable: {}", pageable);
+        Page<AuctionSummaryResponse> hotDealAuctions = auctionService.getHotDealAuctions(pageable);
+        return ResponseEntity.ok(hotDealAuctions);
+    }
+
+    /**
      * 특정 회원이 등록한 모든 판매 상품 목록을 조회합니다.
      *
      * @param memberId 조회할 회원의 ID

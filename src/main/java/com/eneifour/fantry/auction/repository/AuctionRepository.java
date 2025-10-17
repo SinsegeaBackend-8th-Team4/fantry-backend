@@ -94,4 +94,13 @@ public interface AuctionRepository extends JpaRepository<Auction,Integer>, JpaSp
     @Query("select a from Auction a where a.auctionId = :auctionId")
     Optional<Auction> findByIdForUpdate(int auctionId);
 
+    @Query(value = """
+        SELECT a FROM Auction a
+        LEFT JOIN Bid b ON a.auctionId = b.itemId
+        WHERE a.saleStatus = :saleStatus
+        GROUP BY a.auctionId
+        ORDER BY COUNT(b) DESC
+    """)
+    Page<Auction> findHotDealAuctions(@Param("saleStatus") SaleStatus saleStatus, Pageable pageable);
+
 }

@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -135,6 +136,53 @@ public class AuctionService {
 
         // 5. 변환된 DTO 리스트와 페이징 정보를 사용하여 새로운 Page 객체를 생성하여 반환합니다.
         return new PageImpl<>(summaryResponses, pageable, auctions.getTotalElements());
+    }
+
+    /**
+     * 핫딜 상품 목록을 조회합니다. (활성 상태, 입찰 수 상위 5개)
+     * @return 핫딜 상품 요약 정보 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<AuctionSummaryResponse> getHotDealAuctions(Pageable pageable) {
+
+        // 2. Repository에서 입찰 수가 많은 순으로 정렬된 경매 목록을 조회합니다.
+        Page<Auction> auctionList = auctionRepository.findHotDealAuctions(SaleStatus.ACTIVE, pageable);
+
+        if (auctionList.isEmpty()) {
+            return Page.empty();
+        }
+
+        // 3. 조회된 경매 목록의 ID를 추출합니다.
+        List<Integer> auctionIds = auctionList.stream()
+                .map(Auction::getAuctionId)
+                .collect(Collectors.toList());
+
+        // 4. 경매 ID 목록으로 카테고리 이름 맵을 한 번에 조회합니다 (N+1 방지).
+        Map<Integer, String> categoryNameMap = auctionRepository.findCategoryNamesByAuctionIds(auctionIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Integer) row[0], // auctionId
+                        row -> (String) row[1]  // categoryName
+                ));
+
+        // 5. 각 Auction 엔티티를 AuctionSummaryResponse DTO로 변환합니다.
+        List<AuctionSummaryResponse> summaryResponses = auctionList.stream().map(auction -> {
+            AuctionSummaryResponse summary = AuctionSummaryResponse.from(auction);
+            Optional<GroupType> grouptype = inspectionRepository.findGroupTypeById(auction.getProductInspection().getProductInspectionId());
+            // Redis에서 현재가를 조회하여 DTO에 설정
+            summary.setCurrentPrice(redisService.getCurrentPrice(auction.getStartPrice(), auction.getAuctionId()));
+            // Redis 에서 최고 입찰자를 조회하여 DTO에 설정
+            summary.setHighestBidderId(redisService.getHighestBidderId(auction.getAuctionId()));
+            // File info를 조회하여 DTO에 설정
+            summary.setFileInfos(inspectionRepository.findFilesByProductInspectionId(auction.getProductInspection().getProductInspectionId()));
+            // group type 조회하여 DTO 설정
+            summary.setArtistGroupType( grouptype.map(Enum::name).orElse(null));
+            // 조회해둔 카테고리 이름 맵에서 카테고리명을 찾아 설정
+            summary.setCategoryName(categoryNameMap.get(auction.getAuctionId()));
+            return summary;
+        }).collect(Collectors.toList());
+
+        // 5. 변환된 DTO 리스트와 페이징 정보를 사용하여 새로운 Page 객체를 생성하여 반환합니다.
+        return new PageImpl<>(summaryResponses, pageable, auctionList.getTotalElements());
     }
 
     /**
@@ -288,18 +336,18 @@ public class AuctionService {
         List<AuctionDetailResponse.FileInfo> fileInfos = inspectionRepository.findFilesByProductInspectionId(productInspectionId);
 
 
-        // --- 체크리스트 조회 ---
-        // 판매자 체크리스트 답변 조회 및 매핑
+        // --- 4단계 체크리스트 조회 ---
+        // 4-1. 판매자 체크리스트 답변 조회 및 매핑
         List<ProductChecklistAnswer> sellerAnswers = productChecklistAnswerRepository.findByProductInspection_ProductInspectionIdAndId_ChecklistRole(productInspectionId, ChecklistTemplate.Role.SELLER);
         Map<String, String> sellerAnswerMap = sellerAnswers.stream().collect(Collectors.toMap(a -> a.getId().getItemKey(), ProductChecklistAnswer::getAnswerValue));
-        // 3. 검수자 체크리스트 답변 조회 및 매핑
+        // 4-2. 검수자 체크리스트 답변 조회 및 매핑
         List<ProductChecklistAnswer> inspectorAnswers = productChecklistAnswerRepository.findByProductInspection_ProductInspectionIdAndId_ChecklistRole(productInspectionId, ChecklistTemplate.Role.INSPECTOR);
         Map<String, String> inspectorAnswerMap = inspectorAnswers.stream().collect(Collectors.toMap(a -> a.getId().getItemKey(), ProductChecklistAnswer::getAnswerValue));
         Map<String, String> inspectorNoteMap = inspectorAnswers.stream().filter(a -> a.getNote() != null).collect(Collectors.toMap(a -> a.getId().getItemKey(), ProductChecklistAnswer::getNote));
 
-        // 4. 체크리스트 모든 항목 조회
+        // 4-3. 체크리스트 모든 항목 조회
         List<ChecklistItem> items = checklistItemRepository.findByTemplateIdAndCategoryId(inspection.getTemplateId(), inspection.getGoodsCategoryId());
-        // 5. 판매자/검수자 답변 병합
+        // 4-4. 판매자/검수자 답변 병합
         List<OfflineChecklistItemResponse> checklist = items.stream().map(item -> OfflineChecklistItemResponse.builder()
                 .checklistItem(OnlineChecklistItemResponse.from(item))
                 .sellerAnswer(sellerAnswerMap.get(item.getItemKey()))
@@ -307,7 +355,7 @@ public class AuctionService {
                 .note(inspectorNoteMap.get(item.getItemKey()))
                 .build()).toList();
 
-        // --- 4단계: Builder로 모든 정보를 취합하여 최종 DTO 반환 ---
+        // --- 5단계: Builder로 모든 정보를 취합하여 최종 DTO 반환 ---
         return AuctionDetailResponse.builder()
                 // --- 기본 정보 복사 ---
                 .auctionId(baseDetail.getAuctionId())
