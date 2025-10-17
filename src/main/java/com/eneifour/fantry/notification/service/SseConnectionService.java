@@ -30,6 +30,7 @@ public class SseConnectionService {
     private final AuctionSubscriptionService auctionSubscriptionService;
     private final Map<String, SseConnectionInfo> connections = new ConcurrentHashMap<>();
     private final Map<String, String> usernameToConnectionId = new ConcurrentHashMap<>();
+    private final Map<String, Thread> heartbeatThreads = new ConcurrentHashMap<>();
 
     public SseEmitter createConnection(String connectionId, String username) {
         try {
@@ -43,7 +44,8 @@ public class SseConnectionService {
             usernameToConnectionId.put(username, connectionId);
             setupEmitterCallbacks(emitter, connectionId, username);
             sendInitialMessage(emitter, connectionId);
-            log.info("통합 SSE 연결 생성 완료: 사용자={}", username);
+            startHeartbeat(connectionId, emitter); // Heartbeat 시작
+            log.info("통합 SSE 연결 생성 완료: 사용자={}, connectionId={}", username, connectionId);
             return emitter;
         } catch (Exception e) {
             log.error("통합 SSE 연결 생성 실패: 사용자={}", username, e);
@@ -209,6 +211,9 @@ public class SseConnectionService {
     public void removeConnection(String connectionId) {
         SseConnectionInfo connectionInfo = connections.remove(connectionId);
         if (connectionInfo != null) {
+            // Heartbeat 중단
+            stopHeartbeat(connectionId);
+
             usernameToConnectionId.remove(connectionInfo.getUserId());
 
             try {
@@ -244,21 +249,62 @@ public class SseConnectionService {
     private void setupEmitterCallbacks(SseEmitter emitter, String connectionId, String username) {
         emitter.onCompletion(() -> {
             log.info("통합 SSE 연결 완료: username={}, connectionId={}", username, connectionId);
+            stopHeartbeat(connectionId);
             removeConnection(connectionId);
             auctionSubscriptionService.unsubscribeAll(connectionId);
         });
 
         emitter.onTimeout(() -> {
             log.info("통합 SSE 연결 타임아웃: username={}, connectionId={}", username, connectionId);
+            stopHeartbeat(connectionId);
             removeConnection(connectionId);
             auctionSubscriptionService.unsubscribeAll(connectionId);
         });
 
         emitter.onError(throwable -> {
             log.warn("통합 SSE 연결 오류: username={}, connectionId={}", username, connectionId, throwable);
+            stopHeartbeat(connectionId);
             removeConnection(connectionId);
             auctionSubscriptionService.unsubscribeAll(connectionId);
         });
+    }
+
+    /**
+     * Virtual Thread 기반 Heartbeat 시작
+     * 30초마다 comment 이벤트를 전송하여 연결 유지
+     */
+    private void startHeartbeat(String connectionId, SseEmitter emitter) {
+        Thread heartbeatThread = Thread.startVirtualThread(() -> {
+            log.debug("[SSE] Heartbeat 시작: connectionId={}", connectionId);
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    Thread.sleep(30000); // 30초 대기 (Virtual Thread는 블로킹하지 않음)
+                    emitter.send(SseEmitter.event().comment("heartbeat"));
+                    log.debug("[SSE] Heartbeat 전송 성공: connectionId={}", connectionId);
+                } catch (InterruptedException e) {
+                    log.debug("[SSE] Heartbeat 중단됨: connectionId={}", connectionId);
+                    Thread.currentThread().interrupt(); // Interrupt 상태 복원
+                    break;
+                } catch (Exception e) {
+                    log.warn("[SSE] Heartbeat 전송 실패, 연결 제거: connectionId={}", connectionId, e);
+                    removeConnection(connectionId);
+                    break;
+                }
+            }
+            log.debug("[SSE] Heartbeat 종료: connectionId={}", connectionId);
+        });
+        heartbeatThreads.put(connectionId, heartbeatThread);
+    }
+
+    /**
+     * Virtual Thread Heartbeat 중단
+     */
+    private void stopHeartbeat(String connectionId) {
+        Thread thread = heartbeatThreads.remove(connectionId);
+        if (thread != null && thread.isAlive()) {
+            thread.interrupt();
+            log.debug("[SSE] Heartbeat 중지 완료: connectionId={}", connectionId);
+        }
     }
 
     /**

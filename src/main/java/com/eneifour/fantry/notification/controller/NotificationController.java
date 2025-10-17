@@ -4,15 +4,18 @@ import com.eneifour.fantry.notification.domain.UserAuctionSubscription;
 import com.eneifour.fantry.notification.dto.*;
 import com.eneifour.fantry.notification.service.AuctionSubscriptionService;
 import com.eneifour.fantry.notification.service.SseConnectionService;
+import com.eneifour.fantry.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,11 +28,30 @@ public class NotificationController {
     private final SseConnectionService sseConnectionService;
     private final AuctionSubscriptionService auctionSubscriptionService;
 
-    @PreAuthorize("#username == authentication.principal.username and !isAnonymous()")
     @GetMapping(value = "/notification/{username}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter connection(
-            @PathVariable("username") String username
-    ) {
+            @PathVariable("username") String username,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    ) throws IOException {
+
+        SseEmitter emitter = new SseEmitter(1800000L);
+        if (customUserDetails == null || !customUserDetails.isEnabled()) {
+            emitter.send(SseEmitter.event()
+                    .id("error")
+                    .name("auth-error")
+                    .data("{\n\"code\": 401,\n\"message\": \"인증되지 않은 사용자\"\n}"));
+            emitter.complete();
+            return emitter;
+        }
+
+        if(!customUserDetails.getUsername().equals(username)){
+            emitter.send(SseEmitter.event()
+                    .id("error")
+                    .name("auth-error")
+                    .data("{\n\"code\": 403,\n\"message\": \"접근 권한이 없습니다\"\n}"));
+            emitter.complete();
+            return emitter;
+        }
         String connectionId = UUID.randomUUID().toString();
         return sseConnectionService.createConnection(connectionId, username);
     }
