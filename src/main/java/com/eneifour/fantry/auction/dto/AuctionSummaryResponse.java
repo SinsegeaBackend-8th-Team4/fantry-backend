@@ -29,6 +29,7 @@ public class AuctionSummaryResponse {
     private String saleType;
     private String saleStatus;
     private List fileInfos;
+    private LocalDateTime createdAt;
 
 
     public static AuctionSummaryResponse from(Auction auction) {
@@ -42,6 +43,7 @@ public class AuctionSummaryResponse {
                 .endTime(auction.getEndTime())
                 .saleType(auction.getSaleType().toString())
                 .saleStatus(auction.getSaleStatus().toString())
+                .createdAt(auction.getCreatedAt())
                 .build();
     }
 }
