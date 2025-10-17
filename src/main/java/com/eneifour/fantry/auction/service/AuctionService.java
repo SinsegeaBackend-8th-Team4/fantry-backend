@@ -1,37 +1,45 @@
 package com.eneifour.fantry.auction.service;
 
 import com.eneifour.fantry.auction.domain.Auction;
+import com.eneifour.fantry.auction.domain.AuctionClosedEvent;
 import com.eneifour.fantry.auction.domain.SaleStatus;
-import com.eneifour.fantry.auction.domain.SaleType;
 import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
 import com.eneifour.fantry.auction.dto.AuctionRequest;
-import com.eneifour.fantry.auction.dto.AuctionSearchCondition; // AuctionSearchCondition 임포트 추가
+import com.eneifour.fantry.auction.dto.AuctionSearchCondition;
 import com.eneifour.fantry.auction.dto.AuctionSummaryResponse;
 import com.eneifour.fantry.auction.exception.AuctionException;
 import com.eneifour.fantry.auction.exception.ErrorCode;
 import com.eneifour.fantry.auction.exception.MemberException;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
-import com.eneifour.fantry.auction.repository.AuctionSpecification; // AuctionSpecification 임포트 추가
+import com.eneifour.fantry.auction.repository.AuctionSpecification;
 import com.eneifour.fantry.bid.domain.Bid;
 import com.eneifour.fantry.bid.repository.BidRepository;
 import com.eneifour.fantry.catalog.domain.GroupType;
+import com.eneifour.fantry.checklist.domain.ChecklistItem;
+import com.eneifour.fantry.checklist.domain.ChecklistTemplate;
+import com.eneifour.fantry.checklist.dto.OfflineChecklistItemResponse;
+import com.eneifour.fantry.checklist.dto.OnlineChecklistItemResponse;
+import com.eneifour.fantry.checklist.repository.ChecklistItemRepository;
+import com.eneifour.fantry.checklist.repository.ProductChecklistAnswerRepository;
 import com.eneifour.fantry.inspection.domain.InventoryStatus;
+import com.eneifour.fantry.inspection.domain.ProductChecklistAnswer;
 import com.eneifour.fantry.inspection.domain.ProductInspection;
 import com.eneifour.fantry.inspection.repository.InspectionRepository;
 import com.eneifour.fantry.inspection.service.InspectionService;
+import com.eneifour.fantry.inspection.support.exception.BusinessException;
+import com.eneifour.fantry.inspection.support.exception.InspectionErrorCode;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.repository.MemberRepository;
 import com.eneifour.fantry.orders.domain.OrderStatus;
 import com.eneifour.fantry.orders.domain.Orders;
 import com.eneifour.fantry.orders.repository.OrdersRepository;
-import com.eneifour.fantry.auction.domain.AuctionClosedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification; // Specification 임포트 추가
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +63,9 @@ public class AuctionService {
     private final InspectionService inspectionService; // InspectionService 의존성 추가
     private final AuctionSpecification auctionSpecification; // AuctionSpecification 의존성 추가
     private final ApplicationEventPublisher eventPublisher;
+
+    private final ProductChecklistAnswerRepository productChecklistAnswerRepository;
+    private final ChecklistItemRepository checklistItemRepository;
 
     // =============================================
     // 1. 상품 조회 (Read)
@@ -265,18 +276,42 @@ public class AuctionService {
         AuctionDetailResponse baseDetail = auctionRepository.findByAuctionId(auctionId)
                 .orElseThrow(() -> new AuctionException(ErrorCode.AUCTION_NOT_FOUND));
 
+        // 검수 엔티티
+        int productInspectionId = baseDetail.getProductInspectionId();
+        ProductInspection inspection = inspectionRepository.findById(productInspectionId).orElseThrow(() -> new BusinessException(InspectionErrorCode.INSPECTION_NOT_FOUND));
+
         // --- 2단계: 현재 최고 입찰가 및 입찰자 ID 결정 (Redis 우선 조회) ---
         int currentPrice = redisService.getCurrentPrice(baseDetail.getStartPrice(), auctionId);
         int highestBidderId = redisService.getHighestBidderId(auctionId);
 
         // --- 3단계: 파일 정보 목록 조회 ---
-        List<AuctionDetailResponse.FileInfo> fileInfos = inspectionRepository.findFilesByProductInspectionId(baseDetail.getProductInspectionId());
+        List<AuctionDetailResponse.FileInfo> fileInfos = inspectionRepository.findFilesByProductInspectionId(productInspectionId);
+
+
+        // --- 체크리스트 조회 ---
+        // 판매자 체크리스트 답변 조회 및 매핑
+        List<ProductChecklistAnswer> sellerAnswers = productChecklistAnswerRepository.findByProductInspection_ProductInspectionIdAndId_ChecklistRole(productInspectionId, ChecklistTemplate.Role.SELLER);
+        Map<String, String> sellerAnswerMap = sellerAnswers.stream().collect(Collectors.toMap(a -> a.getId().getItemKey(), ProductChecklistAnswer::getAnswerValue));
+        // 3. 검수자 체크리스트 답변 조회 및 매핑
+        List<ProductChecklistAnswer> inspectorAnswers = productChecklistAnswerRepository.findByProductInspection_ProductInspectionIdAndId_ChecklistRole(productInspectionId, ChecklistTemplate.Role.INSPECTOR);
+        Map<String, String> inspectorAnswerMap = inspectorAnswers.stream().collect(Collectors.toMap(a -> a.getId().getItemKey(), ProductChecklistAnswer::getAnswerValue));
+        Map<String, String> inspectorNoteMap = inspectorAnswers.stream().filter(a -> a.getNote() != null).collect(Collectors.toMap(a -> a.getId().getItemKey(), ProductChecklistAnswer::getNote));
+
+        // 4. 체크리스트 모든 항목 조회
+        List<ChecklistItem> items = checklistItemRepository.findByTemplateIdAndCategoryId(inspection.getTemplateId(), inspection.getGoodsCategoryId());
+        // 5. 판매자/검수자 답변 병합
+        List<OfflineChecklistItemResponse> checklist = items.stream().map(item -> OfflineChecklistItemResponse.builder()
+                .checklistItem(OnlineChecklistItemResponse.from(item))
+                .sellerAnswer(sellerAnswerMap.get(item.getItemKey()))
+                .inspectorAnswer(inspectorAnswerMap.get(item.getItemKey()))
+                .note(inspectorNoteMap.get(item.getItemKey()))
+                .build()).toList();
 
         // --- 4단계: Builder로 모든 정보를 취합하여 최종 DTO 반환 ---
         return AuctionDetailResponse.builder()
                 // --- 기본 정보 복사 ---
                 .auctionId(baseDetail.getAuctionId())
-                .productInspectionId(baseDetail.getProductInspectionId())
+                .productInspectionId(productInspectionId)
                 .memberId(baseDetail.getMemberId())
                 .saleStatus(baseDetail.getSaleStatus())
                 .saleType(baseDetail.getSaleType())
@@ -294,6 +329,7 @@ public class AuctionService {
                 .currentPrice(currentPrice)
                 .highestBidderId(highestBidderId)
                 .fileInfos(fileInfos)
+                .checklist(checklist)
                 .build();
     }
 
