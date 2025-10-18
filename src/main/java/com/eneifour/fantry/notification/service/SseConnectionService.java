@@ -31,12 +31,32 @@ public class SseConnectionService {
     private final Map<String, SseConnectionInfo> connections = new ConcurrentHashMap<>();
     private final Map<String, String> usernameToConnectionId = new ConcurrentHashMap<>();
     private final Map<String, Thread> heartbeatThreads = new ConcurrentHashMap<>();
+    private final Map<String, LocalDateTime> lastConnectionAttempt = new ConcurrentHashMap<>();
 
     public SseEmitter createConnection(String connectionId, String username) {
-        long startTime = System.currentTimeMillis();
         log.info("[SSE-CONNECTION] 생성 시작 - username={}, connectionId={}", username, connectionId);
 
         try {
+            // Debounce: 1초 내 중복 연결 요청 차단
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime lastAttempt = lastConnectionAttempt.get(username);
+            if (lastAttempt != null && lastAttempt.plusSeconds(1).isAfter(now)) {
+                log.warn("[SSE-CONNECTION] 중복 연결 요청 차단 (Debounce) - username={}, lastAttempt={}, currentAttempt={}",
+                    username, lastAttempt, now);
+
+                // 기존 연결 재사용
+                String existingConnectionId = usernameToConnectionId.get(username);
+                if (existingConnectionId != null) {
+                    SseConnectionInfo existingConnection = connections.get(existingConnectionId);
+                    if (existingConnection != null) {
+                        log.info("[SSE-CONNECTION] 기존 연결 재사용 - username={}, connectionId={}",
+                            username, existingConnectionId);
+                        return existingConnection.getEmitter();
+                    }
+                }
+            }
+            lastConnectionAttempt.put(username, now);
+
             String oldConnectionId = usernameToConnectionId.get(username);
             if (oldConnectionId != null) {
                 log.info("[SSE-CONNECTION] 기존 연결 감지 - username={}, oldConnectionId={}, newConnectionId={}",
@@ -54,16 +74,14 @@ public class SseConnectionService {
 
             setupEmitterCallbacks(emitter, connectionId, username);
             sendInitialMessage(emitter, connectionId);
-            startHeartbeat(connectionId, emitter); // Heartbeat 시작
+            startHeartbeat(connectionId, emitter);
 
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("[SSE-CONNECTION] 생성 완료 - username={}, connectionId={}, durationMs={}, totalConnections={}",
-                    username, connectionId, duration, connections.size());
+            log.info("[SSE-CONNECTION] 생성 완료 - username={}, connectionId={}, totalConnections={}",
+                    username, connectionId, connections.size());
             return emitter;
         } catch (Exception e) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("[SSE-CONNECTION] 생성 실패 - username={}, connectionId={}, durationMs={}",
-                    username, connectionId, duration, e);
+            log.error("[SSE-CONNECTION] 생성 실패 - username={}, connectionId={}",
+                    username, connectionId, e);
             throw new NotificationException(NotificationErrorCode.SSE_CONNECTION_FAILED, e);
         }
     }
@@ -102,7 +120,6 @@ public class SseConnectionService {
      */
     @Async
     public void broadcastToAuctionSubscribersExcludingConnectionId(Integer auctionId, String excludeConnectionId, String message) {
-        long startTime = System.currentTimeMillis();
         log.info("[SSE-BROADCAST] 시작 (connectionId 제외) - auctionId={}, excludeConnectionId={}", auctionId, excludeConnectionId);
 
         Set<String> subscribers = auctionSubscriptionService.getAuctionSubscribers(auctionId);
@@ -131,19 +148,16 @@ public class SseConnectionService {
                 } catch (Exception e) {
                     failCount++;
                     log.warn("[SSE-BROADCAST] 전송 실패 - auctionId={}, connectionId={}", auctionId, connectionId, e);
-                    throw new NotificationException(NotificationErrorCode.SSE_MESSAGE_SEND_FAILED, e.getCause());
                 }
             }
         }
 
-        long duration = System.currentTimeMillis() - startTime;
-        log.info("[SSE-BROADCAST] 완료 - auctionId={}, targetCount={}, successCount={}, failCount={}, durationMs={}",
-                auctionId, targetCount, successCount, failCount, duration);
+        log.info("[SSE-BROADCAST] 완료 - auctionId={}, targetCount={}, successCount={}, failCount={}",
+                auctionId, targetCount, successCount, failCount);
     }
 
     @Async
     public void broadcastToAuctionSubscribers(Integer auctionId, Notification notification) {
-        long startTime = System.currentTimeMillis();
         log.info("[SSE-BROADCAST] 시작 (전체) - auctionId={}", auctionId);
 
         Set<String> subscribers = auctionSubscriptionService.getAuctionSubscribers(auctionId);
@@ -165,13 +179,11 @@ public class SseConnectionService {
             } catch (Exception e) {
                 failCount++;
                 log.warn("[SSE-BROADCAST] 전송 실패 - auctionId={}, connectionId={}", auctionId, connectionId, e);
-                throw new NotificationException(NotificationErrorCode.SSE_MESSAGE_SEND_FAILED, e.getCause());
             }
         }
 
-        long duration = System.currentTimeMillis() - startTime;
-        log.info("[SSE-BROADCAST] 완료 - auctionId={}, targetCount={}, successCount={}, failCount={}, durationMs={}",
-                auctionId, targetCount, successCount, failCount, duration);
+        log.info("[SSE-BROADCAST] 완료 - auctionId={}, targetCount={}, successCount={}, failCount={}",
+                auctionId, targetCount, successCount, failCount);
     }
 
     private void sendInitialMessage(SseEmitter emitter, String connectionId) {
@@ -242,7 +254,6 @@ public class SseConnectionService {
         }
 
         try {
-            long startTime = System.currentTimeMillis();
             String jsonData = objectMapper.writeValueAsString(notification);
             SseEmitter.SseEventBuilder event = SseEmitter.event()
                     .name(sseName)
@@ -251,9 +262,8 @@ public class SseConnectionService {
             connectionInfo.getEmitter().send(event);
             connectionInfo.updateLastActivity();
 
-            long duration = System.currentTimeMillis() - startTime;
-            log.debug("[SSE-SEND] 전송 완료 - connectionId={}, notificationType={}, durationMs={}",
-                    connectionId, notification.getType(), duration);
+            log.debug("[SSE-SEND] 전송 완료 - connectionId={}, notificationType={}",
+                    connectionId, notification.getType());
 
         } catch (IOException e) {
             // 클라이언트 연결 끊김은 정상 상황
@@ -272,7 +282,6 @@ public class SseConnectionService {
      */
     public void removeConnection(String connectionId) {
         log.info("[SSE-CONNECTION-REMOVE] 시작 - connectionId={}", connectionId);
-        long startTime = System.currentTimeMillis();
 
         SseConnectionInfo connectionInfo = connections.remove(connectionId);
         if (connectionInfo != null) {
@@ -286,7 +295,18 @@ public class SseConnectionService {
             log.debug("[SSE-CONNECTION-REMOVE] 구독 해제 완료 - connectionId={}, unsubscribedCount={}",
                     connectionId, unsubscribedCount);
 
-            usernameToConnectionId.remove(connectionInfo.getUserId());
+            // usernameToConnectionId는 현재 connectionId와 일치할 때만 제거
+            usernameToConnectionId.compute(connectionInfo.getUserId(), (username, currentConnectionId) -> {
+                if (connectionId.equals(currentConnectionId)) {
+                    log.debug("[SSE-CONNECTION-REMOVE] username 매핑 제거 - username={}, connectionId={}",
+                        username, connectionId);
+                    return null; // 제거
+                } else {
+                    log.debug("[SSE-CONNECTION-REMOVE] username 매핑 유지 (다른 연결 존재) - username={}, currentConnectionId={}, removingConnectionId={}",
+                        username, currentConnectionId, connectionId);
+                    return currentConnectionId; // 유지
+                }
+            });
 
             try {
                 connectionInfo.getEmitter().complete();
@@ -294,11 +314,16 @@ public class SseConnectionService {
                 log.debug("[SSE-CONNECTION-REMOVE] Emitter 종료 중 예외 - connectionId={}", connectionId, e);
             }
 
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("[SSE-CONNECTION-REMOVE] 완료 - connectionId={}, username={}, unsubscribedCount={}, durationMs={}, remainingConnections={}",
-                    connectionId, connectionInfo.getUserId(), unsubscribedCount, duration, connections.size());
+            log.info("[SSE-CONNECTION-REMOVE] 완료 - connectionId={}, username={}, unsubscribedCount={}, remainingConnections={}",
+                    connectionId, connectionInfo.getUserId(), unsubscribedCount, connections.size());
         } else {
-            log.debug("[SSE-CONNECTION-REMOVE] 연결 정보 없음 - connectionId={}", connectionId);
+            log.debug("[SSE-CONNECTION-REMOVE] 연결 정보 없음 (이미 제거됨) - connectionId={}", connectionId);
+            // 구독 해제는 여전히 시도 (안전장치)
+            int unsubscribedCount = auctionSubscriptionService.unsubscribeAll(connectionId);
+            if (unsubscribedCount > 0) {
+                log.debug("[SSE-CONNECTION-REMOVE] 고아 구독 정리 완료 - connectionId={}, unsubscribedCount={}",
+                    connectionId, unsubscribedCount);
+            }
         }
     }
 
@@ -326,25 +351,19 @@ public class SseConnectionService {
     private void setupEmitterCallbacks(SseEmitter emitter, String connectionId, String username) {
         emitter.onCompletion(() -> {
             log.info("[SSE-CALLBACK] onCompletion 발생 - username={}, connectionId={}", username, connectionId);
-            stopHeartbeat(connectionId);
-            removeConnection(connectionId);
-            auctionSubscriptionService.unsubscribeAll(connectionId);
+            removeConnection(connectionId); // removeConnection에서 heartbeat 중지 및 구독 해제 처리
         });
 
         emitter.onTimeout(() -> {
             log.warn("[SSE-CALLBACK] onTimeout 발생 - username={}, connectionId={}, timeout={}ms",
                     username, connectionId, timeout);
-            stopHeartbeat(connectionId);
-            removeConnection(connectionId);
-            auctionSubscriptionService.unsubscribeAll(connectionId);
+            removeConnection(connectionId); // removeConnection에서 heartbeat 중지 및 구독 해제 처리
         });
 
         emitter.onError(throwable -> {
             log.warn("[SSE-CALLBACK] onError 발생 - username={}, connectionId={}, error={}",
                     username, connectionId, throwable.getMessage(), throwable);
-            stopHeartbeat(connectionId);
-            removeConnection(connectionId);
-            auctionSubscriptionService.unsubscribeAll(connectionId);
+            removeConnection(connectionId); // removeConnection에서 heartbeat 중지 및 구독 해제 처리
         });
     }
 
