@@ -141,4 +141,27 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
     }
+
+    @ExceptionHandler(com.eneifour.fantry.refund.exception.ReturnException.class)
+    public ResponseEntity<ErrorResponse> handleReturnException(com.eneifour.fantry.refund.exception.ReturnException ex) {
+        log.error("ReturnException 발생: {}", ex.getErrorCode().getMessage());
+        ErrorResponse response = ErrorResponse.of(
+                ex.getErrorCode().getStatus(),
+                ex.getErrorCode().getCode(),
+                ex.getErrorCode().getMessage()
+        );
+        return new ResponseEntity<>(response, ex.getErrorCode().getStatus());
+    }
+
+    // 모든 처리되지 않은 예외를 위한 핸들러
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleAllUnhandledException(Exception ex) {
+        log.error("처리되지 않은 예외 발생: {}", ex.getMessage(), ex);
+        ErrorResponse response = ErrorResponse.of(
+                org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+                "GLOBAL_ERROR",
+                "예상치 못한 서버 오류가 발생했습니다."
+        );
+        return new ResponseEntity<>(response, org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
