@@ -46,11 +46,13 @@ public class ReturnService {
     private final ReturnStatusHistoryRepository historyRepository;
 
     public ReturnDetailResponse createReturnRequest(ReturnCreateRequest request, Member member) {
-        Payment payment = paymentRepository.findByOrderId(request.orderId())
+        Orders order = ordersRepository.findById(Integer.parseInt(request.orderId()))
                 .orElseThrow(() -> new ReturnException(ReturnErrorCode.ORDER_NOT_FOUND));
 
-        Orders order = ordersRepository.findByPayment(payment)
-                .orElseThrow(() -> new ReturnException(ReturnErrorCode.ORDER_NOT_FOUND));
+        Payment payment = order.getPayment();
+        if (payment == null) {
+            throw new ReturnException(ReturnErrorCode.PAYMENT_INFO_NOT_FOUND);
+        }
 
         if (!order.getMember().getId().equals(member.getId())) {
             throw new ReturnException(ReturnErrorCode.ACCESS_DENIED);
