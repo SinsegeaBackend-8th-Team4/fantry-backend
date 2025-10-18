@@ -18,7 +18,7 @@ public class SecurityConstants {
             "/api/ws-auction/**",
             "/api/file/**",
             "/api/payments/**",
-            "/webhook/**",
+            "/webhooks/**",
             "/static/**",
             // Swagger 관련 경로
             "/api-docs/**",         // 사용자가 접속하는 단축 주소 (리다이렉트 시작점)
