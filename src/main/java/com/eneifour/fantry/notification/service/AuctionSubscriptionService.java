@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -22,41 +23,51 @@ public class AuctionSubscriptionService {
     private final Map<Integer, Set<String>> auctionSubscribers = new ConcurrentHashMap<>();
 
     public UserAuctionSubscription subscribe(String connectionId, Integer auctionId) {
-        long startTime = System.currentTimeMillis();
         log.info("[AUCTION-SUBSCRIPTION] 구독 시작 - connectionId={}, auctionId={}", connectionId, auctionId);
 
         try {
-            // 기존 구독이 있는지 확인
-            UserAuctionSubscription existingSubscription = getSubscription(connectionId, auctionId);
-            if (existingSubscription != null && existingSubscription.isActiveSubscription()) {
-                log.info("[AUCTION-SUBSCRIPTION] 활성 구독 존재 - connectionId={}, auctionId={}, action=UPDATE_ACTIVITY",
-                        connectionId, auctionId);
-                existingSubscription.updateLastActivity();
-                return existingSubscription;
+            // 원자적 구독 생성/갱신 처리
+            AtomicBoolean isNewSubscription = new AtomicBoolean(false);
+
+            Map<Integer, UserAuctionSubscription> userSubs =
+                userSubscriptions.computeIfAbsent(connectionId, k -> new ConcurrentHashMap<>());
+
+            UserAuctionSubscription subscription = userSubs.compute(auctionId, (aId, existing) -> {
+                if (existing == null) {
+                    isNewSubscription.set(true);
+                    log.debug("[AUCTION-SUBSCRIPTION] 새 구독 생성 - connectionId={}, auctionId={}",
+                        connectionId, aId);
+                    return UserAuctionSubscription.createSubscription(connectionId, aId);
+                } else if (!existing.isActiveSubscription()) {
+                    log.info("[AUCTION-SUBSCRIPTION] 비활성 구독 재활성화 - connectionId={}, auctionId={}",
+                        connectionId, aId);
+                    existing.activate();
+                } else {
+                    log.info("[AUCTION-SUBSCRIPTION] 활성 구독 갱신 - connectionId={}, auctionId={}",
+                        connectionId, aId);
+                    existing.updateLastActivity();
+                }
+                return existing;
+            });
+
+            // 경매별 구독자 캐시에 추가 및 정합성 검증
+            Set<String> subscribers = auctionSubscribers
+                .computeIfAbsent(auctionId, k -> ConcurrentHashMap.newKeySet());
+            boolean addedToCache = subscribers.add(connectionId);
+
+            if (!addedToCache && isNewSubscription.get()) {
+                log.warn("[AUCTION-SUBSCRIPTION] 데이터 정합성 경고 - 신규 구독이지만 캐시에 이미 존재 - connectionId={}, auctionId={}",
+                    connectionId, auctionId);
             }
 
-            log.debug("[AUCTION-SUBSCRIPTION] 새 구독 생성 중 - connectionId={}, auctionId={}", connectionId, auctionId);
+            log.info("[AUCTION-SUBSCRIPTION] 구독 완료 - connectionId={}, auctionId={}, isNew={}, totalSubscribers={}",
+                connectionId, auctionId, isNewSubscription.get(), subscribers.size());
 
-            // 새로운 구독 생성
-            UserAuctionSubscription subscription = UserAuctionSubscription.createSubscription(connectionId, auctionId);
-
-            // 사용자별 구독 맵에 추가
-            userSubscriptions.computeIfAbsent(connectionId, k -> new ConcurrentHashMap<>())
-                    .put(auctionId, subscription);
-
-            // 경매별 구독자 캐시에 추가
-            auctionSubscribers.computeIfAbsent(auctionId, k -> ConcurrentHashMap.newKeySet())
-                    .add(connectionId);
-
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("[AUCTION-SUBSCRIPTION] 구독 완료 - connectionId={}, auctionId={}, durationMs={}, totalSubscribersForAuction={}",
-                    connectionId, auctionId, duration, auctionSubscribers.get(auctionId).size());
             return subscription;
 
         } catch (Exception e) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("[AUCTION-SUBSCRIPTION] 구독 실패 - connectionId={}, auctionId={}, durationMs={}",
-                    connectionId, auctionId, duration, e);
+            log.error("[AUCTION-SUBSCRIPTION] 구독 실패 - connectionId={}, auctionId={}",
+                connectionId, auctionId, e);
             throw new NotificationException(NotificationErrorCode.SUBSCRIPTION_FAILED, e);
         }
     }
@@ -89,7 +100,6 @@ public class AuctionSubscriptionService {
     }
 
     public int unsubscribeAll(String connectionId) {
-        long startTime = System.currentTimeMillis();
         log.info("[AUCTION-SUBSCRIPTION] 전체 구독 해제 시작 - connectionId={}", connectionId);
 
         try {
@@ -128,21 +138,18 @@ public class AuctionSubscriptionService {
                 }
             }
 
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("[AUCTION-SUBSCRIPTION] 전체 구독 해제 완료 - connectionId={}, totalSubscriptions={}, unsubscribedCount={}, durationMs={}",
-                    connectionId, totalSubscriptions, unsubscribedCount, duration);
+            log.info("[AUCTION-SUBSCRIPTION] 전체 구독 해제 완료 - connectionId={}, totalSubscriptions={}, unsubscribedCount={}",
+                    connectionId, totalSubscriptions, unsubscribedCount);
             return unsubscribedCount;
 
         } catch (Exception e) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("[AUCTION-SUBSCRIPTION] 전체 구독 해제 실패 - connectionId={}, durationMs={}",
-                    connectionId, duration, e);
+            log.error("[AUCTION-SUBSCRIPTION] 전체 구독 해제 실패 - connectionId={}",
+                    connectionId, e);
             throw new NotificationException(NotificationErrorCode.UNSUBSCRIPTION_FAIL, e);
         }
     }
 
     public boolean unsubscribe(String userId, Integer auctionId) {
-        long startTime = System.currentTimeMillis();
         log.info("[AUCTION-SUBSCRIPTION] 구독 해제 시작 - connectionId={}, auctionId={}", userId, auctionId);
 
         try {
@@ -176,15 +183,13 @@ public class AuctionSubscriptionService {
                 }
             }
 
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("[AUCTION-SUBSCRIPTION] 구독 해제 완료 - connectionId={}, auctionId={}, durationMs={}",
-                    userId, auctionId, duration);
+            log.info("[AUCTION-SUBSCRIPTION] 구독 해제 완료 - connectionId={}, auctionId={}",
+                    userId, auctionId);
             return true;
 
         } catch (Exception e) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("[AUCTION-SUBSCRIPTION] 구독 해제 실패 - connectionId={}, auctionId={}, durationMs={}",
-                    userId, auctionId, duration, e);
+            log.error("[AUCTION-SUBSCRIPTION] 구독 해제 실패 - connectionId={}, auctionId={}",
+                    userId, auctionId, e);
             throw new NotificationException(NotificationErrorCode.UNSUBSCRIPTION_FAIL,e);
         }
     }
