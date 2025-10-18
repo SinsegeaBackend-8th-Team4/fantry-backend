@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -24,4 +25,13 @@ public interface NoticeRepository extends JpaRepository<Notice, Integer>, JpaSpe
     Optional<Notice> findWithAttachmentsById(@Param("id") int id);
 
     long countByStatus(CsStatus status);
+
+    @Query("SELECT new map(" +
+            "   count(n) as totalNotices, " +
+            "   COALESCE(sum(case when n.status = com.eneifour.fantry.inquiry.domain.CsStatus.DRAFT then 1 else 0 end), 0L) as draftNotices, " +
+            "   COALESCE(sum(case when n.status = com.eneifour.fantry.inquiry.domain.CsStatus.ACTIVE then 1 else 0 end), 0L) as activeNotices, " +
+            "   COALESCE(sum(case when n.status = com.eneifour.fantry.inquiry.domain.CsStatus.PINNED then 1 else 0 end), 0L) as pinnedNotices, " +
+            "   COALESCE(sum(case when n.status = com.eneifour.fantry.inquiry.domain.CsStatus.INACTIVE then 1 else 0 end), 0L) as inactiveNotices) " +
+            "FROM Notice n")
+    Map<String, Long> countNoticesByStatus();
 }

@@ -7,11 +7,13 @@ package com.eneifour.fantry.settlement.domain;
  * CANCELLATION_FEE: 취소 수수료 수익
  * REFUND_DEDUCTION: 환불 시 차감액 (e.g., 반품 배송비)
  * REFUND_LOSS: 환불로 인한 플랫폼 손실
+ * SETTLEMENT_PAYOUT: 정산 지급 (비용)
  */
 public enum RevenueType {
     COMMISSION,
     DIRECT_PURCHASE_PROFIT,
     CANCELLATION_FEE,
     REFUND_DEDUCTION,
-    REFUND_LOSS
+    REFUND_LOSS,
+    SETTLEMENT_PAYOUT
 }

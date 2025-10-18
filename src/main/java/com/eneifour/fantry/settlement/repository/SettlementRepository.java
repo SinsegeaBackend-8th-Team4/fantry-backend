@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Settlement (정산) 엔티티에 대한 데이터 액세스를 처리하는 리포지토리.
@@ -33,4 +34,13 @@ public interface SettlementRepository extends JpaRepository<Settlement, Integer>
 
     @Query("SELECT COALESCE(SUM(s.settlementAmount), 0) FROM Settlement s WHERE s.status = :status")
     BigDecimal sumAmountByStatus(@Param("status") SettlementStatus status);
+
+    @Query("SELECT new map(" +
+            "   count(s) as totalSettlements, " +
+            "   COALESCE(sum(case when s.status = com.eneifour.fantry.settlement.domain.SettlementStatus.PENDING then 1 else 0 end), 0L) as pendingSettlements, " +
+            "   COALESCE(sum(case when s.status = com.eneifour.fantry.settlement.domain.SettlementStatus.PAID then 1 else 0 end), 0L) as paidSettlements, " +
+            "   COALESCE(sum(case when s.status = com.eneifour.fantry.settlement.domain.SettlementStatus.CANCELLED then 1 else 0 end), 0L) as cancelledSettlements, " +
+            "   COALESCE(sum(case when s.status = com.eneifour.fantry.settlement.domain.SettlementStatus.FAILED then 1 else 0 end), 0L) as failedSettlements) " +
+            "FROM Settlement s")
+    Map<String, Long> countSettlementsByStatus();
 }

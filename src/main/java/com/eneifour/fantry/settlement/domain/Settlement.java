@@ -83,4 +83,21 @@ public class Settlement {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "updated_by")
     private Member updatedBy;
+
+    /**
+     * 정산 완료 시 최종 정산 정보를 업데이트합니다.
+     * @param totalSalesAmount 총 판매 금액
+     * @param totalCommissionAmount 총 수수료 금액
+     * @param totalReturnAmount 총 반품 금액
+     * @param settlementAmount 실제 지급될 정산 금액
+     * @param completedAt 정산 지급 완료 시간
+     */
+    public void completeSettlement(BigDecimal totalSalesAmount, BigDecimal totalCommissionAmount, BigDecimal totalReturnAmount, BigDecimal settlementAmount, LocalDateTime completedAt) {
+        this.totalAmount = totalSalesAmount;
+        this.commissionAmount = totalCommissionAmount;
+        this.totalReturnAmount = totalReturnAmount;
+        this.settlementAmount = settlementAmount;
+        this.status = SettlementStatus.PAID; // Assuming PAID is the final status
+        this.completedAt = completedAt;
+    }
 }

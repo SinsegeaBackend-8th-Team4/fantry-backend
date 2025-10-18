@@ -148,10 +148,17 @@ public class SettlementAdminService {
                 continue;
             }
 
-            // 기본 수수료율 조회
-            SettlementSetting setting = settlementSettingRepository.findFirstByOrderByCreatedAtDesc()
-                    .orElseThrow(() -> new SettlementException(SettlementErrorCode.SETTING_NOT_FOUND));
-            BigDecimal commissionRate = setting.getCommissionRate().divide(new BigDecimal("100"));
+            // 활성 수수료 규칙 조회
+            LocalDateTime now = LocalDateTime.now();
+            List<CommissionRule> activeCommissionRules = commissionRuleRepository.findByIsActiveTrueAndStartDateBeforeAndEndDateAfterOrderByPriorityAsc(now, now);
+
+            if (activeCommissionRules.isEmpty()) {
+                throw new SettlementException(SettlementErrorCode.COMMISSION_RULE_NOT_FOUND); // 새로운 에러 코드 필요
+            }
+
+            // 가장 높은 우선순위의 규칙 적용 (OrderByPriorityAsc 이므로 첫 번째가 가장 높은 우선순위)
+            CommissionRule applicableRule = activeCommissionRules.get(0);
+            BigDecimal commissionRate = applicableRule.getCommissionRate().divide(new BigDecimal("100"));
 
             // 5. 실제 결제 금액(Payment) 기준으로 정산 금액 계산
             List<Orders> validOrders = sellerOrders.stream()

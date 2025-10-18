@@ -10,5 +10,6 @@ public enum OrderStatus {
     CANCEL_REQUESTED, //취소요청
     CANCELLED, //취소 완료
     REFUND_REQUESTED, //환불 요청
-    REFUNDED //환불 완료
+    REFUNDED, //환불 완료
+    SETTLED // 정산 완료
 }

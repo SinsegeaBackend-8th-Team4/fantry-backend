@@ -179,4 +179,14 @@ public class Orders {
         this.orderStatus = OrderStatus.REFUNDED;
     }
 
+    /**
+     * 주문을 정산 완료 상태로 변경합니다.
+     * 구매 확정(CONFIRMED) 상태가 아니면 예외 발생
+     */
+    public void markAsSettled() {
+        if (this.orderStatus != OrderStatus.CONFIRMED) {
+            throw new OrdersException(ErrorCode.ORDER_SETTLEMENT_NOT_ALLOWED); // TODO: Add ORDER_SETTLEMENT_NOT_ALLOWED error code
+        }
+        this.orderStatus = OrderStatus.SETTLED;
+    }
 }
