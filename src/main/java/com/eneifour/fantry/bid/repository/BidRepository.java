@@ -10,6 +10,8 @@ import java.util.Optional;
 @Repository
 public interface BidRepository extends JpaRepository<Bid,Integer> {
 
+    //find All -> 등록일 기준 최신화
+    List<Bid> findAllByOrderByBidAtDesc();
     // bidder_id가 일치하는 내역 전체 조회
     List<Bid> findByBidderId(int bidderId);
 
