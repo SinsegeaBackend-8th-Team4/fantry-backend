@@ -79,7 +79,7 @@ public class PaymentController {
         return ResponseEntity.ok(new ApiResponse<>(true, response));
     }
 
-    @PostMapping("/webhook/bootpay")
+    @PostMapping("/webhooks/bootpay")
     public ResponseEntity<?> onReceiveWebhook(
             @RequestBody String webhook
     ) throws Exception {
