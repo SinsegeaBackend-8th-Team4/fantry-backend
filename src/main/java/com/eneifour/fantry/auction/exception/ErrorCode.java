@@ -35,6 +35,7 @@ public enum ErrorCode {
     ORDER_ALREADY_CANCELLED(HttpStatus.BAD_REQUEST, "O011", "이미 취소된 주문입니다."),
     ORDER_ALREADY_REFUNDED(HttpStatus.BAD_REQUEST, "O012", "이미 환불된 주문입니다."),
     ORDER_INVALID_TRANSITION(HttpStatus.BAD_REQUEST, "O013", "잘못된 주문 상태 전이 요청입니다."),
+    ORDER_SETTLEMENT_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "O014", "구매 확정 상태에서만 정산 완료로 변경할 수 있습니다."),
 
     // Member Exceptions
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "존재하지 않는 회원입니다."),

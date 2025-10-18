@@ -10,7 +10,7 @@ import com.eneifour.fantry.member.exception.MemberException;
 import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import com.eneifour.fantry.member.repository.RoleRepository;
 import com.eneifour.fantry.address.repository.AddressRepository;
-import com.eneifour.fantry.account.repository.accountRepository;
+import com.eneifour.fantry.account.repository.AccountRepository;
 import com.eneifour.fantry.address.domain.Address;
 import com.eneifour.fantry.account.domain.Account;
 import com.eneifour.fantry.security.dto.TokenMemberResponse;
@@ -28,7 +28,7 @@ public class MemberService {
     private final JpaMemberRepository jpaMemberRepository;
     private final RoleRepository roleRepository;
     private final AddressRepository addressRepository;
-    private final accountRepository accountRepository;
+    private final AccountRepository accountRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final PasswordEncoder passwordEncoder;
 

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -225,4 +226,15 @@ public interface InspectionRepository extends JpaRepository<ProductInspection, I
     """)
     Optional<GroupType> findGroupTypeById(@Param("inspectionId") int inspectionId);
 
+    @Query("SELECT new map(" +
+            "   count(i) as totalInspections, " +
+            "   COALESCE(sum(case when i.inspectionStatus = com.eneifour.fantry.inspection.domain.InspectionStatus.DRAFT then 1 else 0 end), 0L) as draftInspections, " +
+            "   COALESCE(sum(case when i.inspectionStatus = com.eneifour.fantry.inspection.domain.InspectionStatus.SUBMITTED then 1 else 0 end), 0L) as submittedInspections, " +
+            "   COALESCE(sum(case when i.inspectionStatus = com.eneifour.fantry.inspection.domain.InspectionStatus.ONLINE_APPROVED then 1 else 0 end), 0L) as onlineApprovedInspections, " +
+            "   COALESCE(sum(case when i.inspectionStatus = com.eneifour.fantry.inspection.domain.InspectionStatus.ONLINE_REJECTED then 1 else 0 end), 0L) as onlineRejectedInspections, " +
+            "   COALESCE(sum(case when i.inspectionStatus = com.eneifour.fantry.inspection.domain.InspectionStatus.OFFLINE_INSPECTING then 1 else 0 end), 0L) as offlineInspectingInspections, " +
+            "   COALESCE(sum(case when i.inspectionStatus = com.eneifour.fantry.inspection.domain.InspectionStatus.OFFLINE_REJECTED then 1 else 0 end), 0L) as offlineRejectedInspections, " +
+            "   COALESCE(sum(case when i.inspectionStatus = com.eneifour.fantry.inspection.domain.InspectionStatus.COMPLETED then 1 else 0 end), 0L) as completedInspections) " +
+            "FROM ProductInspection i")
+    Map<String, Long> countInspectionsByStatus();
 }

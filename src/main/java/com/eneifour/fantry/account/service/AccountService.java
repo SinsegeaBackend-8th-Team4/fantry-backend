@@ -5,7 +5,7 @@ import com.eneifour.fantry.account.dto.AccountRequest;
 import com.eneifour.fantry.account.dto.AccountResponse;
 import com.eneifour.fantry.account.exception.AccountErrorCode;
 import com.eneifour.fantry.account.exception.AccountException;
-import com.eneifour.fantry.account.repository.accountRepository;
+import com.eneifour.fantry.account.repository.AccountRepository;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.repository.JpaMemberRepository;
 import jakarta.transaction.Transactional;
@@ -17,7 +17,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AccountService {
-    private final accountRepository accountRepository;
+    private final AccountRepository accountRepository;
     private final JpaMemberRepository memberRepository;
 
     //모든 계좌 가져오기

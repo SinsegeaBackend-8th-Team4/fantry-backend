@@ -12,7 +12,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -53,4 +55,25 @@ public interface ReturnRepository extends JpaRepository<ReturnRequest, Integer>,
         group by r.status
     """)
     List<Object[]> countByStatus();
+
+    /**
+     * 특정 상태와 완료 시간 범위를 기준으로 반품/환불 요청을 조회합니다.
+     * @param status 조회할 반품/환불 상태
+     * @param startDate 시작 시간
+     * @param endDate 종료 시간
+     * @return 반품/환불 요청 목록
+     */
+    List<ReturnRequest> findByStatusAndCompletedAtBetween(ReturnStatus status, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("SELECT new map(" +
+            "   count(r) as totalRefunds, " +
+            "   sum(case when r.status = com.eneifour.fantry.refund.domain.ReturnStatus.REQUESTED then 1 else 0 end) as requestedRefunds, " +
+            "   sum(case when r.status = com.eneifour.fantry.refund.domain.ReturnStatus.IN_TRANSIT then 1 else 0 end) as inTransitRefunds, " +
+            "   sum(case when r.status = com.eneifour.fantry.refund.domain.ReturnStatus.INSPECTING then 1 else 0 end) as inspectingRefunds, " +
+            "   sum(case when r.status = com.eneifour.fantry.refund.domain.ReturnStatus.APPROVED then 1 else 0 end) as approvedRefunds, " +
+            "   sum(case when r.status = com.eneifour.fantry.refund.domain.ReturnStatus.REJECTED then 1 else 0 end) as rejectedRefunds, " +
+            "   sum(case when r.status = com.eneifour.fantry.refund.domain.ReturnStatus.COMPLETED then 1 else 0 end) as completedRefunds, " +
+            "   sum(case when r.status = com.eneifour.fantry.refund.domain.ReturnStatus.USER_CANCELLED then 1 else 0 end) as userCancelledRefunds) " +
+            "FROM ReturnRequest r WHERE r.status != com.eneifour.fantry.refund.domain.ReturnStatus.DELETED")
+    Map<String, Long> countRefundsByStatus();
 }
