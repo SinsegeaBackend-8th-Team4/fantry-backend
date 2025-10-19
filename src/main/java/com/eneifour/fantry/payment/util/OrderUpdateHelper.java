@@ -1,6 +1,7 @@
 package com.eneifour.fantry.payment.util;
 
 import com.eneifour.fantry.auction.domain.Auction;
+import com.eneifour.fantry.auction.domain.SaleStatus;
 import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
 import com.eneifour.fantry.auction.repository.AuctionRepository;
 import com.eneifour.fantry.auction.service.AuctionService;
@@ -66,7 +67,16 @@ public class OrderUpdateHelper {
                 return;
             }
             Optional<Auction> response = auctionRepository.findByIdForUpdate(auction.getAuctionId());
-            response.ifPresent(value -> value.closeAsSold((int) auctionInfo.get("itemPrice")));
+            response.ifPresent(value ->
+            {
+                if (value.getSaleStatus() == SaleStatus.SOLD) {
+                    return;
+                }
+
+                if (value.getSaleStatus() == SaleStatus.ACTIVE || value.getSaleStatus() == SaleStatus.REACTIVE) {
+                    value.closeAsSold((int) auctionInfo.get("itemPrice"));
+                }
+            });
             OrdersRequest ordersRequest = new OrdersRequest(auction.getAuctionId(), (int) userInfo.get("memberId"), (int) auctionInfo.get("itemPrice"), payment.getPaymentId(), shippingAddress);
             ordersService.createInstantBuyOrder(ordersRequest);
         }
