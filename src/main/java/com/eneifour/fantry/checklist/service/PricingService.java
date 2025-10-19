@@ -125,7 +125,7 @@ public class PricingService {
         String formattedPrice = null;
         if (marketAvgPrice != null) {
             BigDecimal rounded = marketAvgPrice.setScale(0, RoundingMode.HALF_UP); // 소수점 반올림
-            formattedPrice = String.format("%,d원", rounded.intValue());
+            formattedPrice = String.format("%,d", rounded.intValue());
         }
 
         return new MarketAvgPriceResponse(formattedPrice, count);
