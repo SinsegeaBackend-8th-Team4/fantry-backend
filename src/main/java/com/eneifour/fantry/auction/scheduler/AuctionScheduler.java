@@ -30,7 +30,7 @@ public class AuctionScheduler {
      */
     @Scheduled(fixedRate = 60000) // 1분마다 실행
     public void activateScheduledAuctions() {
-        log.debug("Checking for auctions to activate...");
+        log.warn("Checking for auctions to activate...");
 
         Pageable pageable = PageRequest.of(0, 100); // 한 번에 100개씩 처리
         Page<Auction> scheduledAuctionsPage;
@@ -46,21 +46,21 @@ public class AuctionScheduler {
             );
 
             if (scheduledAuctionsPage.isEmpty()) {
-                log.debug("No auctions to activate in this batch.");
+                log.warn("No auctions to activate in this batch.");
                 break;
             }
 
-            log.info("Found {} auctions to activate.", scheduledAuctionsPage.getNumberOfElements());
+            log.warn("Found {} auctions to activate.", scheduledAuctionsPage.getNumberOfElements());
 
             // 2. 각 경매를 개별 트랜잭션으로 처리하여, 하나가 실패해도 다른 경매에 영향을 주지 않도록 함
             for (Auction auction : scheduledAuctionsPage.getContent()) {
                 try {
                     // 서비스 레이어의 activateAuction 메소드를 호출하여 상태를 변경
                     auctionService.activateAuction(auction.getAuctionId());
-                    log.info("Auction ID: {} has been activated.", auction.getAuctionId());
+                    log.warn("Auction ID: {} has been activated.", auction.getAuctionId());
                 } catch (Exception e) {
                     // 개별 경매 처리 중 발생한 예외는 로깅만 하고 계속 진행
-                    log.error("Failed to activate auction for auctionId: {}. Error: {}",
+                    log.warn("Failed to activate auction for auctionId: {}. Error: {}",
                             auction.getAuctionId(), e.getMessage(), e);
                 }
             }
@@ -74,7 +74,7 @@ public class AuctionScheduler {
      */
     @Scheduled(fixedRate = 60000) // 1분마다 실행
     public void closeEndedAuctions() {
-        log.debug("Checking for ended auctions...");
+        log.warn("Checking for ended auctions...");
 
         // 낙찰자를 결정하기 전에, In-Memory Queue에 남아있는 모든 입찰 기록을
         // DB에 즉시 동기화하여 데이터 정합성을 보장합니다.
@@ -94,11 +94,11 @@ public class AuctionScheduler {
             );
 
             if (endedAuctionsPage.isEmpty()) {
-                log.debug("No auctions have ended in this batch.");
+                log.warn("No auctions have ended in this batch.");
                 break;
             }
 
-            log.info("Found {} auctions to close.", endedAuctionsPage.getNumberOfElements());
+            log.warn("Found {} auctions to close.", endedAuctionsPage.getNumberOfElements());
 
             // 2. 각 경매를 개별 트랜잭션으로 처리하여, 하나가 실패해도 다른 경매에 영향을 주지 않도록 함
             for (Auction auction : endedAuctionsPage.getContent()) {
@@ -106,7 +106,7 @@ public class AuctionScheduler {
                     auctionService.processAuctionClosure(auction);
                 } catch (Exception e) {
                     // 개별 경매 처리 중 발생한 예외는 로깅만 하고 계속 진행
-                    log.error("Failed to process auction closure for auctionId: {}. Error: {}",
+                    log.warn("Failed to process auction closure for auctionId: {}. Error: {}",
                             auction.getAuctionId(), e.getMessage(), e);
                 }
             }
