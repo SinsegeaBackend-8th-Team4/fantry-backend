@@ -35,8 +35,9 @@ public class Payment extends BaseAuditingEntity {
     private Integer cancelledPrice;
     @Column(name = "order_name")
     private String orderName;
-    @Column(name = "metadata")
-    private String metadata;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "json")
+    private Map<String,Object> metadata;
     @Column(name = "pg")
     private String pg;
     @Column(name = "method")

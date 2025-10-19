@@ -45,8 +45,9 @@ public abstract class AbstractSpecification<T, C> {
         if (value == null) {
             return null;
         }
+        String[] fields = fieldName.split("\\.");
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get(fieldName), value);
+                criteriaBuilder.equal(fields.length > 1 ? root.get(fields[0]).get(fields[1]) : root.get(fieldName), value);
     }
 
     /**

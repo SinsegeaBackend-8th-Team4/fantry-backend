@@ -23,9 +23,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -45,24 +42,23 @@ public class OrdersService {
     // paging 처리
     // 파라미터에 status 및 member 여부에 따라 해당 Record 조회 , 없다면 전체 조회
     @Transactional
-    public Page<OrdersResponse> searchOrders(Pageable pageable, Integer memberId,OrderStatus orderStatus) {
+    public Page<OrdersResponse> searchOrders(Pageable pageable, Integer memberId, OrderStatus orderStatus) {
 
         Page<Orders> ordersList;
 
-        if(memberId != null && orderStatus != null){
-            ordersList = ordersRepository.findByMember_MemberIdAndOrderStatus(pageable,memberId, orderStatus);
-        }
-        else if(orderStatus != null){
-            ordersList = ordersRepository.findByOrderStatus(pageable,orderStatus);
-        }else if(memberId != null){
-            ordersList = ordersRepository.findByMember_MemberId(pageable,memberId);
-        } else{
+        if (memberId != null && orderStatus != null) {
+            ordersList = ordersRepository.findByMember_MemberIdAndOrderStatus(pageable, memberId, orderStatus);
+        } else if (orderStatus != null) {
+            ordersList = ordersRepository.findByOrderStatus(pageable, orderStatus);
+        } else if (memberId != null) {
+            ordersList = ordersRepository.findByMember_MemberId(pageable, memberId);
+        } else {
             ordersList = ordersRepository.findAll(pageable);
         }
 
         return ordersList.map(orders -> {
-            OrdersResponse ordersResponse  = OrdersResponse.from(orders);
-            if(orders.getShippingAddress() != null) {
+            OrdersResponse ordersResponse = OrdersResponse.from(orders);
+            if (orders.getShippingAddress() != null) {
                 ordersResponse.setShippingAddress(orders.getShippingAddress());
             }
 
@@ -86,12 +82,12 @@ public class OrdersService {
     @Transactional
     public OrdersResponse findOne(int ordersId) {
 
-        Orders orders =  ordersRepository.findOrderDetailByOrdersId(ordersId)
+        Orders orders = ordersRepository.findOrderDetailByOrdersId(ordersId)
                 .orElseThrow(() -> new OrdersException(ErrorCode.ORDER_NOT_FOUND));
 
-        OrdersResponse ordersResponse  = OrdersResponse.from(orders);
+        OrdersResponse ordersResponse = OrdersResponse.from(orders);
 
-        if(orders.getShippingAddress() != null) {
+        if (orders.getShippingAddress() != null) {
             ordersResponse.setShippingAddress(orders.getShippingAddress());
         }
 
@@ -107,7 +103,16 @@ public class OrdersService {
             ordersResponse.setPaidAt(orders.getPayment().getPurchasedAt());
         }
 
+
         return ordersResponse;
+    }
+
+    //auction_id 와 일치하는 주문 단건 조회
+    public Orders findByAuctionId(int auctionId) {
+        Orders orders = ordersRepository.findByAuction_AuctionId(auctionId)
+                .orElseThrow(() -> new OrdersException(ErrorCode.ORDER_NOT_FOUND));
+
+        return orders;
     }
 
     // =============================================
@@ -122,18 +127,20 @@ public class OrdersService {
         Member buyer = memberRepository.findById(ordersRequest.getBuyerId())
                 .orElseThrow(() -> new OrdersException(ErrorCode.MEMBER_NOT_FOUND));
         Payment payment = paymentRepository.findByPaymentId(ordersRequest.getPaymentId())
-                .orElseThrow(()-> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
+                .orElseThrow(() -> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
         //DTO와 조회된 엔티티를 바탕으로 Orders 엔티티 생성
 
-        Orders orders = Orders.builder()
+        Orders.OrdersBuilder builder = Orders.builder()
                 .auction(auction)
                 .member(buyer)
                 .price(ordersRequest.getPrice())
                 .payment(payment)
-                .orderStatus(OrderStatus.PAID)
-                .build();
-
+                .orderStatus(OrderStatus.PAID);
+        if (ordersRequest.getShippingAddress() != null) {
+            builder.shippingAddress(ordersRequest.getShippingAddress());
+        }
+        Orders orders = builder.build();
         Orders savedOrders = ordersRepository.save(orders);
 
         return findOne(savedOrders.getOrdersId());
@@ -145,12 +152,12 @@ public class OrdersService {
 
     //낙찰된 주문건 결제 완료 처리
     @Transactional
-    public void completeAuctionPayment(String shippingAddress, int ordersId , int paymentId) {
+    public void completeAuctionPayment(String shippingAddress, int ordersId, int paymentId) {
         Orders order = ordersRepository.findById(ordersId)
                 .orElseThrow(() -> new OrdersException(ErrorCode.ORDER_NOT_FOUND));
 
         Payment payment = paymentRepository.findByPaymentId(paymentId)
-                .orElseThrow(()-> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
+                .orElseThrow(() -> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
         order.completePayment(shippingAddress, payment);
     }

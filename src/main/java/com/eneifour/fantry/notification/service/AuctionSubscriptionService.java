@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -22,122 +23,173 @@ public class AuctionSubscriptionService {
     private final Map<Integer, Set<String>> auctionSubscribers = new ConcurrentHashMap<>();
 
     public UserAuctionSubscription subscribe(String connectionId, Integer auctionId) {
-        try {
+        log.info("[AUCTION-SUBSCRIPTION] 구독 시작 - connectionId={}, auctionId={}", connectionId, auctionId);
 
-            // 기존 구독이 있는지 확인
-            UserAuctionSubscription existingSubscription = getSubscription(connectionId, auctionId);
-            if (existingSubscription != null && existingSubscription.isActiveSubscription()) {
-                log.debug("이미 활성 구독 존재: 사용자={}, 경매={}", connectionId, auctionId);
-                existingSubscription.updateLastActivity();
-                return existingSubscription;
+        try {
+            // 원자적 구독 생성/갱신 처리
+            AtomicBoolean isNewSubscription = new AtomicBoolean(false);
+
+            Map<Integer, UserAuctionSubscription> userSubs =
+                userSubscriptions.computeIfAbsent(connectionId, k -> new ConcurrentHashMap<>());
+
+            UserAuctionSubscription subscription = userSubs.compute(auctionId, (aId, existing) -> {
+                if (existing == null) {
+                    isNewSubscription.set(true);
+                    log.debug("[AUCTION-SUBSCRIPTION] 새 구독 생성 - connectionId={}, auctionId={}",
+                        connectionId, aId);
+                    return UserAuctionSubscription.createSubscription(connectionId, aId);
+                } else if (!existing.isActiveSubscription()) {
+                    log.info("[AUCTION-SUBSCRIPTION] 비활성 구독 재활성화 - connectionId={}, auctionId={}",
+                        connectionId, aId);
+                    existing.activate();
+                } else {
+                    log.info("[AUCTION-SUBSCRIPTION] 활성 구독 갱신 - connectionId={}, auctionId={}",
+                        connectionId, aId);
+                    existing.updateLastActivity();
+                }
+                return existing;
+            });
+
+            // 경매별 구독자 캐시에 추가 및 정합성 검증
+            Set<String> subscribers = auctionSubscribers
+                .computeIfAbsent(auctionId, k -> ConcurrentHashMap.newKeySet());
+            boolean addedToCache = subscribers.add(connectionId);
+
+            if (!addedToCache && isNewSubscription.get()) {
+                log.warn("[AUCTION-SUBSCRIPTION] 데이터 정합성 경고 - 신규 구독이지만 캐시에 이미 존재 - connectionId={}, auctionId={}",
+                    connectionId, auctionId);
             }
 
-            // 새로운 구독 생성
-            UserAuctionSubscription subscription = UserAuctionSubscription.createSubscription(connectionId, auctionId);
+            log.info("[AUCTION-SUBSCRIPTION] 구독 완료 - connectionId={}, auctionId={}, isNew={}, totalSubscribers={}",
+                connectionId, auctionId, isNewSubscription.get(), subscribers.size());
 
-            // 사용자별 구독 맵에 추가
-            userSubscriptions.computeIfAbsent(connectionId, k -> new ConcurrentHashMap<>())
-                    .put(auctionId, subscription);
-
-            // 경매별 구독자 캐시에 추가
-            auctionSubscribers.computeIfAbsent(auctionId, k -> ConcurrentHashMap.newKeySet())
-                    .add(connectionId);
-
-            log.info("경매 구독 완료: 사용자={}, 경매={}", connectionId, auctionId);
             return subscription;
 
         } catch (Exception e) {
-            log.error("경매 구독 실패: 사용자={}, 경매={}", connectionId, auctionId, e);
+            log.error("[AUCTION-SUBSCRIPTION] 구독 실패 - connectionId={}, auctionId={}",
+                connectionId, auctionId, e);
             throw new NotificationException(NotificationErrorCode.SUBSCRIPTION_FAILED, e);
         }
     }
 
     public Set<String> getAuctionSubscribers(Integer auctionId) {
+        log.debug("[AUCTION-SUBSCRIPTION] 구독자 조회 시작 - auctionId={}", auctionId);
 
         Set<String> subscribers = auctionSubscribers.get(auctionId);
         if (subscribers == null) {
+            log.debug("[AUCTION-SUBSCRIPTION] 구독자 없음 - auctionId={}", auctionId);
             return Collections.emptySet();
         }
 
         // 활성 구독자만 필터링
-        return subscribers.stream()
+        Set<String> activeSubscribers = subscribers.stream()
                 .filter(userId -> {
                     UserAuctionSubscription subscription = getSubscription(userId, auctionId);
-                    return subscription != null && subscription.isActiveSubscription();
+                    boolean isActive = subscription != null && subscription.isActiveSubscription();
+                    if (!isActive) {
+                        log.trace("[AUCTION-SUBSCRIPTION] 비활성 구독자 필터링 - connectionId={}, auctionId={}",
+                                userId, auctionId);
+                    }
+                    return isActive;
                 })
                 .collect(Collectors.toSet());
+
+        log.debug("[AUCTION-SUBSCRIPTION] 구독자 조회 완료 - auctionId={}, totalSubscribers={}, activeSubscribers={}",
+                auctionId, subscribers.size(), activeSubscribers.size());
+        return activeSubscribers;
     }
 
     public int unsubscribeAll(String connectionId) {
-        try {
+        log.info("[AUCTION-SUBSCRIPTION] 전체 구독 해제 시작 - connectionId={}", connectionId);
 
+        try {
             Map<Integer, UserAuctionSubscription> userSubs = userSubscriptions.get(connectionId);
             if (userSubs == null || userSubs.isEmpty()) {
-                log.debug("구독 정보 없음: 사용자={}", connectionId);
+                log.debug("[AUCTION-SUBSCRIPTION] 구독 정보 없음 - connectionId={}", connectionId);
                 return 0;
             }
 
             int unsubscribedCount = 0;
+            int totalSubscriptions = userSubs.size();
+
+            log.debug("[AUCTION-SUBSCRIPTION] 구독 해제 진행 중 - connectionId={}, totalSubscriptions={}",
+                    connectionId, totalSubscriptions);
 
             // 모든 구독 비활성화
             for (UserAuctionSubscription subscription : userSubs.values()) {
                 if (subscription.isActiveSubscription()) {
+                    Integer auctionId = subscription.getAuctionId();
                     subscription.deactivate();
 
                     // 경매별 구독자 캐시에서 제거
-                    Set<String> subscribers = auctionSubscribers.get(subscription.getAuctionId());
+                    Set<String> subscribers = auctionSubscribers.get(auctionId);
                     if (subscribers != null) {
                         subscribers.remove(connectionId);
                         if (subscribers.isEmpty()) {
-                            auctionSubscribers.remove(subscription.getAuctionId());
+                            auctionSubscribers.remove(auctionId);
+                            log.debug("[AUCTION-SUBSCRIPTION] 경매 구독자 캐시 제거 - auctionId={}, reason=NO_SUBSCRIBERS",
+                                    auctionId);
                         }
                     }
 
                     unsubscribedCount++;
+                    log.trace("[AUCTION-SUBSCRIPTION] 개별 구독 해제 - connectionId={}, auctionId={}",
+                            connectionId, auctionId);
                 }
             }
 
-            log.info("사용자 전체 구독 해제 완료: 사용자={}, 해제 수={}", connectionId, unsubscribedCount);
+            log.info("[AUCTION-SUBSCRIPTION] 전체 구독 해제 완료 - connectionId={}, totalSubscriptions={}, unsubscribedCount={}",
+                    connectionId, totalSubscriptions, unsubscribedCount);
             return unsubscribedCount;
 
         } catch (Exception e) {
-            log.error("사용자 전체 구독 해제 실패: 사용자={}", connectionId, e);
+            log.error("[AUCTION-SUBSCRIPTION] 전체 구독 해제 실패 - connectionId={}",
+                    connectionId, e);
             throw new NotificationException(NotificationErrorCode.UNSUBSCRIPTION_FAIL, e);
         }
     }
 
     public boolean unsubscribe(String userId, Integer auctionId) {
-        try {
+        log.info("[AUCTION-SUBSCRIPTION] 구독 해제 시작 - connectionId={}, auctionId={}", userId, auctionId);
 
+        try {
             Map<Integer, UserAuctionSubscription> userSubs = userSubscriptions.get(userId);
             if (userSubs == null) {
-                log.debug("구독 정보 없음: 사용자={}", userId);
+                log.debug("[AUCTION-SUBSCRIPTION] 구독 정보 없음 - connectionId={}", userId);
                 return false;
             }
 
             UserAuctionSubscription subscription = userSubs.get(auctionId);
             if (subscription == null) {
-                log.debug("해당 경매 구독 없음: 사용자={}, 경매={}", userId, auctionId);
+                log.debug("[AUCTION-SUBSCRIPTION] 해당 경매 구독 없음 - connectionId={}, auctionId={}", userId, auctionId);
                 return false;
             }
 
             // 구독 비활성화
             subscription.deactivate();
+            log.debug("[AUCTION-SUBSCRIPTION] 구독 비활성화 완료 - connectionId={}, auctionId={}", userId, auctionId);
 
             // 경매별 구독자 캐시에서 제거
             Set<String> subscribers = auctionSubscribers.get(auctionId);
             if (subscribers != null) {
                 subscribers.remove(userId);
+                int remainingSubscribers = subscribers.size();
+                log.debug("[AUCTION-SUBSCRIPTION] 구독자 캐시 업데이트 - auctionId={}, remainingSubscribers={}",
+                        auctionId, remainingSubscribers);
+
                 if (subscribers.isEmpty()) {
                     auctionSubscribers.remove(auctionId);
+                    log.debug("[AUCTION-SUBSCRIPTION] 경매 구독자 캐시 제거 - auctionId={}, reason=NO_SUBSCRIBERS", auctionId);
                 }
             }
 
-            log.info("경매 구독 해제 완료: 사용자={}, 경매={}", userId, auctionId);
+            log.info("[AUCTION-SUBSCRIPTION] 구독 해제 완료 - connectionId={}, auctionId={}",
+                    userId, auctionId);
             return true;
 
         } catch (Exception e) {
-            log.error("경매 구독 해제 실패: 사용자={}, 경매={}", userId, auctionId, e);
+            log.error("[AUCTION-SUBSCRIPTION] 구독 해제 실패 - connectionId={}, auctionId={}",
+                    userId, auctionId, e);
             throw new NotificationException(NotificationErrorCode.UNSUBSCRIPTION_FAIL,e);
         }
     }

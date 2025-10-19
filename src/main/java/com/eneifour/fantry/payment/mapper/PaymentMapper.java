@@ -39,6 +39,7 @@ public class PaymentMapper {
         payment.setReceiptId(dto.getReceiptId());
         payment.setCancelledPrice(dto.getCancelledPrice());
         payment.setOrderName(dto.getOrderName());
+        payment.setMetadata(dto.getMetadata());
         payment.setPg(dto.getPg());
         payment.setMethod(dto.getMethod());
         payment.setCurrency(dto.getCurrency());
@@ -52,7 +53,7 @@ public class PaymentMapper {
 
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            payment.setMetadata(objectMapper.writeValueAsString(dto.getMetadata()));
+            payment.setMetadata(dto.getMetadata());
         } catch (Exception e) {
             payment.setMetadata(null);
         }

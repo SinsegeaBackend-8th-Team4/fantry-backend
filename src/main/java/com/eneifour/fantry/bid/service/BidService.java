@@ -205,7 +205,7 @@ public class BidService {
     /*---------------------------------------------------------------------------------------*/
     //전체 Log 조회
     public List<Bid> findAll(){
-        return bidRepository.findAll();
+        return bidRepository.findAllByOrderByBidAtDesc();
     }
 
     //Member_id 기준으로 Log 조회

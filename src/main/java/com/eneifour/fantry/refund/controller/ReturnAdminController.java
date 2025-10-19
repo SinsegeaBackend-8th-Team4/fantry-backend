@@ -27,6 +27,17 @@ public class ReturnAdminController {
     private final ReturnAdminService returnAdminService;
 
     /**
+     * 관리자용 대시보드에 표시될 환불/반품 요청 통계를 조회합니다.
+     *
+     * @return 각 상태별 요청 건수를 포함하는 통계 데이터.
+     */
+    @GetMapping("/stats")
+    public ResponseEntity<ReturnStatsAdminResponse> getReturnStats() {
+        ReturnStatsAdminResponse stats = returnAdminService.getReturnStats();
+        return ResponseEntity.ok(stats);
+    }
+
+    /**
      * 관리자가 사용자를 대신하여 환불/반품 요청을 생성합니다.
      * <p>고객센터를 통해 접수된 건 등을 관리자가 직접 시스템에 등록할 때 사용됩니다.
      *

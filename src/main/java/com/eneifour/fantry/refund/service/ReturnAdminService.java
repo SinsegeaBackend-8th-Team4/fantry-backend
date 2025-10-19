@@ -15,6 +15,7 @@ import com.eneifour.fantry.refund.dto.*;
 import com.eneifour.fantry.refund.exception.ReturnErrorCode;
 import com.eneifour.fantry.refund.exception.ReturnException;
 import com.eneifour.fantry.refund.repository.ReturnRepository;
+import com.eneifour.fantry.refund.repository.ReturnSpecification;
 import com.eneifour.fantry.refund.repository.ReturnStatusHistoryRepository;
 import com.eneifour.fantry.orders.repository.OrdersRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -102,6 +104,19 @@ public class ReturnAdminService {
 
         List<String> urls = getAttachmentUrls(returnRequest);
         return ReturnAdminResponse.from(returnRequest, urls);
+    }
+
+    @Transactional(readOnly = true)
+    public ReturnStatsAdminResponse getReturnStats() {
+        List<Object[]> statusCountsList = returnRepository.countByStatus();
+
+        Map<ReturnStatus, Long> statusCountsMap = statusCountsList.stream()
+                .collect(Collectors.toMap(
+                        row -> (ReturnStatus) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        return ReturnStatsAdminResponse.from(statusCountsMap);
     }
 
     // --- Helper Methods ---

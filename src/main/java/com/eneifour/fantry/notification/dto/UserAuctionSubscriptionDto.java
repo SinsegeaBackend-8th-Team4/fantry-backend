@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserAuctionSubscriptionDto {
-    private String username;
+    private String connectionId;
     private Integer auctionId;
     private LocalDateTime subscribeAt;
 
@@ -22,7 +22,7 @@ public class UserAuctionSubscriptionDto {
             return null;
         }
         return UserAuctionSubscriptionDto.builder()
-                .username(userAuctionSubscription.getConnectionId())
+                .connectionId(userAuctionSubscription.getConnectionId())
                 .auctionId(userAuctionSubscription.getAuctionId())
                 .subscribeAt(userAuctionSubscription.getSubscribedAt())
                 .build();

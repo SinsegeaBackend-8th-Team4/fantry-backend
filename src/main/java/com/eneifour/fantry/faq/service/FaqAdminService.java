@@ -15,13 +15,17 @@ import com.eneifour.fantry.faq.repository.FaqRepository;
 import com.eneifour.fantry.member.domain.Member;
 import com.eneifour.fantry.member.domain.RoleType;
 import lombok.RequiredArgsConstructor;
+import com.eneifour.fantry.faq.dto.FaqStatsAdminResponse;
+import com.eneifour.fantry.inquiry.domain.CsStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 관리자용 FAQ 관리 서비스를 담당합니다.
@@ -145,5 +149,15 @@ public class FaqAdminService {
 
         Map<Integer, String> urlMap = fileService.getFileAccessUrls(fileMetaIds);
         return new ArrayList<>(urlMap.values());
+    }
+
+    @Transactional(readOnly = true)
+    public FaqStatsAdminResponse getFaqStatsForAdmin() {
+        Map<CsStatus, Long> statusCounts = Arrays.stream(CsStatus.values())
+                .collect(Collectors.toMap(
+                        status -> status,
+                        faqRepository::countByStatus
+                ));
+        return FaqStatsAdminResponse.from(statusCounts);
     }
 }

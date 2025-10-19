@@ -24,5 +24,7 @@ public class OrdersRequest {
 
     @NotNull(message = "결제 정보는 필수입니다.")
     private int paymentId;
+    
+    private String shippingAddress;
 }
 

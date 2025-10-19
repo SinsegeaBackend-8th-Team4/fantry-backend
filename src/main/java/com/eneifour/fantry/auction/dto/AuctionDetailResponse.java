@@ -1,5 +1,6 @@
 package com.eneifour.fantry.auction.dto;
 
+import com.eneifour.fantry.checklist.dto.OfflineChecklistItemResponse;
 import com.eneifour.fantry.common.util.file.FileType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
@@ -34,6 +35,9 @@ public class AuctionDetailResponse {
 
     //상품 사진 파일
     private List<FileInfo> fileInfos;
+
+    // 체크리스트
+    List<OfflineChecklistItemResponse> checklist;
 
     @Getter
     @NoArgsConstructor

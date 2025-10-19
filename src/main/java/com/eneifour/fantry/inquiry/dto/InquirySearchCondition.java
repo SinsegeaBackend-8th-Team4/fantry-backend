@@ -1,6 +1,5 @@
 package com.eneifour.fantry.inquiry.dto;
 
-import com.eneifour.fantry.inquiry.domain.CsType;
 import com.eneifour.fantry.inquiry.domain.InquiryStatus;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,9 +19,9 @@ public class InquirySearchCondition {
     private InquiryStatus status;
 
     /**
-     * 검색할 문의 유형 (결제, 계정, 기타 등)
+     * 검색할 문의 유형 ID (결제, 계정, 기타 등)
      */
-    private CsType csType;
+    private Integer csTypeId;
 
     /**
      * 검색할 작성자 이름 (부분 일치)

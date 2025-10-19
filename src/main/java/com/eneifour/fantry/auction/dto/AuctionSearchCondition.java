@@ -27,4 +27,9 @@ public class AuctionSearchCondition {
      * 검색할 그룹 유형 (MALE_SOLO, GIRL_GROUP)
      */
     private GroupType artistGroupType;
+
+    /**
+     * 검색할 키워드 (상품명, 아티스트 한글/영문명)
+     */
+    private String keyword;
 }

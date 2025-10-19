@@ -8,14 +8,14 @@ import lombok.Getter;
 @Getter
 public class SettlementException extends RuntimeException {
 
-    private final com.eneifour.fantry.settlement.exception.SettlementErrorCode errorCode;
+    private final SettlementErrorCode errorCode;
 
-    public SettlementException(com.eneifour.fantry.settlement.exception.SettlementErrorCode errorCode) {
+    public SettlementException(SettlementErrorCode errorCode) {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
 
-    public SettlementException(com.eneifour.fantry.settlement.exception.SettlementErrorCode errorCode, Throwable cause) {
+    public SettlementException(SettlementErrorCode errorCode, Throwable cause) {
         super(errorCode.getMessage(), cause);
         this.errorCode = errorCode;
     }
