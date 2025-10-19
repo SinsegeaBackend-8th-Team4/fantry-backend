@@ -1,6 +1,8 @@
 package com.eneifour.fantry.payment.util;
 
+import com.eneifour.fantry.auction.domain.Auction;
 import com.eneifour.fantry.auction.dto.AuctionDetailResponse;
+import com.eneifour.fantry.auction.repository.AuctionRepository;
 import com.eneifour.fantry.auction.service.AuctionService;
 import com.eneifour.fantry.orders.domain.Orders;
 import com.eneifour.fantry.orders.dto.OrdersRequest;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +24,7 @@ import java.util.Map;
 public class OrderUpdateHelper {
     private final OrdersService ordersService;
     private final AuctionService auctionService;
+    private final AuctionRepository auctionRepository;
 
     @Transactional
     public void purchase(Payment payment, BootpayReceiptDto bootpayReceiptDto) {
@@ -53,7 +57,17 @@ public class OrderUpdateHelper {
             log.info("ordersResponse : {}", orders);
             ordersService.completeAuctionPayment(shippingAddress, orders.getOrdersId(), payment.getPaymentId());
         } else {
-            OrdersRequest ordersRequest = new OrdersRequest(auction.getAuctionId(), (int) userInfo.get("memberId"), (int) auctionInfo.get("itemPrice"), payment.getPaymentId(),shippingAddress);
+            Orders orders = null;
+            try {
+                orders = ordersService.findByAuctionId(auction.getAuctionId());
+            } catch (Exception ignore) {
+            }
+            if (orders != null) {
+                return;
+            }
+            Optional<Auction> response = auctionRepository.findByIdForUpdate(auction.getAuctionId());
+            response.ifPresent(value -> value.closeAsSold((int) auctionInfo.get("itemPrice")));
+            OrdersRequest ordersRequest = new OrdersRequest(auction.getAuctionId(), (int) userInfo.get("memberId"), (int) auctionInfo.get("itemPrice"), payment.getPaymentId(), shippingAddress);
             ordersService.createInstantBuyOrder(ordersRequest);
         }
     }
