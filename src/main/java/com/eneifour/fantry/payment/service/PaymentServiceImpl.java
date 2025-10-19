@@ -106,10 +106,11 @@ public class PaymentServiceImpl implements PaymentService {
      * {@inheritDoc}
      * <p>
      * 낙관적 락(@Version)을 사용하여 동시성을 제어합니다.
-     * ObjectOptimisticLockingFailureException 발생 시 유령 결제로 등록합니다.
+     * ObjectOptimisticLockingFailureException 발생 시 WebHook이 먼저 처리한 것으로 간주하고 정상 처리합니다.
+     * BootpayException 발생 시에는 유령 결제로 등록합니다.
      * </p>
      *
-     * @throws ConcurrentPaymentException 동시성 문제 발생 시
+     * @throws BootpayException Bootpay API 호출 실패 시
      */
     @Override
     @Transactional
@@ -124,9 +125,13 @@ public class PaymentServiceImpl implements PaymentService {
             if(payment.getStatus() == PaymentStatus.COMPLETE) {
                 orderUpdateHelper.purchase(payment, receiptFromBootpay);
             }
-        } catch (ObjectOptimisticLockingFailureException | BootpayException e) {
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.info("중복 결제 요청 감지 (WebHook 우선 처리): orderId={}", receiptFromClient.getOrderId());
+        } catch (BootpayException e) {
+            // Bootpay API 에러는 여전히 GhostPayment로 처리
+            log.error("Bootpay API 호출 실패: orderId={}", receiptFromClient.getOrderId(), e);
             ghostPaymentService.createGhostPayment(receiptFromClient.getReceiptId());
-            throw new ConcurrentPaymentException(e);
+            throw e;
         }
     }
 
