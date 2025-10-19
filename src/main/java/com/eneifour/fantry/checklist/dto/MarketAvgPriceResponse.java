@@ -1,5 +1,3 @@
 package com.eneifour.fantry.checklist.dto;
 
-import java.math.BigDecimal;
-
-public record MarketAvgPriceResponse(BigDecimal marketAvgPrice, int count) { }
+public record MarketAvgPriceResponse(String formattedPrice, int count) { }

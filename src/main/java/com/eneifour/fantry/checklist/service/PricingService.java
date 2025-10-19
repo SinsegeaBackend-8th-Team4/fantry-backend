@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -120,6 +121,13 @@ public class PricingService {
         BigDecimal marketAvgPrice = inspectionRepository.getMarketAvgPrice(goodsCategoryId, artistId, albumId, InspectionStatus.COMPLETED).orElse(null);
         int count = inspectionRepository.countForMarketPrice(goodsCategoryId, artistId, albumId, InspectionStatus.COMPLETED);
 
-        return new MarketAvgPriceResponse(marketAvgPrice, count);
+        // 평균가 포맷: 천 단위 콤마, 원 단위 반올림
+        String formattedPrice = null;
+        if (marketAvgPrice != null) {
+            BigDecimal rounded = marketAvgPrice.setScale(0, RoundingMode.HALF_UP); // 소수점 반올림
+            formattedPrice = String.format("%,d원", rounded.intValue());
+        }
+
+        return new MarketAvgPriceResponse(formattedPrice, count);
     }
 }
