@@ -121,13 +121,10 @@ public class PricingService {
         BigDecimal marketAvgPrice = inspectionRepository.getMarketAvgPrice(goodsCategoryId, artistId, albumId, InspectionStatus.COMPLETED).orElse(null);
         int count = inspectionRepository.countForMarketPrice(goodsCategoryId, artistId, albumId, InspectionStatus.COMPLETED);
 
-        // 평균가 포맷: 천 단위 콤마, 원 단위 반올림
-        String formattedPrice = null;
         if (marketAvgPrice != null) {
-            BigDecimal rounded = marketAvgPrice.setScale(0, RoundingMode.HALF_UP); // 소수점 반올림
-            formattedPrice = String.format("%,d", rounded.intValue());
+            marketAvgPrice = marketAvgPrice.setScale(0, RoundingMode.HALF_UP);
         }
 
-        return new MarketAvgPriceResponse(formattedPrice, count);
+        return new MarketAvgPriceResponse(marketAvgPrice, count);
     }
 }
