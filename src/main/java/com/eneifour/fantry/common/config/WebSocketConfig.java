@@ -20,10 +20,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // WebSocket 연결 엔드 포인트 설정
+        // 기존 프론트엔드 앱을 위한 SockJS 엔드포인트 (그대로 둠)
         registry.addEndpoint("/api/ws-auction")
                 .setAllowedOrigins("http://localhost:5173")
                 .withSockJS();
+
+        // K6 부하 테스트를 위한 순수 웹소켓 엔드포인트 추가
+        registry.addEndpoint("/ws-load-test")
+                .setAllowedOrigins("*");
 
     }
 }
