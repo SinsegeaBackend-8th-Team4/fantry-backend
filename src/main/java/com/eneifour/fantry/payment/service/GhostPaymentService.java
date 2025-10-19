@@ -4,6 +4,7 @@ import com.eneifour.fantry.payment.domain.GhostPayment;
 import com.eneifour.fantry.payment.domain.GhostPaymentStatus;
 import com.eneifour.fantry.payment.domain.Payment;
 import com.eneifour.fantry.payment.domain.bootpay.BootpayReceiptDto;
+import com.eneifour.fantry.payment.exception.AlreadyCancelledPaymentException;
 import com.eneifour.fantry.payment.exception.NotFoundPaymentException;
 import com.eneifour.fantry.payment.mapper.PaymentMapper;
 import com.eneifour.fantry.payment.repository.GhostPaymentRepository;
@@ -125,6 +126,8 @@ public class GhostPaymentService {
                 PaymentMapper.updateFromDto(payment, resultReceiptDto);
                 paymentRepository.save(payment);
                 log.info("유령 결제 취소 성공. Receipt ID: {}", ghostPayment.getReceiptId());
+            } catch (AlreadyCancelledPaymentException e) {
+                ghostPayment.setStatus(GhostPaymentStatus.CANCEL_SUCCESS);
             } catch (Exception e) {
                 log.error("유령 결제 취소 중 오류 발생. Receipt ID: {}, Error: {}", ghostPayment.getReceiptId(), e.getMessage());
                 ghostPayment.setStatus(GhostPaymentStatus.CANCEL_FAILED);
