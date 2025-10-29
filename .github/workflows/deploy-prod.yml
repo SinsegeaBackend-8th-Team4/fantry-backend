@@ -1,9 +1,9 @@
-name: Deploy Backend to Dev Server
+name: Deploy Backend to Prod Server
 
 on:
   push:
     branches:
-      - develop  # fantry-backend 저장소의 develop 브랜치에 push되면 실행
+      - main  # fantry-backend 저장소의 develop 브랜치에 push되면 실행
 
 jobs:
   deploy:
