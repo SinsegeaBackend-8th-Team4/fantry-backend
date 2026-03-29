@@ -13,6 +13,7 @@ import com.eneifour.fantry.inquiry.repository.CsTypeRepository;
 import com.eneifour.fantry.inquiry.repository.InquiryRepository;
 import com.eneifour.fantry.inquiry.repository.InquirySpecification;
 import com.eneifour.fantry.member.domain.Member;
+import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -107,6 +108,21 @@ public class InquiryService {
     public Page<InquirySummaryResponse> searchInquires(InquirySearchCondition condition, Pageable pageable){
         Specification<Inquiry> spec = inquirySpecification.toSpecification(condition);
         return inquiryRepository.findAll(spec, pageable)
+                .map(InquirySummaryResponse::from);
+    }
+
+    //성능 비교용 테스트 메서드
+    @Transactional(readOnly = true)
+    public Page<InquirySummaryResponse> fetchJoinsNoOpt(InquirySearchCondition condition, Pageable pageable) {
+        Specification<Inquiry> spec = inquirySpecification.toSpecification(condition);
+        Specification<Inquiry> noOptSpec = spec.and((root, query, criteriaBuilder) -> {
+            root.fetch("inquiredBy", JoinType.LEFT);
+            root.fetch("answeredBy", JoinType.LEFT);
+            root.fetch("csType", JoinType.LEFT);
+            return criteriaBuilder.conjunction();
+        });
+
+        return inquiryRepository.findAll(noOptSpec, pageable)
                 .map(InquirySummaryResponse::from);
     }
 

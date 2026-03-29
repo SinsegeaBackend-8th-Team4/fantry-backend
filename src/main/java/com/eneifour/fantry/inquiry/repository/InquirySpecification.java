@@ -66,4 +66,16 @@ public class InquirySpecification extends AbstractSpecification<Inquiry, Inquiry
             return criteriaBuilder.conjunction();
         };
     }
+
+    // 성능 비교를 위해 의도적으로 'if 분기'를 제거한 버전
+    public Specification<Inquiry> fetchJoinsNoOpt() {
+        return (root, query, criteriaBuilder) -> {
+            // 분기 처리(if)를 삭제함 -> Count 쿼리 시에도 Join Fetch가 강제됨
+            root.fetch("inquiredBy", JoinType.LEFT);
+            root.fetch("answeredBy", JoinType.LEFT);
+            root.fetch("csType", JoinType.LEFT);
+
+            return criteriaBuilder.conjunction();
+        };
+    }
 }

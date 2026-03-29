@@ -83,4 +83,14 @@ public class                              InquiryAdminController {
         InquiryStatsAdminResponse stats = inquiryService.getInquiryStatsForAdmin();
         return ResponseEntity.ok(stats);
     }
+
+    @Operation(summary = "[성능 테스트용] 최적화 미적용 목록 조회", description = "Fetch Join 분기 처리가 없는 로직을 실행하여 Count 쿼리 성능 저하를 테스트합니다.")
+    @GetMapping("/test-no-opt")
+    public ResponseEntity<Page<InquirySummaryResponse>> searchInquiriesNoOpt(
+            @ModelAttribute InquirySearchCondition condition,
+            Pageable pageable
+    ) {
+        Page<InquirySummaryResponse> results = inquiryService.fetchJoinsNoOpt(condition, pageable);
+        return ResponseEntity.ok(results);
+    }
 }
